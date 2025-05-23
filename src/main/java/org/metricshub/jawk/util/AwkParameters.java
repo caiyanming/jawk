@@ -64,7 +64,7 @@ import org.slf4j.Logger;
  *   and <code>printf</code>.
  * <li><i>Extension</i> -ext <br/>
  *   Enabled user-defined extensions. Works together with the
- *   -Djava.extensions property.
+ *   -Djawk.extensions property.
  *   It also disables blank rule as mapping to a print $0 statement.
  * <li><i>Extension</i> -ni <br/>
  *   Do NOT consume stdin or files from ARGC/V through input rules.
