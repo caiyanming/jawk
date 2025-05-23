@@ -2,4 +2,4 @@
 
 ## Build
 
-The project uses Maven to build. Build and test your changes with `mvnw` (the Maven Wrapper).
+The project uses Maven to build. Use `mvn` with the `--offline` option if there is no Internet available.
