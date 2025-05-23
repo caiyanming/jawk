@@ -22,4 +22,4 @@ See [AWK in Java documentation](https://metricshub.org/Jawk/java.html)
 
 ## Contributing
 
-See [CONTRIBUDING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md).
