@@ -101,7 +101,7 @@ import org.slf4j.Logger;
 public class AVM implements AwkInterpreter, VariableManager {
 
 	private static final Logger LOG = AwkLogger.getLogger(AVM.class);
-	private static final boolean IS_WINDOWS = (System.getProperty("os.name").indexOf("Windows") >= 0);
+       private static final boolean IS_WINDOWS = System.getProperty("os.name").indexOf("Windows") >= 0;
 
 	private RuntimeStack runtime_stack = new RuntimeStack();
 
@@ -109,8 +109,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 	// (could be a parameter)
 	//private Deque<Object> operand_stack = new ArrayDeque<Object>(16);
 	//private MyStack<Object> operand_stack = new LinkedListStackImpl<Object>();
-	private MyStack<Object> operand_stack = new ArrayStackImpl<Object>();
-	private java.util.List<String> arguments;
+       private MyStack<Object> operand_stack = new ArrayStackImpl<Object>();
+       private List<String> arguments;
 	private boolean sorted_array_keys;
 	private Map<String, Object> initial_variables;
 	private String initial_fs_value;
@@ -1466,7 +1466,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 						// arg[0] = class object
 						// stack[0] = item to check
 						Object o = pop();
-						if (!(position.classArg().isInstance(o))) {
+                                               if (!position.classArg().isInstance(o)) {
 							throw new AwkRuntimeException(position.lineNumber(), "Verification failed. Top-of-stack = " + o.getClass() + " isn't an instance of " + position.classArg());
 						}
 						push(o);
@@ -1974,20 +1974,18 @@ public class AVM implements AwkInterpreter, VariableManager {
 						}
 						// (... and proceed)
 
-						if (retval == null) {
-							retval = "";
-						} else if (retval instanceof Integer) {
-						} else if (retval instanceof Long) {
-						} else if (retval instanceof Double) {
-						} else if (retval instanceof String) {
-						} else if (retval instanceof AssocArray) {
-						} else if (retval instanceof BlockObject) {
-							// pass a block object through...
-						} else {
-							// all other extension results are converted
-							// to a string (via Object.toString())
-							retval = retval.toString();
-						}
+                                               if (retval == null) {
+                                                       retval = "";
+                                               } else if (!(retval instanceof Integer
+                                                               || retval instanceof Long
+                                                               || retval instanceof Double
+                                                               || retval instanceof String
+                                                               || retval instanceof AssocArray
+                                                               || retval instanceof BlockObject)) {
+                                                       // all other extension results are converted
+                                                       // to a string (via Object.toString())
+                                                       retval = retval.toString();
+                                               }
 						push(retval);
 
 						position.next();

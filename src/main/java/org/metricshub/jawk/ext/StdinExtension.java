@@ -113,8 +113,8 @@ public class StdinExtension extends AbstractExtension implements JawkExtension {
 			return "Stdin";
 		}
 
-		@Override
-		public final void block()
+               @Override
+               public void block()
 				throws InterruptedException
 		{
 			synchronized (blocker) {
@@ -133,8 +133,8 @@ public class StdinExtension extends AbstractExtension implements JawkExtension {
 		super.init(vm, jrt, settings);
 
 		Thread getLineInputThread = new Thread("getLineInputThread") {
-			@Override
-			public final void run() {
+                       @Override
+                       public void run() {
 				try {
 					BufferedReader br = new BufferedReader(
 							new InputStreamReader(settings.getInput()));

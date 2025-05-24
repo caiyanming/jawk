@@ -93,7 +93,7 @@ public class JRT {
 
 	private static final Logger LOG = AwkLogger.getLogger(JRT.class);
 
-	private static final boolean IS_WINDOWS = (System.getProperty("os.name").indexOf("Windows") >= 0);
+       private static final boolean IS_WINDOWS = System.getProperty("os.name").indexOf("Windows") >= 0;
 
 	private VariableManager vm;
 
@@ -221,11 +221,11 @@ public class JRT {
 		// it to a Double. Because if it's a literal representation of a number,
 		// we will need to display it as a number ("12.00" --> 12)
 		if (!(o instanceof Number)) {
-			try {
-				o = Double.parseDouble(o.toString());
-			} catch (NumberFormatException e) {
-				// Do nothing here
-			}
+                       try {
+                               o = Double.parseDouble(o.toString());
+                       } catch (NumberFormatException e) {
+                               LOG.debug("Failed to parse number", e);
+                       }
 		}
 
 		return toAwkString(o, ofmt, locale);
@@ -365,28 +365,32 @@ public class JRT {
 		if (!(o1 instanceof Number) && !o1String.isEmpty()) {
 			char o1FirstChar = o1String.charAt(0);
 			if (o1FirstChar >= '0' && o1FirstChar <= '9') {
-				try {
-					o1 = Double.parseDouble(o1String);
-				} catch (NumberFormatException nfe) { /* Fail silently */ }
+                               try {
+                                       o1 = Double.parseDouble(o1String);
+                               } catch (NumberFormatException nfe) {
+                                       LOG.debug("Invalid number", nfe);
+                               }
 			}
 		}
 		if (!(o2 instanceof Number) && !o2String.isEmpty()) {
 			char o2FirstChar = o2String.charAt(0);
 			if (o2FirstChar >= '0' && o2FirstChar <= '9') {
-				try {
-					o2 = Double.parseDouble(o2String);
-				} catch (NumberFormatException nfe) { /* Fail silently */ }
+                               try {
+                                       o2 = Double.parseDouble(o2String);
+                               } catch (NumberFormatException nfe) {
+                                       LOG.debug("Invalid number", nfe);
+                               }
 			}
 		}
 
 		if ((o1 instanceof Number) && (o2 instanceof Number)) {
-			if (mode < 0) {
-				return (((Number) o1).doubleValue() < ((Number) o2).doubleValue());
-			} else if (mode == 0) {
-				return (((Number) o1).doubleValue() == ((Number) o2).doubleValue());
-			} else {
-				return (((Number) o1).doubleValue() > ((Number) o2).doubleValue());
-			}
+                       if (mode < 0) {
+                               return ((Number) o1).doubleValue() < ((Number) o2).doubleValue();
+                       } else if (mode == 0) {
+                               return ((Number) o1).doubleValue() == ((Number) o2).doubleValue();
+                       } else {
+                               return ((Number) o1).doubleValue() > ((Number) o2).doubleValue();
+                       }
 		} else {
 
 			// string equality usually occurs more often than natural ordering comparison

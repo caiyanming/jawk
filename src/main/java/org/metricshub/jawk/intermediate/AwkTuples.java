@@ -311,7 +311,7 @@ public class AwkTuples implements Serializable {
 		}
 
 		private boolean hasNext() {
-			return (next != null);
+                       return next != null;
 		}
 
 		private Tuple getNext() {
@@ -344,13 +344,13 @@ public class AwkTuples implements Serializable {
 				} else if (type == String.class) {
 					sb.append('"').append(strings[idx]).append('"');
 				} else if (type == Address.class) {
-					assert (idx == 0);
+                                       assert idx == 0;
 					sb.append(address);
 				} else if (type == Class.class) {
-					assert (idx == 0);
+                                       assert idx == 0;
 					sb.append(cls);
 				} else if (type == HasFunctionAddress.class) {
-					assert (idx == 0);
+                                       assert idx == 0;
 					sb.append(hasFuncAddr);
 				} else {
 					throw new Error("Unknown param type (" + idx + "): " + type);
@@ -3176,7 +3176,7 @@ public class AwkTuples implements Serializable {
 	 */
 	public void popSourceLineNumber(int lineno) {
 		int tos = lineno_stack.pop();
-		assert (lineno == tos);
+               assert lineno == tos;
 	}
 
 

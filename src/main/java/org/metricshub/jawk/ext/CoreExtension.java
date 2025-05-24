@@ -215,8 +215,8 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 			return "Timeout";
 		}
 
-		@Override
-		public final void block()
+               @Override
+               public void block()
 				throws InterruptedException
 		{
 			synchronized (timeoutBlocker) {

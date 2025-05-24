@@ -329,14 +329,11 @@ public class AwkParser {
 		while (c == '\r') {
 			c = reader.read();
 		}
-		if (c < 0) {
-			// check if there are additional sources
-			if ((scriptSourcesCurrentIndex + 1) < scriptSources.size()) {
-				scriptSourcesCurrentIndex++;
-				reader = new LineNumberReader(scriptSources.get(scriptSourcesCurrentIndex).getReader());
-				read();
-			}
-		}
+               if (c < 0 && (scriptSourcesCurrentIndex + 1) < scriptSources.size()) {
+                       scriptSourcesCurrentIndex++;
+                       reader = new LineNumberReader(scriptSources.get(scriptSourcesCurrentIndex).getReader());
+                       read();
+               }
 	}
 	
 	/**
@@ -956,14 +953,14 @@ public class AwkParser {
 			if (token == _COMMA_) {
 				lexer();
 				opt_newline();
-				AST rest = FORMAL_PARAM_LIST(func_name);
-				if (rest == null) {
-					throw new ParserException("Cannot terminate a formal parameter list with a comma.");
-				} else {
-					return new FunctionDefParamList_AST(id, offset, rest);
-				}
+                               AST rest = FORMAL_PARAM_LIST(func_name);
+                               if (rest == null) {
+                                       throw new ParserException("Cannot terminate a formal parameter list with a comma.");
+                               } else {
+                                       return new FunctionDefParamList_AST(id, rest);
+                               }
 			} else {
-				return new FunctionDefParamList_AST(id, offset, null);
+                               return new FunctionDefParamList_AST(id, null);
 			}
 		} else {
 			return null;
@@ -1418,7 +1415,7 @@ public class AwkParser {
 	AST INTEGER_EXPRESSION(boolean not_in_print_root, boolean allow_in_keyword, boolean allow_multidim_indices)
 			throws IOException
 	{
-		boolean parens = (c == '(');
+               boolean parens = c == '(';
 		expectKeyword("_INTEGER");
 		if (token == _SEMICOLON_ || token == _NEWLINE_ || token == _CLOSE_BRACE_) {
 			throw new ParserException("expression expected");
@@ -1444,7 +1441,7 @@ public class AwkParser {
 	AST DOUBLE_EXPRESSION(boolean not_in_print_root, boolean allow_in_keyword, boolean allow_multidim_indices)
 			throws IOException
 	{
-		boolean parens = (c == '(');
+               boolean parens = c == '(';
 		expectKeyword("_DOUBLE");
 		if (token == _SEMICOLON_ || token == _NEWLINE_ || token == _CLOSE_BRACE_) {
 			throw new ParserException("expression expected");
@@ -2351,12 +2348,12 @@ public class AwkParser {
 		}
 
 		@Override
-		public final boolean isArray() {
+               public boolean isArray() {
 			return false;
 		}
 
 		@Override
-		public final boolean isScalar() {
+               public boolean isScalar() {
 			return true;
 		}
 	}
@@ -2739,7 +2736,7 @@ public class AwkParser {
 			continue_address = loop;
 
 			// condition
-			assert (ast1 != null);
+                       assert ast1 != null;
 			int ast1_result = ast1.populateTuples(tuples);
 			assert ast1_result == 1;
 			tuples.ifFalse(break_address);
@@ -2799,7 +2796,7 @@ public class AwkParser {
 			tuples.address(continue_address);
 
 			// condition
-			assert (ast2 != null);
+                       assert ast2 != null;
 			int ast2_result = ast2.populateTuples(tuples);
 			assert ast2_result == 1;
 			tuples.ifTrue(loop);
@@ -3972,12 +3969,12 @@ public class AwkParser {
 	private final class FunctionDefParamList_AST extends AST {
 
 		private String id;
-		private FunctionDefParamList_AST(String id, int offset, AST rest) {
-			super(rest);
-			this.id = id;
-		}
+               private FunctionDefParamList_AST(String id, AST rest) {
+                       super(rest);
+                       this.id = id;
+               }
 
-		public final int populateTuples(AwkTuples tuples) {
+               public int populateTuples(AwkTuples tuples) {
 			throw new Error("Cannot 'execute' function definition parameter list (formal parameters) in this manner.");
 		}
 
@@ -4048,12 +4045,12 @@ public class AwkParser {
 		}
 
 		@Override
-		public final boolean isArray() {
+               public boolean isArray() {
 			return is_array;
 		}
 
 		@Override
-		public final boolean isScalar() {
+               public boolean isScalar() {
 			return is_scalar;
 		}
 
