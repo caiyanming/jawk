@@ -28,6 +28,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import org.metricshub.jawk.util.AwkLogger;
+import org.slf4j.Logger;
 
 import org.metricshub.jawk.intermediate.UninitializedObject;
 
@@ -45,6 +47,8 @@ import org.metricshub.jawk.intermediate.UninitializedObject;
  * @author Danny Daglas
  */
 public class AssocArray implements Comparator<Object> {
+
+       private static final Logger LOG = AwkLogger.getLogger(AssocArray.class);
 
 	private Map<Object, Object> map;
 
@@ -181,7 +185,9 @@ public class AssocArray implements Comparator<Object> {
 			if (result != null) {
 				return result;
 			}
-		} catch (Exception e) {}
+               } catch (Exception e) {
+                       LOG.debug("Key parse failure", e);
+               }
 
 		// based on the AWK specification:
 		// Any reference (except for IN expressions) to a non-existent
@@ -207,8 +213,9 @@ public class AssocArray implements Comparator<Object> {
 			// Save a primitive version
 			long iKey = Long.parseLong(key.toString());
 			return map.put(iKey, value);
-		} catch (Exception e) {
-		}
+               } catch (Exception e) {
+                       LOG.debug("Key parse failure", e);
+               }
 
 		return map.put(key, value);
 	}
