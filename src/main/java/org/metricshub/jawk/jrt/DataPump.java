@@ -2,7 +2,7 @@ package org.metricshub.jawk.jrt;
 
 /*-
  * ╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲
- * Jawk
+	 * Jawk
  * ჻჻჻჻჻჻
  * Copyright (C) 2006 - 2025 MetricsHub
  * ჻჻჻჻჻჻
@@ -26,6 +26,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 
+import org.metricshub.jawk.util.AwkLogger;
+import org.slf4j.Logger;
+
 /**
  * Relay data from an input stream to an output stream.
  * A thread is created to do the work.
@@ -38,6 +41,8 @@ import java.io.PrintStream;
  * @author Danny Daglas
  */
 public class DataPump implements Runnable {
+
+	private static final Logger LOG = AwkLogger.getLogger(DataPump.class);
 
 	private InputStream is;
 	private PrintStream os;
@@ -82,10 +87,12 @@ public class DataPump implements Runnable {
 				os.write(b, 0, len);
 			}
 		} catch (IOException ioe) {
-			// ignore
+			LOG.error("", ioe);
 		}
 		try {
 			is.close();
-		} catch (IOException ioe) {}
+		} catch (IOException ioe) {
+			LOG.error("", ioe);
+		}
 	}
 }
