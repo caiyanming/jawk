@@ -520,12 +520,11 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 
 		Object retval = null;
 
-		while (iter.hasNext()) {
+		if (iter.hasNext()) {
 			retval = iter.next();
 			if (retval instanceof String && retval.toString().equals("")) {
 				throw new AwkRuntimeException("Assoc array key contains a blank string ?!");
 			}
-			break;
 		}
 
 		if (retval == null) {
