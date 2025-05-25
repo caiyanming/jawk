@@ -938,7 +938,7 @@ public class AwkParser {
 	AST FORMAL_PARAM_LIST(String func_name) throws IOException {
 		if (token == _ID_) {
 			String id = text.toString();
-			int offset = symbol_table.addFunctionParameter(func_name, id);
+			symbol_table.addFunctionParameter(func_name, id);
 			lexer();
 			if (token == _COMMA_) {
 				lexer();
@@ -1419,7 +1419,7 @@ public class AwkParser {
 	}
 
 	AST STRING_EXPRESSION(boolean not_in_print_root, boolean allow_in_keyword, boolean allow_multidim_indices) throws IOException {
-		boolean parens = (c == '(');
+		boolean parens = c == '(';
 		expectKeyword("_STRING");
 		if (token == _SEMICOLON_ || token == _NEWLINE_ || token == _CLOSE_BRACE_) {
 			throw new ParserException("expression expected");
@@ -1449,7 +1449,7 @@ public class AwkParser {
 		}
 		int id_token = token;
 		String id = text.toString();
-		boolean parens = (c == '(');
+		boolean parens = c == '(';
 		lexer();
 
 		if (id_token == _EXTENSION_) {
@@ -1466,7 +1466,7 @@ public class AwkParser {
 					params = EXPRESSION_LIST(not_in_print_root, allow_in_keyword);
 				lexer(_CLOSE_PAREN_);
 			} else {
-				boolean parens = (c == '(');
+               boolean parens = c == '(';
 				//expectKeyword("delete");
 				if (parens) {
 					assert token == _OPEN_PAREN_;
@@ -1778,7 +1778,7 @@ public class AwkParser {
 	}
 
 	AST DELETE_STATEMENT() throws IOException {
-		boolean parens = (c == '(');
+		boolean parens = c == '(';
 		expectKeyword("delete");
 		if (parens) {
 			assert token == _OPEN_PAREN_;
@@ -1831,11 +1831,7 @@ public class AwkParser {
 			lexer(_CLOSE_PAREN_);
 		} else {
 			if (
-				token == _NEWLINE_ ||
-				token == _SEMICOLON_ ||
-				token == _CLOSE_BRACE_ ||
-				token == _CLOSE_PAREN_ ||
-				(token == _GT_ || token == _APPEND_ || token == _PIPE_)
+				token == _NEWLINE_ || token == _SEMICOLON_ || token == _CLOSE_BRACE_ || token == _CLOSE_PAREN_ || token == _GT_ || token == _APPEND_ || token == _PIPE_
 			) {
 				func_params = null;
 			} else {
@@ -1855,7 +1851,7 @@ public class AwkParser {
 	}
 
 	AST PRINT_STATEMENT() throws IOException {
-		boolean parens = (c == '(');
+		boolean parens = c == '(';
 		expectKeyword("print");
 		ParsedPrintStatement parsedPrintStatement = parsePrintStatement(parens);
 
@@ -1863,7 +1859,7 @@ public class AwkParser {
 	}
 
 	AST PRINTF_STATEMENT() throws IOException {
-		boolean parens = (c == '(');
+		boolean parens = c == '(';
 		expectKeyword("printf");
 		ParsedPrintStatement parsedPrintStatement = parsePrintStatement(parens);
 
@@ -1930,7 +1926,7 @@ public class AwkParser {
 	}
 
 	AST SLEEP_STATEMENT() throws IOException {
-		boolean parens = (c == '(');
+		boolean parens = c == '(';
 		expectKeyword("_sleep");
 		if (token == _SEMICOLON_ || token == _NEWLINE_ || token == _CLOSE_BRACE_) {
 			return new SleepStatement_AST(null);
@@ -1954,7 +1950,7 @@ public class AwkParser {
 	}
 
 	AST DUMP_STATEMENT() throws IOException {
-		boolean parens = (c == '(');
+		boolean parens = c == '(';
 		expectKeyword("_dump");
 		if (token == _SEMICOLON_ || token == _NEWLINE_ || token == _CLOSE_BRACE_) {
 			return new DumpStatement_AST(null);
@@ -2325,12 +2321,8 @@ public class AwkParser {
 				return true;
 			}
 		}
-		return (
-			containsASTType(ast.ast1, cls_array) ||
-			containsASTType(ast.ast2, cls_array) ||
-			containsASTType(ast.ast3, cls_array) ||
-			containsASTType(ast.ast4, cls_array)
-		);
+		// prettier-ignore
+               return containsASTType(ast.ast1, cls_array) || containsASTType(ast.ast2, cls_array) || containsASTType(ast.ast3, cls_array) || containsASTType(ast.ast4, cls_array);
 	}
 
 	private Address next_address;
@@ -2917,9 +2909,9 @@ public class AwkParser {
 		public int populateTuples(AwkTuples tuples) {
 			pushSourceLineNumber(tuples);
 			int expr_count = ast1.populateTuples(tuples);
-			if (expr_count == 0) {} else if (expr_count == 1) {
+			if (expr_count == 1) {
 				tuples.pop();
-			} else {
+			} else if (expr_count != 0) {
 				assert false : "expr_count = " + expr_count;
 			}
 			popSourceLineNumber(tuples);
