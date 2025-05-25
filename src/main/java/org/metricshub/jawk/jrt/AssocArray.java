@@ -283,12 +283,12 @@ public class AssocArray implements Comparator<Object> {
 			return s1.compareTo(s2);
 		} else {
 			if (o1 instanceof Double || o2 instanceof Double) {
-				Double d1 = ((Double) o1);
-				Double d2 = ((Double) o2);
+				Double d1 = (Double) o1;
+				Double d2 = (Double) o2;
 				return d1.compareTo(d2);
 			} else {
-				Integer i1 = ((Integer) o1);
-				Integer i2 = ((Integer) o2);
+				Integer i1 = (Integer) o1;
+				Integer i2 = (Integer) o2;
 				return i1.compareTo(i2);
 			}
 		}
