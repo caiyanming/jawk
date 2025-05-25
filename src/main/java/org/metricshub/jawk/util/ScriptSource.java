@@ -38,8 +38,7 @@ import java.io.Reader;
 public class ScriptSource {
 
 	/** Constant <code>DESCRIPTION_COMMAND_LINE_SCRIPT="&lt;command-line-supplied-script&gt;"</code> */
-	public static final String DESCRIPTION_COMMAND_LINE_SCRIPT
-			= "<command-line-supplied-script>";
+	public static final String DESCRIPTION_COMMAND_LINE_SCRIPT = "<command-line-supplied-script>";
 
 	private String description;
 	private Reader reader;
@@ -53,7 +52,6 @@ public class ScriptSource {
 	 * @param intermediate a boolean
 	 */
 	public ScriptSource(String description, Reader reader, boolean intermediate) {
-
 		this.description = description;
 		this.reader = reader;
 		this.intermediate = intermediate;
@@ -78,9 +76,7 @@ public class ScriptSource {
 	 *   refer to an intermediate file.
 	 * @throws java.io.IOException if any.
 	 */
-	public Reader getReader()
-			throws IOException
-	{
+	public Reader getReader() throws IOException {
 		return reader;
 	}
 
@@ -92,9 +88,7 @@ public class ScriptSource {
 	 * @return a {@link java.io.InputStream} object
 	 * @throws java.io.IOException if any.
 	 */
-	public InputStream getInputStream()
-			throws IOException
-	{
+	public InputStream getInputStream() throws IOException {
 		return null;
 	}
 

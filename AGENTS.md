@@ -2,7 +2,7 @@
 
 ## Code style
 
-We use tabs here, as sane people.
+Your never need to worry about code formatting at all. Simply run `mvn prettier:write` before committing changes to make sure the new code follows this project's code formatting rules.
 
 ## Build
 

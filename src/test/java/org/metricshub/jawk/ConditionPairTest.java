@@ -15,7 +15,7 @@ public class ConditionPairTest {
 		assertTrue("Still inside", cp.update(false, false));
 		assertTrue("Leaving", cp.update(false, true));
 		assertFalse("Outside", cp.update(false, false));
-		
+
 		assertTrue("Re-entering", cp.update(true, false));
 		assertTrue("Still inside", cp.update(false, false));
 		assertTrue("Re-re-entering", cp.update(true, false));
@@ -26,5 +26,4 @@ public class ConditionPairTest {
 		assertTrue("Entering and leaving", cp.update(true, true));
 		assertFalse("So we're outside", cp.update(false, false));
 	}
-
 }

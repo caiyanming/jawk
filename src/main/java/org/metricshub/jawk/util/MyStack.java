@@ -33,7 +33,6 @@ package org.metricshub.jawk.util;
  * @author Danny Daglas
  */
 public interface MyStack<E> {
-
 	/**
 	 * Push an item onto the stack.
 	 *

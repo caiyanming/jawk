@@ -28,10 +28,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import org.metricshub.jawk.intermediate.UninitializedObject;
 import org.metricshub.jawk.util.AwkLogger;
 import org.slf4j.Logger;
-
-import org.metricshub.jawk.intermediate.UninitializedObject;
 
 /**
  * An AWK associative array.
@@ -48,7 +47,7 @@ import org.metricshub.jawk.intermediate.UninitializedObject;
  */
 public class AssocArray implements Comparator<Object> {
 
-       private static final Logger LOG = AwkLogger.getLogger(AssocArray.class);
+	private static final Logger LOG = AwkLogger.getLogger(AssocArray.class);
 
 	private Map<Object, Object> map;
 
@@ -170,7 +169,7 @@ public class AssocArray implements Comparator<Object> {
 	 */
 	public Object get(Object key) {
 		if (key == null || key instanceof UninitializedObject) {
-			key = (long)0;
+			key = (long) 0;
 		}
 		Object result = map.get(key);
 		if (result != null) {
@@ -185,9 +184,9 @@ public class AssocArray implements Comparator<Object> {
 			if (result != null) {
 				return result;
 			}
-               } catch (Exception e) {
-                       LOG.debug("Key parse failure", e);
-               }
+		} catch (Exception e) {
+			LOG.debug("Key parse failure", e);
+		}
 
 		// based on the AWK specification:
 		// Any reference (except for IN expressions) to a non-existent
@@ -207,15 +206,15 @@ public class AssocArray implements Comparator<Object> {
 	 */
 	public Object put(Object key, Object value) {
 		if (key == null || key instanceof UninitializedObject) {
-			key = (long)0;
+			key = (long) 0;
 		}
 		try {
 			// Save a primitive version
 			long iKey = Long.parseLong(key.toString());
 			return map.put(iKey, value);
-               } catch (Exception e) {
-                       LOG.debug("Key parse failure", e);
-               }
+		} catch (Exception e) {
+			LOG.debug("Key parse failure", e);
+		}
 
 		return map.put(key, value);
 	}
@@ -275,7 +274,6 @@ public class AssocArray implements Comparator<Object> {
 	 */
 	@Override
 	public int compare(Object o1, Object o2) {
-
 		if (o1 instanceof String || o2 instanceof String) {
 			// use string comparison
 			String s1 = o1.toString();

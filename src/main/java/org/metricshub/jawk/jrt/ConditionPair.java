@@ -41,7 +41,7 @@ public class ConditionPair {
 	/**
 	 * Update the status of the condition pair according to
 	 * whether the begin and end conditions match or not
-	 * 
+	 *
 	 * @param startMatches True if the start condition is true, which means
 	 *                     we're entering the range
 	 * @param endMatches True if the end condition is true, which means
@@ -49,9 +49,8 @@ public class ConditionPair {
 	 * @return wether we're within the range
 	 */
 	public boolean update(boolean startMatches, boolean endMatches) {
-		
 		boolean previousWithin = within;
-		
+
 		if (startMatches) {
 			within = true;
 		}
@@ -60,5 +59,4 @@ public class ConditionPair {
 		}
 		return startMatches || previousWithin;
 	}
-	
 }

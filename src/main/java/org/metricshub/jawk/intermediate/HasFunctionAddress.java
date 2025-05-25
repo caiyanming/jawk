@@ -42,7 +42,6 @@ package org.metricshub.jawk.intermediate;
  * @author Danny Daglas
  */
 public interface HasFunctionAddress {
-
 	/**
 	 * Get an address to the tuple where this function is
 	 * defined.

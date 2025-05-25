@@ -2,7 +2,7 @@ package org.metricshub.jawk.jrt;
 
 /*-
  * ╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲
-	 * Jawk
+ * Jawk
  * ჻჻჻჻჻჻
  * Copyright (C) 2006 - 2025 MetricsHub
  * ჻჻჻჻჻჻
@@ -25,7 +25,6 @@ package org.metricshub.jawk.jrt;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-
 import org.metricshub.jawk.util.AwkLogger;
 import org.slf4j.Logger;
 

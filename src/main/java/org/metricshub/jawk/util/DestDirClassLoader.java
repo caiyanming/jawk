@@ -56,16 +56,12 @@ public final class DestDirClassLoader extends ClassLoader {
 
 	/** {@inheritDoc} */
 	@Override
-	protected Class<?> findClass(String name)
-			throws ClassNotFoundException
-	{
+	protected Class<?> findClass(String name) throws ClassNotFoundException {
 		byte[] b = loadClassData(name);
 		return defineClass(name, b, 0, b.length);
 	}
 
-	private byte[] loadClassData(String name)
-			throws ClassNotFoundException
-	{
+	private byte[] loadClassData(String name) throws ClassNotFoundException {
 		String fileName = dirname + File.separator + name + ".class";
 		try {
 			FileInputStream f = new FileInputStream(fileName);
@@ -79,9 +75,7 @@ public final class DestDirClassLoader extends ClassLoader {
 			baos.close();
 			return baos.toByteArray();
 		} catch (IOException ioe) {
-			throw new ClassNotFoundException(
-					"Could not load class " + name
-					+ " from file \"" + fileName + "\"", ioe);
+			throw new ClassNotFoundException("Could not load class " + name + " from file \"" + fileName + "\"", ioe);
 		}
 	}
 }

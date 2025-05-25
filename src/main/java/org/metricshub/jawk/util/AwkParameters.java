@@ -28,7 +28,6 @@ import java.io.PrintStream;
 import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.util.Locale;
-
 import org.slf4j.Logger;
 
 /**
@@ -91,13 +90,13 @@ public class AwkParameters {
 	private static final Logger LOG = AwkLogger.getLogger(AwkParameters.class);
 
 	private static final String JAR_NAME;
+
 	static {
 		String myName;
 		try {
 			File me = new File(AwkParameters.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
 			myName = me.getName();
-		}
-		catch (URISyntaxException e) {
+		} catch (URISyntaxException e) {
 			myName = "Jawk.jar";
 		}
 		JAR_NAME = myName;
@@ -121,7 +120,6 @@ public class AwkParameters {
 	 *   set in the command line arguments
 	 */
 	public static AwkSettings parseCommandLineArguments(String[] args) {
-
 		AwkSettings settings = new AwkSettings();
 
 		int argIdx = 0;
@@ -195,10 +193,7 @@ public class AwkParameters {
 					throw new IllegalArgumentException("Awk script not provided.");
 				}
 				String scriptContent = args[argIdx++];
-				settings.addScriptSource(new ScriptSource(
-						ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
-						new StringReader(scriptContent),
-						false));
+				settings.addScriptSource(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, new StringReader(scriptContent), false));
 			} else {
 				// XXX Maybe we should delay that to a later stage? The only difference would be, that errors (for example: File not found, or unable to read) would occure later
 				// initialize the Readers or InputStreams
@@ -236,21 +231,24 @@ public class AwkParameters {
 		//String cls = Awk.class.getName();
 		dest.println("Usage:");
 		dest.println(
-				"java -jar " + JAR_NAME + " [-F fs_val]"
-				+ " [-f script-filename]"
-				+ " [-o output-filename]"
-				+ " [-c]"
-				+ " [-S]"
-				+ " [-s]"
-				+ " [-x]"
-				+ " [-y]"
-				+ " [-r]"
-				+ " [--locale locale]"
-				+ " [-ext]"
-				+ " [-t]"
-				+ " [-v name=val]..."
-				+ " [script]"
-				+ " [name=val | input_filename]...");
+			"java -jar " +
+			JAR_NAME +
+			" [-F fs_val]" +
+			" [-f script-filename]" +
+			" [-o output-filename]" +
+			" [-c]" +
+			" [-S]" +
+			" [-s]" +
+			" [-x]" +
+			" [-y]" +
+			" [-r]" +
+			" [--locale locale]" +
+			" [-ext]" +
+			" [-t]" +
+			" [-v name=val]..." +
+			" [script]" +
+			" [name=val | input_filename]..."
+		);
 		dest.println();
 		dest.println(" -F fs_val = Use fs_val for FS.");
 		dest.println(" -f filename = Use contents of filename for script.");

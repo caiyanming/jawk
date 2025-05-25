@@ -68,7 +68,6 @@ import org.metricshub.jawk.util.AwkSettings;
  * @author Danny Daglas
  */
 public interface JawkExtension {
-
 	/**
 	 * Called after the creation and before normal processing of the
 	 * extension, pass in the Jawk Runtime Manager

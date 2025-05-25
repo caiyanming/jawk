@@ -48,7 +48,6 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import org.metricshub.jawk.intermediate.UninitializedObject;
 import org.metricshub.jawk.util.AwkLogger;
 import org.slf4j.Logger;
@@ -93,7 +92,7 @@ public class JRT {
 
 	private static final Logger LOG = AwkLogger.getLogger(JRT.class);
 
-       private static final boolean IS_WINDOWS = System.getProperty("os.name").indexOf("Windows") >= 0;
+	private static final boolean IS_WINDOWS = System.getProperty("os.name").indexOf("Windows") >= 0;
 
 	private VariableManager vm;
 
@@ -170,7 +169,6 @@ public class JRT {
 	 * @param locale a {@link java.util.Locale} object
 	 */
 	public static String toAwkString(Object o, String convfmt, Locale locale) {
-
 		if (o instanceof Number) {
 			// It is a number, some processing is required here
 			double d = ((Number) o).doubleValue();
@@ -216,16 +214,15 @@ public class JRT {
 	 * @param locale a {@link java.util.Locale} object
 	 */
 	public static String toAwkStringForOutput(Object o, String ofmt, Locale locale) {
-
 		// Even if specified Object o is not officially a number, we try to convert
 		// it to a Double. Because if it's a literal representation of a number,
 		// we will need to display it as a number ("12.00" --> 12)
 		if (!(o instanceof Number)) {
-                       try {
-                               o = Double.parseDouble(o.toString());
-                       } catch (NumberFormatException e) {
-                               LOG.debug("Failed to parse number", e);
-                       }
+			try {
+				o = Double.parseDouble(o.toString());
+			} catch (NumberFormatException e) {
+				LOG.debug("Failed to parse number", e);
+			}
 		}
 
 		return toAwkString(o, ofmt, locale);
@@ -239,7 +236,6 @@ public class JRT {
 	 * @return the "double" value of o, or 0 if invalid
 	 */
 	public static double toDouble(final Object o) {
-
 		if (o == null) {
 			return 0;
 		}
@@ -249,7 +245,7 @@ public class JRT {
 		}
 
 		if (o instanceof Character) {
-			return (double)((Character)o).charValue();
+			return (double) ((Character) o).charValue();
 		}
 
 		// Try to convert the string to a number.
@@ -285,17 +281,16 @@ public class JRT {
 	 * @return the "long" value of o, or 0 if invalid
 	 */
 	public static long toLong(final Object o) {
-
 		if (o == null) {
 			return 0;
 		}
 
 		if (o instanceof Number) {
-			return ((Number)o).longValue();
+			return ((Number) o).longValue();
 		}
 
 		if (o instanceof Character) {
-			return (long)((Character)o).charValue();
+			return (long) ((Character) o).charValue();
 		}
 
 		// Try to convert the string to a number.
@@ -317,7 +312,6 @@ public class JRT {
 			} catch (NumberFormatException nfe) {
 				length--;
 			}
-
 		}
 		// Failed (not even with one char)
 		return 0;
@@ -338,24 +332,20 @@ public class JRT {
 	 * @return a boolean
 	 */
 	public static boolean compare2(Object o1, Object o2, int mode) {
-
 		// Pre-compute String representations of o1 and o2
 		String o1String = o1.toString();
 		String o2String = o2.toString();
 
 		// Special case of Uninitialized objects
 		if (o1 instanceof UninitializedObject) {
-			if (o2 instanceof UninitializedObject ||
-					"".equals(o2String) ||
-					"0".equals(o2String)) {
+			if (o2 instanceof UninitializedObject || "".equals(o2String) || "0".equals(o2String)) {
 				return mode == 0;
 			} else {
 				return mode < 0;
 			}
 		}
 		if (o2 instanceof UninitializedObject) {
-			if ("".equals(o1String) ||
-					"0".equals(o1String)) {
+			if ("".equals(o1String) || "0".equals(o1String)) {
 				return mode == 0;
 			} else {
 				return mode > 0;
@@ -365,34 +355,33 @@ public class JRT {
 		if (!(o1 instanceof Number) && !o1String.isEmpty()) {
 			char o1FirstChar = o1String.charAt(0);
 			if (o1FirstChar >= '0' && o1FirstChar <= '9') {
-                               try {
-                                       o1 = Double.parseDouble(o1String);
-                               } catch (NumberFormatException nfe) {
-                                       LOG.debug("Invalid number", nfe);
-                               }
+				try {
+					o1 = Double.parseDouble(o1String);
+				} catch (NumberFormatException nfe) {
+					LOG.debug("Invalid number", nfe);
+				}
 			}
 		}
 		if (!(o2 instanceof Number) && !o2String.isEmpty()) {
 			char o2FirstChar = o2String.charAt(0);
 			if (o2FirstChar >= '0' && o2FirstChar <= '9') {
-                               try {
-                                       o2 = Double.parseDouble(o2String);
-                               } catch (NumberFormatException nfe) {
-                                       LOG.debug("Invalid number", nfe);
-                               }
+				try {
+					o2 = Double.parseDouble(o2String);
+				} catch (NumberFormatException nfe) {
+					LOG.debug("Invalid number", nfe);
+				}
 			}
 		}
 
 		if ((o1 instanceof Number) && (o2 instanceof Number)) {
-                       if (mode < 0) {
-                               return ((Number) o1).doubleValue() < ((Number) o2).doubleValue();
-                       } else if (mode == 0) {
-                               return ((Number) o1).doubleValue() == ((Number) o2).doubleValue();
-                       } else {
-                               return ((Number) o1).doubleValue() > ((Number) o2).doubleValue();
-                       }
+			if (mode < 0) {
+				return ((Number) o1).doubleValue() < ((Number) o2).doubleValue();
+			} else if (mode == 0) {
+				return ((Number) o1).doubleValue() == ((Number) o2).doubleValue();
+			} else {
+				return ((Number) o1).doubleValue() > ((Number) o2).doubleValue();
+			}
 		} else {
-
 			// string equality usually occurs more often than natural ordering comparison
 			if (mode == 0) {
 				return o1String.equals(o2String);
@@ -418,8 +407,8 @@ public class JRT {
 	 *   is an integer, an Integer object is returned.
 	 *   Otherwise, a Double object is returned.
 	 */
-       public static Object inc(Object o) {
-               assert o != null;
+	public static Object inc(Object o) {
+		assert o != null;
 		double ans;
 		if (o instanceof Number) {
 			ans = ((Number) o).doubleValue() + 1;
@@ -489,11 +478,11 @@ public class JRT {
 	public final boolean toBoolean(Object o) {
 		boolean val;
 		if (o instanceof Integer) {
-			val = ((Integer)o).intValue() != 0;
+			val = ((Integer) o).intValue() != 0;
 		} else if (o instanceof Long) {
-			val = ((Long)o).longValue() != 0;
+			val = ((Long) o).longValue() != 0;
 		} else if (o instanceof Double) {
-			val = ((Double)o).doubleValue() != 0;
+			val = ((Double) o).doubleValue() != 0;
 		} else if (o instanceof String) {
 			val = (o.toString().length() > 0);
 		} else if (o instanceof UninitializedObject) {
@@ -525,6 +514,7 @@ public class JRT {
 	public static int split(Object array, Object string, String convfmt, Locale locale) {
 		return splitWorker(new StringTokenizer(toAwkString(string, convfmt, locale)), (AssocArray) array);
 	}
+
 	/**
 	 * Splits the string into parts separated the regular expression fs.
 	 * This conforms to the 3-argument version of AWK's split function.
@@ -639,7 +629,7 @@ public class JRT {
 				if (partitioningReader == null) {
 					int argc = (int) toDouble(vm.getARGC()); // (vm.getVariable("argc_field", true));
 					Object o = BLANK;
-					while(arglist_idx <= argc) {
+					while (arglist_idx <= argc) {
 						o = arglist_aa.get(arglist_idx);
 						++arglist_idx;
 						if (!(o instanceof UninitializedObject || o.toString().isEmpty())) {
@@ -672,7 +662,7 @@ public class JRT {
 					if (has_filenames) {
 						int argc = (int) toDouble(vm.getARGC());
 						Object o = BLANK;
-						while(arglist_idx <= argc) {
+						while (arglist_idx <= argc) {
 							o = arglist_aa.get(arglist_idx);
 							++arglist_idx;
 							if (!(o instanceof UninitializedObject || o.toString().isEmpty())) {
@@ -699,7 +689,6 @@ public class JRT {
 					}
 				}
 
-
 				// when active_input == false, usually means
 				// to instantiate "pr" (PartitioningReader for $0, etc)
 				// for Jawk extensions
@@ -710,10 +699,10 @@ public class JRT {
 				if (inputLine == null) {
 					continue;
 				} else {
-                                       if (!for_getline) {
-                                               // For getline the caller will re-acquire $0; otherwise parse fields
-                                               jrtParseFields();
-                                       }
+					if (!for_getline) {
+						// For getline the caller will re-acquire $0; otherwise parse fields
+						jrtParseFields();
+					}
 					vm.incNR();
 					if (partitioningReader.fromFilenameList()) {
 						vm.incFNR();
@@ -934,7 +923,7 @@ public class JRT {
 		PrintStream ps = outputFiles.get(filename);
 		if (ps == null) {
 			try {
-				outputFiles.put(filename, ps = new PrintStream(new FileOutputStream(filename, append), true));	// true = autoflush
+				outputFiles.put(filename, ps = new PrintStream(new FileOutputStream(filename, append), true)); // true = autoflush
 			} catch (IOException ioe) {
 				throw new AwkRuntimeException("Cannot open " + filename + " for writing: " + ioe);
 			}
@@ -974,7 +963,6 @@ public class JRT {
 	}
 
 	private static Process spawnProcess(String cmd) throws IOException {
-
 		Process p;
 
 		if (IS_WINDOWS) {
@@ -1051,7 +1039,7 @@ public class JRT {
 				throw new AwkRuntimeException("Can't spawn " + cmd + ": " + ioe);
 			}
 			output_processes.put(cmd, p);
-			output_streams.put(cmd, ps = new PrintStream(p.getOutputStream(), true));	// true = auto-flush
+			output_streams.put(cmd, ps = new PrintStream(p.getOutputStream(), true)); // true = auto-flush
 		}
 		return ps;
 	}
@@ -1216,9 +1204,7 @@ public class JRT {
 	 * @return a {@link java.lang.String} object
 	 * @throws java.util.IllegalFormatException if any.
 	 */
-	public static String sprintfNoCatch(Locale locale, String fmt_arg, Object... arr)
-			throws IllegalFormatException
-	{
+	public static String sprintfNoCatch(Locale locale, String fmt_arg, Object... arr) throws IllegalFormatException {
 		return String.format(locale, fmt_arg, arr);
 	}
 
@@ -1258,24 +1244,18 @@ public class JRT {
 	 * @return a string that can be used in Java's Matcher.appendReplacement()
 	 */
 	public static String prepareReplacement(String awkRepl) {
-
 		// Null
 		if (awkRepl == null) {
 			return "";
 		}
-		
+
 		// Simple case
-		if (
-			(awkRepl.indexOf('\\') == -1) && 
-			(awkRepl.indexOf('$') == -1) &&
-			(awkRepl.indexOf('&') == -1)
-		) {
+		if ((awkRepl.indexOf('\\') == -1) && (awkRepl.indexOf('$') == -1) && (awkRepl.indexOf('&') == -1)) {
 			return awkRepl;
 		}
-		
+
 		StringBuilder javaRepl = new StringBuilder();
 		for (int i = 0; i < awkRepl.length(); i++) {
-			
 			char c = awkRepl.charAt(i);
 
 			// Backslash
@@ -1289,7 +1269,7 @@ public class JRT {
 					javaRepl.append("\\\\");
 					continue;
 				}
-				
+
 				// For everything else, append the backslash and continue with the logic
 				javaRepl.append('\\');
 			}
@@ -1302,10 +1282,10 @@ public class JRT {
 				javaRepl.append(c);
 			}
 		}
-		
+
 		return javaRepl.toString();
 	}
-	
+
 	/**
 	 * <p>replaceFirst.</p>
 	 *
@@ -1321,7 +1301,7 @@ public class JRT {
 
 		// Reset provided StringBuffer
 		sb.setLength(0);
-		
+
 		Pattern p = Pattern.compile(ere);
 		Matcher m = p.matcher(orig_value);
 		int cnt = 0;
@@ -1342,10 +1322,9 @@ public class JRT {
 	 * @return the number of replacements performed
 	 */
 	public static Integer replaceAll(String orig_value, String repl, String ere, StringBuffer sb) {
-		
 		// Reset the provided StringBuffer
 		sb.setLength(0);
-		
+
 		// remove special meaning for backslash and dollar signs and handle '&'
 		repl = prepareReplacement(repl);
 
@@ -1412,8 +1391,8 @@ public class JRT {
 	 * @return a int
 	 */
 	public static int timeSeed() {
-               long l = new Date().getTime();
-               long l2 = l % (1000 * 60 * 60 * 24);
+		long l = new Date().getTime();
+		long l2 = l % (1000 * 60 * 60 * 24);
 		int seed = (int) l2;
 		return seed;
 	}
@@ -1434,8 +1413,8 @@ public class JRT {
 	 * @param rs_obj a {@link java.lang.Object} object
 	 */
 	public void applyRS(Object rs_obj) {
-//	if (rs_obj.toString().equals(BLANK))
-//		rs_obj = DEFAULT_RS_REGEX;
+		//	if (rs_obj.toString().equals(BLANK))
+		//		rs_obj = DEFAULT_RS_REGEX;
 		if (partitioningReader != null) {
 			partitioningReader.setRecordSeparator(rs_obj.toString());
 		}

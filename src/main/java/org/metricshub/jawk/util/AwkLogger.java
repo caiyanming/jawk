@@ -30,11 +30,10 @@ import org.slf4j.LoggerFactory;
  * like logging its own initialization, which we don't want in most cases.
  */
 public class AwkLogger {
-
 	static {
 		System.setProperty("slf4j.internal.verbosity", "WARN");
 	}
-	
+
 	/**
 	 * @param clazz Class for which the logger will be used
 	 * @return an SLF4J Logger instance

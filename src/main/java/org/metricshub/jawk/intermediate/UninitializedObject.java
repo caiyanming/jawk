@@ -32,8 +32,7 @@ public class UninitializedObject {
 	/**
 	 * <p>Constructor for UninitializedObject.</p>
 	 */
-	public UninitializedObject() {
-	}
+	public UninitializedObject() {}
 
 	/**
 	 * <p>toString.</p>
@@ -43,5 +42,4 @@ public class UninitializedObject {
 	public String toString() {
 		return "";
 	}
-
 }

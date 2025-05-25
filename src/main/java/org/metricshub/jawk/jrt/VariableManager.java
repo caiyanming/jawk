@@ -38,7 +38,6 @@ package org.metricshub.jawk.jrt;
  * @author Danny Daglas
  */
 public interface VariableManager {
-
 	/**
 	 * <p>getARGC.</p>
 	 *
@@ -62,7 +61,7 @@ public interface VariableManager {
 
 	/**
 	 * <p>getFS.</p>
-	 * 
+	 *
 	 * @return the contents of the FS variable.
 	 */
 	Object getFS();
@@ -134,5 +133,4 @@ public interface VariableManager {
 	 * @param value The new contents of the variable.
 	 */
 	void assignVariable(String name, Object value);
-
 }

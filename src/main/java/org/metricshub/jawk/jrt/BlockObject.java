@@ -79,7 +79,6 @@ public abstract class BlockObject {
 	 */
 	public abstract void block() throws InterruptedException;
 
-
 	/**
 	 * Eliminate the rest of the BlockObject chain.
 	 */

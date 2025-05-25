@@ -38,7 +38,7 @@ public class AwkParserTest {
 		assertThrows("Interrupted octal number in string by EOL must throw", AwkParser.LexerException.class, () -> evalAwk("\"unfinished\\0\n\""));
 		assertThrows("Interrupted hex number in string by EOF must throw", AwkParser.LexerException.class, () -> runAwk("BEGIN { printf \"unfinished\\xF", null));
 		assertThrows("Interrupted hex number in string by EOL must throw", AwkParser.LexerException.class, () -> evalAwk("\"unfinished\\xf\n\""));
-}
+	}
 
 	@Test
 	public void testMultiLineStatement() throws Exception {
@@ -58,7 +58,11 @@ public class AwkParserTest {
 
 	@Test
 	public void testTernaryExpression() throws Exception {
-		assertEquals("Ternary expression must allow string concatenations", "success", runAwk("BEGIN { printf( a \"1\" b ? \"suc\" \"cess\" : \"failure\" ) }", null));
+		assertEquals(
+			"Ternary expression must allow string concatenations",
+			"success",
+			runAwk("BEGIN { printf( a \"1\" b ? \"suc\" \"cess\" : \"failure\" ) }", null)
+		);
 	}
 
 	@Test
@@ -73,7 +77,7 @@ public class AwkParserTest {
 		assertEquals("^ (pow) operator must be supported", "256", evalAwk("2^8 "));
 		assertEquals("** (pow) operator must be supported", "256", evalAwk("2**8 "));
 	}
-	
+
 	@Test
 	public void testOperatorPrecedence() throws Exception {
 		assertEquals("$a precedes a++", "1122", runAwk("{ a = 1; printf $a++ ; printf a ; printf $(a++) ; printf a }", "1 2 3"));
@@ -87,7 +91,7 @@ public class AwkParserTest {
 		assertEquals("* precedes +", "5", evalAwk("1 + 2 * 2"));
 		assertEquals("+ precedes string concat", "33", evalAwk("1 + 2 3"));
 	}
-	
+
 	@Test
 	public void testRegExpConstant() throws Exception {
 		assertEquals("/\\\\/ must be supported", "success", runAwk("/\\\\/ { printf \"success\" }", "a\\b"));
