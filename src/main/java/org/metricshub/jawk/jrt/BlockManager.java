@@ -143,7 +143,7 @@ public class BlockManager {
 					BlockManager.this.notify();
 				}
                         } catch (InterruptedException ie) {
-                                Thread.currentThread().interrupt();
+                                currentThread().interrupt();
                         } catch (RuntimeException re) {
 				LOG.error("exitting", re);
 				System.exit(1);
