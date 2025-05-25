@@ -87,12 +87,12 @@ public class DataPump implements Runnable {
 				os.write(b, 0, len);
 			}
 		} catch (IOException ioe) {
-			LOG.error("", ioe);
+			LOG.debug("Error pumping data from InputStream to OutputStream", ioe);
 		}
 		try {
 			is.close();
 		} catch (IOException ioe) {
-			LOG.error("", ioe);
+			LOG.debug("Couldn't close InputStream", ioe);
 		}
 	}
 }
