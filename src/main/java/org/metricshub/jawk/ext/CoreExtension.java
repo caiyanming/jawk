@@ -308,28 +308,28 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 	/** {@inheritDoc} */
 	@Override
 	public Object invoke(String keyword, Object[] args) {
-		if        (keyword.equals("Map") || keyword.equals("HashMap")) {
-			return map(args, getVm(), AssocArray.MT_HASH);
-		} else if (keyword.equals("LinkedMap")) {
-			return map(args, getVm(), AssocArray.MT_LINKED);
-		} else if (keyword.equals("TreeMap")) {
-			return map(args, getVm(), AssocArray.MT_TREE);
-		} else if (keyword.equals("MapUnion")) {
-			return mapUnion(args, getVm(), AssocArray.MT_LINKED);
+if        (keyword.equals("Map") || keyword.equals("HashMap")) {
+return map(args, AssocArray.MT_HASH);
+} else if (keyword.equals("LinkedMap")) {
+return map(args, AssocArray.MT_LINKED);
+} else if (keyword.equals("TreeMap")) {
+return map(args, AssocArray.MT_TREE);
+} else if (keyword.equals("MapUnion")) {
+return mapUnion(args, AssocArray.MT_LINKED);
 		} else if (keyword.equals("MapCopy")) {
 			checkNumArgs(args, 2);
 			return mapCopy(args);
 		} else if (keyword.equals("Array")) {
 			return array(args, getVm());
 		} else if (keyword.equals("TypeOf")) {
-			checkNumArgs(args, 1);
-			return typeOf(args[0], getVm());
+checkNumArgs(args, 1);
+return typeOf(args[0]);
 		} else if (keyword.equals("String")) {
-			checkNumArgs(args, 1);
-			return toString(args[0], getVm());
+checkNumArgs(args, 1);
+return toString(args[0]);
 		} else if (keyword.equals("Double")) {
-			checkNumArgs(args, 1);
-			return toDouble(args[0], getVm());
+checkNumArgs(args, 1);
+return toDouble(args[0]);
 		} else if (keyword.equals("Halt")) {
 			if (args.length == 0) {
 				Runtime.getRuntime().halt(0);
@@ -347,22 +347,22 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 				throw new IllegalAwkArgumentException(keyword + " requires 1 or 3 arguments, not " + args.length);
 			}
 		} else if (keyword.equals("Dereference") || keyword.equals("DeRef")) {
-			if (args.length == 1) {
-				return resolve(dereference(args[0], getVm()), getVm());
-			} else if (args.length == 2) {
-				return resolve(dereference(toAwkString(args[0]), args[1], getVm()), getVm());
+if (args.length == 1) {
+return resolve(dereference(args[0]));
+} else if (args.length == 2) {
+return resolve(dereference(toAwkString(args[0]), args[1]));
 			} else {
 				throw new IllegalAwkArgumentException(keyword + " requires 1 or 2 arguments, not " + args.length);
 			}
 		} else if (keyword.equals("Unreference") || keyword.equals("UnRef")) {
-			checkNumArgs(args, 1);
-			return unreference(args[0], getVm());
+checkNumArgs(args, 1);
+return unreference(args[0]);
 		} else if (keyword.equals("InRef")) {
-			checkNumArgs(args, 1);
-			return inref(args[0], getVm());
+checkNumArgs(args, 1);
+return inref(args[0]);
 		} else if (keyword.equals("IsInRef")) {
-			checkNumArgs(args, 2);
-			return isInRef(args[0], args[1], getVm());
+checkNumArgs(args, 2);
+return isInRef(args[0], args[1]);
 		} else if (keyword.equals("DumpRefs")) {
 			checkNumArgs(args, 0);
 			dumpRefs();
@@ -392,7 +392,7 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 		return null;
 	}
 
-	private Object resolve(Object arg, VariableManager vm) {
+private Object resolve(Object arg) {
 
 		Object obj = arg;
 		while (true) {
@@ -443,7 +443,7 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 	}
 
 	// this version assigns an object to a reference
-	private Object dereference(Object arg, VariableManager vm) {
+	private Object dereference(Object arg) {
 		// return the reference if the arg is a reference key
 		if (arg instanceof AssocArray) {
 			throw new IllegalAwkArgumentException("an assoc array cannot be a reference handle");
@@ -464,7 +464,7 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 
 	// this version assumes an assoc array is stored as a reference,
 	// and to retrieve the stored value
-	static Object dereference(String refstring, Object key, VariableManager vm) {
+	static Object dereference(String refstring, Object key) {
 		AssocArray aa = (AssocArray) instance.referenceMap.get(refstring);
 		if (aa == null) {
 			throw new IllegalAwkArgumentException("AssocArray reference doesn't exist.");
@@ -480,7 +480,7 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 		return aa.get(key);
 	}
 
-	static int unreference(Object arg, VariableManager vm) {
+	static int unreference(Object arg) {
 		String argCheck = instance.toAwkString(arg);
 		if (instance.referenceMap.get(argCheck) == null) {
 			throw new IllegalAwkArgumentException("Not a reference : " + argCheck);
@@ -491,7 +491,7 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 		return 1;
 	}
 
-	private Object inref(Object arg, VariableManager vm) {
+	private Object inref(Object arg) {
 		if (arg instanceof AssocArray) {
 			throw new IllegalAwkArgumentException("InRef requires a Reference (string) argument, not an assoc array");
 		}
@@ -547,7 +547,7 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 		}
 	}
 
-	private int isInRef(Object ref, Object key, VariableManager vm) {
+	private int isInRef(Object ref, Object key) {
 		if (ref instanceof AssocArray) {
 			throw new IllegalAwkArgumentException("Expecting a reference string for the 1st argument, not an assoc array.");
 		}
@@ -574,7 +574,7 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 		}
 	}
 
-	static String typeOf(Object arg, VariableManager vm) {
+	static String typeOf(Object arg) {
 		if        (arg instanceof AssocArray) {
 			return "AssocArray";
 		} else if (arg instanceof Integer) {
@@ -603,19 +603,19 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 		return aa.get(0);
 	}
 
-	private Object map(Object[] args, VariableManager vm, int mapType) {
+	private Object map(Object[] args, int mapType) {
 		if (args.length % 2 == 0) {
-			return subMap(args, vm, mapType);
+			return subMap(args, mapType);
 		} else {
-			return topLevelMap(args, vm, mapType, false);	// false = map assignment
+			return topLevelMap(args, mapType, false);	// false = map assignment
 		}
 	}
 
-	private Object mapUnion(Object[] args, VariableManager vm, int mapType) {
-		return topLevelMap(args, vm, mapType, true);	// true = map union
+	private Object mapUnion(Object[] args, int mapType) {
+		return topLevelMap(args, mapType, true);	// true = map union
 	}
 
-	private int topLevelMap(Object[] args, VariableManager vm, int mapType, boolean mapUnion) {
+	private int topLevelMap(Object[] args, int mapType, boolean mapUnion) {
 		AssocArray aa = (AssocArray) args[0];
 		if (!mapUnion) {
 			aa.clear();
@@ -637,7 +637,7 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 		return cnt;
 	}
 
-	private AssocArray subMap(Object[] args, VariableManager vm, int mapType) {
+	private AssocArray subMap(Object[] args, int mapType) {
 		AssocArray aa = new AssocArray(false);
 		aa.useMapType(mapType);
 		for (int i = 0; i < args.length; i += 2) {
@@ -710,7 +710,7 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 		return cnt;
 	}
 
-	private Object toDouble(Object arg, VariableManager vm) {
+	private Object toDouble(Object arg) {
 		if (arg instanceof AssocArray) {
 			throw new IllegalArgumentException("Cannot deduce double value from an associative array.");
 		}
@@ -729,7 +729,7 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 		}
 	}
 
-	private static String toString(Object arg, VariableManager vm) {
+	private static String toString(Object arg) {
 		if (arg instanceof AssocArray) {
 			return ((AssocArray) arg).mapString();
 		} else {
