@@ -128,6 +128,8 @@
 					</execution>
 				</executions>
 				<configuration>
+					<nodePath>${nodePath}</nodePath>
+					<npmPath>${npmPath}</npmPath>
 					<prettierJavaVersion>2.5.0</prettierJavaVersion>
 					<ignoreConfigFile>false</ignoreConfigFile>
 					<ignoreEditorConfig>false</ignoreEditorConfig>
