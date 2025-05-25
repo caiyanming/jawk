@@ -418,8 +418,8 @@ public class JRT {
 	 *   is an integer, an Integer object is returned.
 	 *   Otherwise, a Double object is returned.
 	 */
-	public static Object inc(Object o) {
-		assert (o != null);
+       public static Object inc(Object o) {
+               assert o != null;
 		double ans;
 		if (o instanceof Number) {
 			ans = ((Number) o).doubleValue() + 1;
@@ -710,15 +710,10 @@ public class JRT {
 				if (inputLine == null) {
 					continue;
 				} else {
-					if (for_getline) {
-						// TRUE
-						// leave result on the stack
-						// DO NOTHING! The callee will re-acquire $0
-					} else {
-						// FALSE
-						// leave the stack alone ...
-						jrtParseFields();
-					}
+                                       if (!for_getline) {
+                                               // For getline the caller will re-acquire $0; otherwise parse fields
+                                               jrtParseFields();
+                                       }
 					vm.incNR();
 					if (partitioningReader.fromFilenameList()) {
 						vm.incFNR();
@@ -1417,8 +1412,8 @@ public class JRT {
 	 * @return a int
 	 */
 	public static int timeSeed() {
-		long l = (new Date()).getTime();
-		long l2 = (l % (1000 * 60 * 60 * 24));
+               long l = new Date().getTime();
+               long l2 = l % (1000 * 60 * 60 * 24);
 		int seed = (int) l2;
 		return seed;
 	}
