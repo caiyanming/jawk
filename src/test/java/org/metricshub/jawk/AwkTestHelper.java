@@ -15,7 +15,6 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import org.metricshub.jawk.util.AwkSettings;
 import org.metricshub.jawk.util.ScriptFileSource;
 import org.metricshub.jawk.util.ScriptSource;
@@ -24,6 +23,7 @@ public class AwkTestHelper {
 
 	/** Temporary directory where to store temporary stuff */
 	private static String tempDirectory;
+
 	static {
 		Path tempDirectoryPath;
 		try {
@@ -34,6 +34,7 @@ public class AwkTestHelper {
 			e.printStackTrace();
 		}
 	}
+
 	/**
 	 * @return the path to a temp directory (as a String)
 	 */
@@ -49,12 +50,12 @@ public class AwkTestHelper {
 	 * @return the printed output of the script as a String
 	 * @throws ExitException when the AWK script forces its exit with a specified code
 	 * @throws IOException on I/O problems
-	 * @throws ClassNotFoundException 
+	 * @throws ClassNotFoundException
 	 */
 	static String runAwk(File scriptFile, File inputFile) throws IOException, ExitException, ClassNotFoundException {
 		return runAwk(scriptFile, Collections.singletonList(inputFile));
 	}
-	
+
 	/**
 	 * Executes the specified AWK script
 	 * <p>
@@ -63,7 +64,7 @@ public class AwkTestHelper {
 	 * @return the printed output of the script as a String
 	 * @throws ExitException when the AWK script forces its exit with a specified code
 	 * @throws IOException on I/O problems
-	 * @throws ClassNotFoundException 
+	 * @throws ClassNotFoundException
 	 */
 	static String runAwk(File scriptFile, List<File> inputFileList) throws IOException, ExitException, ClassNotFoundException {
 		return runAwk(scriptFile, inputFileList, false);
@@ -78,19 +79,18 @@ public class AwkTestHelper {
 	 * @return the printed output of the script as a String
 	 * @throws ExitException when the AWK script forces its exit with a specified code
 	 * @throws IOException on I/O problems
-	 * @throws ClassNotFoundException 
+	 * @throws ClassNotFoundException
 	 */
 	static String runAwk(File scriptFile, List<File> inputFileList, boolean setTempDir) throws IOException, ExitException, ClassNotFoundException {
-		
 		AwkSettings settings = new AwkSettings();
-		
+
 		// Default record separator should support both CRLF and LF
 		settings.setDefaultRS("\r?\n");
 		settings.setDefaultORS("\n");
-		
+
 		// Set the input files
 		settings.getNameValueOrFileNames().addAll(inputFileList.stream().map(File::getAbsolutePath).collect(Collectors.toList()));
-		
+
 		// Set TEMPDIR so the AWK scripts can "play" with it
 		if (setTempDir) {
 			settings.getVariables().put("TEMPDIR", tempDirectory);
@@ -99,10 +99,10 @@ public class AwkTestHelper {
 		// Create the OutputStream, to collect the result as a String
 		ByteArrayOutputStream resultBytesStream = new ByteArrayOutputStream();
 		settings.setOutputStream(new PrintStream(resultBytesStream));
-		
+
 		// Sets the AWK script to execute
 		settings.addScriptSource(new ScriptFileSource(scriptFile.getAbsolutePath()));
-		
+
 		// Execute the awk script against the specified input
 		Awk awk = new Awk();
 		try {
@@ -112,11 +112,10 @@ public class AwkTestHelper {
 				throw e;
 			}
 		}
-		
+
 		// Return the result as a string
 		return resultBytesStream.toString("UTF-8");
 	}
-	
 
 	/**
 	 * Executes the specified script against the specified input
@@ -126,12 +125,12 @@ public class AwkTestHelper {
 	 * @return result as a String
 	 * @throws ExitException when the AWK script forces its exit with a specified code
 	 * @throws IOException on I/O problems
-	 * @throws ClassNotFoundException 
+	 * @throws ClassNotFoundException
 	 */
 	static String runAwk(String script, String input) throws IOException, ExitException, ClassNotFoundException {
 		return runAwk(script, input, false);
 	}
-	
+
 	/**
 	 * Executes the specified script against the specified input
 	 * <p>
@@ -141,26 +140,25 @@ public class AwkTestHelper {
 	 * @return result as a String
 	 * @throws ExitException when the AWK script forces its exit with a specified code
 	 * @throws IOException on I/O problems
-	 * @throws ClassNotFoundException 
+	 * @throws ClassNotFoundException
 	 */
 	static String runAwk(String script, String input, boolean setTempDir) throws IOException, ExitException, ClassNotFoundException {
-		
 		AwkSettings settings = new AwkSettings();
-		
+
 		// Set the input
 		if (input != null) {
 			settings.setInput(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
 		}
-		
+
 		// We force \n as the Record Separator (RS) because even if running on Windows
 		// we're passing Java strings, where end of lines are simple \n
 		settings.setDefaultRS("\n");
 		settings.setDefaultORS("\n");
-		
+
 		// Create the OutputStream, to collect the result as a String
 		ByteArrayOutputStream resultBytesStream = new ByteArrayOutputStream();
 		settings.setOutputStream(new PrintStream(resultBytesStream));
-		
+
 		// Set TEMPDIR so the AWK scripts can "play" with it
 		if (setTempDir) {
 			settings.getVariables().put("TEMPDIR", tempDirectory);
@@ -168,7 +166,7 @@ public class AwkTestHelper {
 
 		// Sets the AWK script to execute
 		settings.addScriptSource(new ScriptSource("Body", new StringReader(script), false));
-		
+
 		// Execute the awk script against the specified input
 		Awk awk = new Awk();
 		try {
@@ -178,10 +176,9 @@ public class AwkTestHelper {
 				throw e;
 			}
 		}
-		
+
 		// Return the result as a string
 		return resultBytesStream.toString("UTF-8");
-
 	}
 
 	/**
@@ -191,58 +188,49 @@ public class AwkTestHelper {
 	 * @return result as a String
 	 * @throws ExitException when the AWK script forces its exit with a specified code
 	 * @throws IOException on I/O problems
-	 * @throws ClassNotFoundException 
+	 * @throws ClassNotFoundException
 	 */
 	static String evalAwk(String expression) throws IOException, ExitException, ClassNotFoundException {
 		return runAwk("BEGIN { printf " + expression + "}", null);
 	}
-
 
 	/**
 	 * Reads the specified file and returns its content as a String
 	 *
 	 * @param textFile File reference to read
 	 * @return The content of the resource file as a String
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	static String readTextFile(File textFile) throws IOException {
-	
 		StringBuilder builder = new StringBuilder();
-	
+
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(textFile)))) {
 			String l;
 			while ((l = reader.readLine()) != null) {
 				builder.append(l).append('\n');
 			}
-			
 		}
-	
+
 		return builder.toString();
 	}
-	
+
 	/**
 	 * Reads the specified resource file and returns its content as a String
 	 *
 	 * @param path Path to the file
 	 * @return The content of the resource file as a String
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	static String readResource(String path) throws IOException {
-	
 		StringBuilder builder = new StringBuilder();
-	
-		try (BufferedReader reader = new BufferedReader(
-				new InputStreamReader(AwkTestHelper.class.getResourceAsStream(path))
-				)) {
+
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(AwkTestHelper.class.getResourceAsStream(path)))) {
 			String l;
 			while ((l = reader.readLine()) != null) {
 				builder.append(l).append('\n');
 			}
-			
 		}
-	
+
 		return builder.toString();
 	}
-	
-
 }

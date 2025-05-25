@@ -28,7 +28,6 @@ package org.metricshub.jawk.intermediate;
  * @author Danny Daglas
  */
 public interface Position {
-
 	/**
 	 * <p>isEOF.</p>
 	 *

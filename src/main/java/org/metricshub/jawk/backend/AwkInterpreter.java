@@ -23,7 +23,6 @@ package org.metricshub.jawk.backend;
  */
 
 import java.io.IOException;
-
 import org.metricshub.jawk.ExitException;
 import org.metricshub.jawk.intermediate.AwkTuples;
 
@@ -33,7 +32,6 @@ import org.metricshub.jawk.intermediate.AwkTuples;
  * @author Danny Daglas
  */
 public interface AwkInterpreter {
-
 	/**
 	 * Traverse the tuples, interpreting tuple opcodes and arguments
 	 * and acting on them accordingly.

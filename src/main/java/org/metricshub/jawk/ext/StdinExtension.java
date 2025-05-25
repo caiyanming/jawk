@@ -1,4 +1,3 @@
-
 package org.metricshub.jawk.ext;
 
 /*-
@@ -28,7 +27,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
 import org.metricshub.jawk.NotImplementedError;
 import org.metricshub.jawk.jrt.BlockObject;
 import org.metricshub.jawk.jrt.JRT;
@@ -107,16 +105,13 @@ public class StdinExtension extends AbstractExtension implements JawkExtension {
 	private final BlockingQueue<Object> getLineInput = new LinkedBlockingQueue<Object>();
 
 	private final BlockObject blocker = new BlockObject() {
-
 		@Override
 		public String getNotifierTag() {
 			return "Stdin";
 		}
 
-               @Override
-               public void block()
-				throws InterruptedException
-		{
+		@Override
+		public void block() throws InterruptedException {
 			synchronized (blocker) {
 				if (stdInHasInput() == 0) {
 					blocker.wait();
@@ -133,11 +128,10 @@ public class StdinExtension extends AbstractExtension implements JawkExtension {
 		super.init(vm, jrt, settings);
 
 		Thread getLineInputThread = new Thread("getLineInputThread") {
-                       @Override
-                       public void run() {
+			@Override
+			public void run() {
 				try {
-					BufferedReader br = new BufferedReader(
-							new InputStreamReader(settings.getInput()));
+					BufferedReader br = new BufferedReader(new InputStreamReader(settings.getInput()));
 					String line;
 					while ((line = br.readLine()) != null) {
 						getLineInput.put(line);
@@ -177,17 +171,17 @@ public class StdinExtension extends AbstractExtension implements JawkExtension {
 	@Override
 	public String[] extensionKeywords() {
 		return new String[] {
-					// keyboard stuff
-					"StdinHasInput", // i.e. b = StdinHasInput()
-					"StdinGetline", // i.e. retcode = StdinGetline() # $0 = the input
-					"StdinBlock", // i.e. StdinBlock(...)
-				};
+			// keyboard stuff
+			"StdinHasInput", // i.e. b = StdinHasInput()
+			"StdinGetline", // i.e. retcode = StdinGetline() # $0 = the input
+			"StdinBlock" // i.e. StdinBlock(...)
+		};
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public Object invoke(String keyword, Object[] args) {
-		if        (keyword.equals("StdinHasInput")) {
+		if (keyword.equals("StdinHasInput")) {
 			checkNumArgs(args, 0);
 			return stdInHasInput();
 		} else if (keyword.equals("StdinGetline")) {

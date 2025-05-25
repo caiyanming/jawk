@@ -33,7 +33,6 @@ package org.metricshub.jawk.intermediate;
  * @author Danny Daglas
  */
 public interface PositionForCompilation extends Position {
-
 	/**
 	 * <p>index.</p>
 	 *

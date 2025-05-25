@@ -24,7 +24,6 @@ package org.metricshub.jawk.jrt;
 
 import java.util.LinkedList;
 import java.util.List;
-
 import org.metricshub.jawk.util.AwkLogger;
 import org.slf4j.Logger;
 
@@ -89,7 +88,7 @@ public class BlockManager {
 		// interrupt all other threads, resulting in InterruptedExceptions
 
 		List<Thread> threadList = new LinkedList<Thread>();
-               synchronized (this) {
+		synchronized (this) {
 			for (BlockObject blockobj : bos) {
 				// spawn a thread
 				Thread t = new BlockThread(blockobj);
@@ -99,21 +98,21 @@ public class BlockManager {
 
 			// now, wait for notification from one of the BlockThreads
 			try {
-                               this.wait();
-                        } catch (InterruptedException ie) {
-                               Thread.currentThread().interrupt();
-                        }
+				this.wait();
+			} catch (InterruptedException ie) {
+				Thread.currentThread().interrupt();
+			}
 		}
 
 		// block successful, interrupt other blockers
 		// and wait for thread deaths
 		for (Thread t : threadList) {
 			t.interrupt();
-                       try {
-                               t.join();
-                        } catch (InterruptedException ie) {
-                               Thread.currentThread().interrupt();
-                        }
+			try {
+				t.join();
+			} catch (InterruptedException ie) {
+				Thread.currentThread().interrupt();
+			}
 		}
 
 		// return who was the notifier
@@ -142,9 +141,9 @@ public class BlockManager {
 				synchronized (BlockManager.this) {
 					BlockManager.this.notify();
 				}
-                        } catch (InterruptedException ie) {
-                                currentThread().interrupt();
-                        } catch (RuntimeException re) {
+			} catch (InterruptedException ie) {
+				currentThread().interrupt();
+			} catch (RuntimeException re) {
 				LOG.error("exitting", re);
 				System.exit(1);
 			}

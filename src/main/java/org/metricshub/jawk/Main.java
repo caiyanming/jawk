@@ -24,7 +24,6 @@ package org.metricshub.jawk;
 
 import java.io.InputStream;
 import java.io.PrintStream;
-
 import org.metricshub.jawk.util.AwkParameters;
 import org.metricshub.jawk.util.AwkSettings;
 
@@ -55,9 +54,7 @@ public class Main {
 	 * @param es The output stream to use as stderr.
 	 * @throws java.lang.Exception enables exceptions to propagate to the callee.
 	 */
-	public Main(String[] args, InputStream is, PrintStream os, PrintStream es)
-			throws Exception
-	{
+	public Main(String[] args, InputStream is, PrintStream os, PrintStream es) throws Exception {
 		System.setIn(is);
 		System.setOut(os);
 		System.setErr(es);
@@ -81,7 +78,6 @@ public class Main {
 	 * @param args Command line arguments to the VM.
 	 */
 	public static void main(String[] args) {
-
 		try {
 			AwkSettings settings = AwkParameters.parseCommandLineArguments(args);
 			Awk awk = new Awk();
@@ -92,8 +88,5 @@ public class Main {
 			System.err.printf("%s: %s\n", e.getClass().getSimpleName(), e.getMessage());
 			System.exit(1);
 		}
-
 	}
-
-
 }

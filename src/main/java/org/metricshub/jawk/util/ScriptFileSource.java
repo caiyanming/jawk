@@ -49,7 +49,6 @@ public class ScriptFileSource extends ScriptSource {
 	 */
 	public ScriptFileSource(String filePath) {
 		super(filePath, null, filePath.endsWith(".ai"));
-
 		this.filePath = filePath;
 		this.fileReader = null;
 		this.fileInputStream = null;
@@ -67,7 +66,6 @@ public class ScriptFileSource extends ScriptSource {
 	/** {@inheritDoc} */
 	@Override
 	public Reader getReader() {
-
 		if ((fileReader == null) && !isIntermediate()) {
 			try {
 				fileReader = new FileReader(filePath);
@@ -82,7 +80,6 @@ public class ScriptFileSource extends ScriptSource {
 	/** {@inheritDoc} */
 	@Override
 	public InputStream getInputStream() {
-
 		if ((fileInputStream == null) && isIntermediate()) {
 			try {
 				fileInputStream = new FileInputStream(filePath);

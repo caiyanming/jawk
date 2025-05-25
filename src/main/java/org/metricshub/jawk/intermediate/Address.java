@@ -42,7 +42,6 @@ package org.metricshub.jawk.intermediate;
  * @author Danny Daglas
  */
 public interface Address {
-
 	/**
 	 * The label of the address.
 	 * It is particularly useful when dumping tuples to an output stream.

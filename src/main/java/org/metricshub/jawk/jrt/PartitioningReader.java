@@ -67,6 +67,7 @@ public class PartitioningReader extends FilterReader {
 		String grs = System.getProperty("jawk.forceGreedyRS", "0").trim();
 		FORCE_GREEDY_RS = grs.equals("1") || grs.equalsIgnoreCase("yes") || grs.equalsIgnoreCase("true");
 	}
+
 	private Pattern rs;
 	private Matcher matcher;
 	private boolean fromFileNameList;
@@ -95,6 +96,7 @@ public class PartitioningReader extends FilterReader {
 		this.fromFileNameList = fromFileNameList;
 		setRecordSeparator(recordSeparator);
 	}
+
 	private String recordSeparator = null;
 	private boolean consumeAll = false;
 
@@ -154,7 +156,6 @@ public class PartitioningReader extends FilterReader {
 	 * @throws java.io.IOException upon an IO error
 	 */
 	public String readRecord() throws IOException {
-
 		if (matcher == null) {
 			matcher = rs.matcher(remaining);
 		} else {

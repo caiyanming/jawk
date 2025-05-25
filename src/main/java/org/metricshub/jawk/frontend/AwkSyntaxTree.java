@@ -23,7 +23,6 @@ package org.metricshub.jawk.frontend;
  */
 
 import java.io.PrintStream;
-
 import org.metricshub.jawk.intermediate.AwkTuples;
 
 /**
@@ -34,7 +33,6 @@ import org.metricshub.jawk.intermediate.AwkTuples;
  * @author Danny Daglas
  */
 public interface AwkSyntaxTree {
-
 	/**
 	 * Dump a meaningful text representation of this
 	 * abstract syntax tree node to the output (print)

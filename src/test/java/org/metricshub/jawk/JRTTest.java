@@ -48,10 +48,9 @@ public class JRTTest {
 		Object nothing = null;
 		assertEquals(0L, JRT.toLong(nothing));
 	}
-	
+
 	@Test
 	public void testCompare2Uninitialized() {
-		
 		// Uninitialized ==
 		assertTrue(JRT.compare2(new UninitializedObject(), new UninitializedObject(), 0));
 		assertTrue(JRT.compare2(new UninitializedObject(), "0", 0));
@@ -62,7 +61,7 @@ public class JRTTest {
 		assertFalse(JRT.compare2(new UninitializedObject(), 1, 0));
 		assertFalse(JRT.compare2("1", new UninitializedObject(), 0));
 		assertFalse(JRT.compare2(1, new UninitializedObject(), 0));
-		
+
 		// Uninitialized <
 		assertFalse(JRT.compare2(new UninitializedObject(), new UninitializedObject(), -1));
 		assertFalse(JRT.compare2(new UninitializedObject(), "0", -1));
@@ -73,7 +72,7 @@ public class JRTTest {
 		assertTrue(JRT.compare2(new UninitializedObject(), 1, -1));
 		assertFalse(JRT.compare2("1", new UninitializedObject(), -1));
 		assertFalse(JRT.compare2(1, new UninitializedObject(), -1));
-		
+
 		// Uninitialized >
 		assertFalse(JRT.compare2(new UninitializedObject(), new UninitializedObject(), 1));
 		assertFalse(JRT.compare2(new UninitializedObject(), "0", 1));
@@ -85,7 +84,7 @@ public class JRTTest {
 		assertTrue(JRT.compare2("1", new UninitializedObject(), 1));
 		assertTrue(JRT.compare2(1, new UninitializedObject(), 1));
 	}
-	
+
 	@Test
 	public void testPrepareReplacement() throws Exception {
 		assertEquals("don't change", JRT.prepareReplacement("don't change"));
@@ -103,5 +102,4 @@ public class JRTTest {
 		assertEquals("", JRT.prepareReplacement(""));
 		assertEquals("", JRT.prepareReplacement(null));
 	}
-
 }

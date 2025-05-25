@@ -38,7 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
-
 import org.metricshub.jawk.backend.AVM;
 import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.frontend.AwkParser;
@@ -86,9 +85,8 @@ import org.slf4j.Logger;
  */
 public class Awk {
 
-	private static final String DEFAULT_EXTENSIONS
-			= org.metricshub.jawk.ext.CoreExtension.class.getName()
-			+ "#" + org.metricshub.jawk.ext.StdinExtension.class.getName();
+	private static final String DEFAULT_EXTENSIONS =
+		org.metricshub.jawk.ext.CoreExtension.class.getName() + "#" + org.metricshub.jawk.ext.StdinExtension.class.getName();
 
 	private static final Logger LOG = AwkLogger.getLogger(Awk.class);
 
@@ -109,9 +107,7 @@ public class Awk {
 	 * @throws org.metricshub.jawk.ExitException if interpretation is requested,
 	 *	 and a specific exit code is requested.
 	 */
-	public void invoke(AwkSettings settings)
-			throws IOException, ClassNotFoundException, ExitException
-	{
+	public void invoke(AwkSettings settings) throws IOException, ClassNotFoundException, ExitException {
 		AVM avm = null;
 		try {
 			// key = Keyword, value = JawkExtension
@@ -137,10 +133,7 @@ public class Awk {
 				}
 			}
 			if (!notIntermediateScriptSources.isEmpty()) {
-				AwkParser parser = new AwkParser(
-						settings.isAdditionalFunctions(),
-						settings.isAdditionalTypeFunctions(),
-						extensions);
+				AwkParser parser = new AwkParser(settings.isAdditionalFunctions(), settings.isAdditionalTypeFunctions(), extensions);
 				// parse the script
 				AwkSyntaxTree ast = parser.parse(notIntermediateScriptSources);
 
@@ -195,7 +188,6 @@ public class Awk {
 			// interpret!
 			avm = new AVM(settings, extensions);
 			avm.interpret(tuples);
-
 		} finally {
 			if (avm != null) {
 				avm.waitForIO();
@@ -203,18 +195,14 @@ public class Awk {
 		}
 	}
 
-	private static Object readObjectFromInputStream(InputStream is)
-			throws IOException, ClassNotFoundException
-	{
+	private static Object readObjectFromInputStream(InputStream is) throws IOException, ClassNotFoundException {
 		ObjectInputStream ois = new ObjectInputStream(is);
 		Object retval = ois.readObject();
 		ois.close();
 		return retval;
 	}
 
-	private static void writeObjectToFile(Object object, String filename)
-			throws IOException
-	{
+	private static void writeObjectToFile(Object object, String filename) throws IOException {
 		ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename));
 		oos.writeObject(object);
 		oos.close();
@@ -259,22 +247,19 @@ public class Awk {
 					String[] keywords = ji.extensionKeywords();
 					for (String keyword : keywords) {
 						if (retval.get(keyword) != null) {
-							throw new IllegalArgumentException("keyword collision : " + keyword
-									+ " for both " + retval.get(keyword).getExtensionName()
-									+ " and " + ji.getExtensionName());
+							throw new IllegalArgumentException(
+								"keyword collision : " + keyword + " for both " + retval.get(keyword).getExtensionName() + " and " + ji.getExtensionName()
+							);
 						}
 						retval.put(keyword, ji);
 					}
-				} catch (InstantiationException |
-						IllegalAccessException |
-						NoSuchMethodException |
-						SecurityException |
-						IllegalArgumentException |
-						InvocationTargetException e) {
+				} catch (
+					InstantiationException | IllegalAccessException | NoSuchMethodException | SecurityException | IllegalArgumentException | InvocationTargetException e
+				) {
 					LOG.warn("Cannot instantiate " + c.getName(), e);
 				}
 			} catch (ClassNotFoundException cnfe) {
-				LOG.warn("Cannot classload {} : {}", new Object[] {cls, cnfe});
+				LOG.warn("Cannot classload {} : {}", new Object[] { cls, cnfe });
 			}
 		}
 

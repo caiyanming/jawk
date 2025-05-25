@@ -168,37 +168,23 @@ public class AwkSettings {
 	 * @return a human readable representation of the parameters values.
 	 */
 	public String toDescriptionString() {
-
 		StringBuilder desc = new StringBuilder();
 
 		final char newLine = '\n';
 
-		desc.append("variables = ")
-				.append(getVariables()).append(newLine);
-		desc.append("nameValueOrFileNames = ")
-				.append(getNameValueOrFileNames()).append(newLine);
-		desc.append("scriptSources = ")
-				.append(scriptSources).append(newLine);
-		desc.append("fieldSeparator = ")
-				.append(getFieldSeparator()).append(newLine);
-		desc.append("dumpSyntaxTree = ")
-				.append(isDumpSyntaxTree()).append(newLine);
-		desc.append("dumpIntermediateCode = ")
-				.append(isDumpIntermediateCode()).append(newLine);
-		desc.append("additionalFunctions = ")
-				.append(isAdditionalFunctions()).append(newLine);
-		desc.append("additionalTypeFunctions = ")
-				.append(isAdditionalTypeFunctions()).append(newLine);
-		desc.append("useSortedArrayKeys = ")
-				.append(isUseSortedArrayKeys()).append(newLine);
-		desc.append("catchIllegalFormatExceptions = ")
-				.append(isCatchIllegalFormatExceptions()).append(newLine);
-		desc.append("writeIntermediateFile = ")
-				.append(isWriteIntermediateFile()).append(newLine);
-		desc.append("outputFilename = ")
-				.append(getOutputFilename()).append(newLine);
-		desc.append("destinationDirectory = ")
-				.append(getDestinationDirectory()).append(newLine);
+		desc.append("variables = ").append(getVariables()).append(newLine);
+		desc.append("nameValueOrFileNames = ").append(getNameValueOrFileNames()).append(newLine);
+		desc.append("scriptSources = ").append(scriptSources).append(newLine);
+		desc.append("fieldSeparator = ").append(getFieldSeparator()).append(newLine);
+		desc.append("dumpSyntaxTree = ").append(isDumpSyntaxTree()).append(newLine);
+		desc.append("dumpIntermediateCode = ").append(isDumpIntermediateCode()).append(newLine);
+		desc.append("additionalFunctions = ").append(isAdditionalFunctions()).append(newLine);
+		desc.append("additionalTypeFunctions = ").append(isAdditionalTypeFunctions()).append(newLine);
+		desc.append("useSortedArrayKeys = ").append(isUseSortedArrayKeys()).append(newLine);
+		desc.append("catchIllegalFormatExceptions = ").append(isCatchIllegalFormatExceptions()).append(newLine);
+		desc.append("writeIntermediateFile = ").append(isWriteIntermediateFile()).append(newLine);
+		desc.append("outputFilename = ").append(getOutputFilename()).append(newLine);
+		desc.append("destinationDirectory = ").append(getDestinationDirectory()).append(newLine);
 
 		return desc.toString();
 	}
@@ -212,7 +198,6 @@ public class AwkSettings {
 	 * @return A description of the extensions which are enabled/disabled.
 	 */
 	public String toExtensionDescription() {
-
 		StringBuilder extensions = new StringBuilder();
 
 		if (isAdditionalFunctions()) {
@@ -234,7 +219,6 @@ public class AwkSettings {
 			return "{no compiled extensions utilized}";
 		}
 	}
-
 
 	@SuppressWarnings("unused")
 	private void addInitialVariable(String keyValue) {
@@ -593,7 +577,6 @@ public class AwkSettings {
 	 *   <code>"."</code> by default.
 	 */
 	public void setDestinationDirectory(String destinationDirectory) {
-
 		if (destinationDirectory == null) {
 			throw new IllegalArgumentException("The destination directory might never be null (you might want to use \".\")");
 		}

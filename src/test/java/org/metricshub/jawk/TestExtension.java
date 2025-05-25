@@ -12,8 +12,7 @@ public class TestExtension extends AbstractExtension implements JawkExtension {
 	private static final String MY_EXTENSION_FUNCTION = "myExtensionFunction";
 
 	@Override
-	public void init(VariableManager vm, JRT jrt, AwkSettings settings) {
-	}
+	public void init(VariableManager vm, JRT jrt, AwkSettings settings) {}
 
 	@Override
 	public String getExtensionName() {
@@ -38,11 +37,11 @@ public class TestExtension extends AbstractExtension implements JawkExtension {
 	public Object invoke(String keyword, Object[] args) {
 		if (MY_EXTENSION_FUNCTION.equals(keyword)) {
 			StringBuilder result = new StringBuilder();
-			int count = ((Long)args[0]).intValue();
-			AssocArray array = (AssocArray)args[1];
-			for (int i = 0 ; i < count ; i++) {
+			int count = ((Long) args[0]).intValue();
+			AssocArray array = (AssocArray) args[1];
+			for (int i = 0; i < count; i++) {
 				for (Object item : array.keySet()) {
-					result.append((String)array.get(item));
+					result.append((String) array.get(item));
 				}
 			}
 			return result.toString();
@@ -50,5 +49,4 @@ public class TestExtension extends AbstractExtension implements JawkExtension {
 			throw new NotImplementedError(keyword + " is not implemented by " + getExtensionName());
 		}
 	}
-
 }

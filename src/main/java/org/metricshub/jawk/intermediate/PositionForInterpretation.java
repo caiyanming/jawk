@@ -33,7 +33,6 @@ package org.metricshub.jawk.intermediate;
  * @author Danny Daglas
  */
 public interface PositionForInterpretation extends Position {
-
 	/**
 	 * Reposition to the tuple located at a particular address.
 	 * This is usually done in a response to an if condition.
