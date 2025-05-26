@@ -448,4 +448,14 @@ public class AwkTest {
 
 		assertEquals("gsub must replace '$0' with '$0'", "a _$0_ _$0_ d e\n", runAwk("{ gsub(/[b-c]/, \"_$0_\"); print $0; }", "a b c d e"));
 	}
+
+	@Test
+	public void testMultiDimensionalArrayWithSubsep() throws Exception {
+		assertEquals("42\n", runAwk("BEGIN { SUBSEP=\"@\"; a[1,2]=42; print a[1 SUBSEP 2]; }", null));
+	}
+
+	@Test
+	public void testSubsepChangeAfterIndexCreation() throws Exception {
+		assertEquals("42\n\n", runAwk("BEGIN { SUBSEP=\"@\"; idx = 1 SUBSEP 2; a[idx]=42; SUBSEP=\":\"; print a[idx]; print a[1,2]; }", null));
+	}
 }
