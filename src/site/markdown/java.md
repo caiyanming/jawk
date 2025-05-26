@@ -17,6 +17,8 @@ Add Jawk in the list of dependencies in your [Maven **pom.xml**](https://maven.a
 </dependencies>
 ```
 
+Jawk artifacts are published on Maven Central, so the dependency can be resolved automatically by most build tools.
+
 ## Examples
 
 ### Invoke AWK scripts files on input files
@@ -80,7 +82,7 @@ private String runAwk(String script, String input) throws IOException, ExitExcep
 
     // Create the OutputStream, to collect the result as a String
     ByteArrayOutputStream resultBytesStream = new ByteArrayOutputStream();
-    settings.setOutputStream(new UniformPrintStream(resultBytesStream));
+    settings.setOutputStream(new PrintStream(resultBytesStream));
 
     // Sets the AWK script to execute
     settings.addScriptSource(new ScriptSource("Body", new StringReader(script), false));
@@ -102,4 +104,41 @@ private String runAwk(String script, String input) throws IOException, ExitExcep
 
 ## Java Scripting API (JSR 223)
 
-**Jawk** can be invoked via the JSR 223 scripting API (J2SE 6).
+**Jawk** can be invoked via the standard Java scripting framework introduced in JSR&nbsp;223.
+The following example loads Jawk through the `ScriptEngineManager` and evaluates
+an AWK script from a Java `String`:
+
+```java
+ScriptEngineManager manager = new ScriptEngineManager();
+ScriptEngine engine = manager.getEngineByName("jawk");
+
+String script = "{ print toupper($0) }";
+String input = "hello world";
+
+Bindings bindings = engine.createBindings();
+bindings.put("input", new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
+
+StringWriter result = new StringWriter();
+engine.getContext().setWriter(new PrintWriter(result));
+
+engine.eval(script, bindings);
+
+System.out.println(result.toString());
+```
+
+## Limitations and Differences
+
+When embedding Jawk into an application remember that the interpreter follows
+the AWK language closely but not everything from other implementations is
+available.  The most notable differences are:
+
+* Regular expressions use Java's implementation and therefore have slightly
+  different semantics compared to traditional AWK.
+* `printf`/`sprintf` formatting relies on `java.util.Formatter`.  Unexpected
+  argument types will raise an exception unless the `_INTEGER`, `_DOUBLE` or
+  `_STRING` helpers are enabled with the `-y` option or their equivalents in
+  `AwkSettings`.
+* Extensions must be explicitly enabled.  Only the core extensions bundled with
+  Jawk are available by default.
+
+For a more complete list see the [project overview](index.html#features).

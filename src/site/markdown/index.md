@@ -12,7 +12,7 @@ This project is forked from the excellent [Jawk project](https://jawk.sourceforg
 
 It's very simple:
 
-* Download [jawk-${project.version}-standalone.jar](https://github.com/metricshub/Jawk/releases/download/v${project.version}/jawk-${project.version}-standalone.jar) from the [latest release](releases)
+* Download [jawk-${project.version}-standalone.jar](https://github.com/metricshub/Jawk/releases/download/v${project.version}/jawk-${project.version}-standalone.jar) from the [latest release](https://github.com/metricshub/Jawk/releases)
 * Make sure to have Java installed on your system ([download](https://adoptium.net/))
 * Execute `jawk-${project.version}-standalone.jar` just like the "traditional" AWK
 
