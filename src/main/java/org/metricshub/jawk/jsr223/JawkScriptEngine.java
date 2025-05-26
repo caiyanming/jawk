@@ -1,6 +1,7 @@
 package org.metricshub.jawk.jsr223;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 /*-
  * ╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲
  * Jawk
@@ -33,7 +34,6 @@ import java.nio.charset.StandardCharsets;
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
 import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
@@ -52,21 +52,23 @@ public class JawkScriptEngine extends AbstractScriptEngine {
 	}
 
 	@Override
-	public Object eval(String script, ScriptContext context) throws ScriptException {
+	public Object eval(Reader scriptReader, ScriptContext context) throws ScriptException {
 		try {
 			AwkSettings settings = new AwkSettings();
 			Object inObj = context.getAttribute("input");
 			if (inObj instanceof InputStream) {
 				settings.setInput((InputStream) inObj);
+			} else if (inObj instanceof String) {
+				settings.setInput(new ByteArrayInputStream(((String) inObj).getBytes(StandardCharsets.UTF_8)));
 			}
 			settings.setDefaultRS("\n");
 			settings.setDefaultORS("\n");
 			ByteArrayOutputStream result = new ByteArrayOutputStream();
 			settings.setOutputStream(new PrintStream(result));
-			settings.addScriptSource(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, new StringReader(script), false));
+			settings.addScriptSource(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, scriptReader, false));
 			Awk awk = new Awk();
 			awk.invoke(settings);
-			String out = result.toString(StandardCharsets.UTF_8.name());
+			String out = result.toString(StandardCharsets.UTF_8);
 			Writer writer = context.getWriter();
 			if (writer != null) {
 				writer.write(out);
@@ -84,18 +86,8 @@ public class JawkScriptEngine extends AbstractScriptEngine {
 	}
 
 	@Override
-	public Object eval(Reader reader, ScriptContext context) throws ScriptException {
-		try (BufferedReader br = new BufferedReader(reader)) {
-			StringBuilder sb = new StringBuilder();
-			char[] buf = new char[4096];
-			int n;
-			while ((n = br.read(buf)) != -1) {
-				sb.append(buf, 0, n);
-			}
-			return eval(sb.toString(), context);
-		} catch (IOException e) {
-			throw new ScriptException(e);
-		}
+	public Object eval(String script, ScriptContext context) throws ScriptException {
+		return eval(new StringReader(script), context);
 	}
 
 	@Override
