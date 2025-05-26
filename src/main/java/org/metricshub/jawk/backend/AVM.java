@@ -1883,7 +1883,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 							//String s;
 							String convfmt = getCONVFMT().toString();
 							if (count == 1) {
-								//s = JRT.toAwkString(pop(), convfmt);
+								push(JRT.toAwkString(pop(), convfmt, locale));
 							} else {
 								StringBuilder sb = new StringBuilder();
 								sb.append(JRT.toAwkString(pop(), convfmt, locale));
