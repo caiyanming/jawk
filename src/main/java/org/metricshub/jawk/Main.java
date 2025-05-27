@@ -1,5 +1,6 @@
 package org.metricshub.jawk;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 /*-
  * ╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲
  * Jawk
@@ -35,7 +36,7 @@ import org.metricshub.jawk.util.AwkSettings;
  *
  * @author Danny Daglas
  */
-public class Main {
+public final class Main {
 
 	/**
 	 * Prohibit the instantiation of this class, other than the
@@ -77,6 +78,7 @@ public class Main {
 	 *
 	 * @param args Command line arguments to the VM.
 	 */
+	@SuppressFBWarnings(value = "VA_FORMAT_STRING_USES_NEWLINE", justification = "let PrintStream decide line separator")
 	public static void main(String[] args) {
 		try {
 			AwkSettings settings = AwkParameters.parseCommandLineArguments(args);
