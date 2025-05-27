@@ -30,6 +30,7 @@ import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -141,7 +142,7 @@ public class Awk {
 					// dump the syntax tree of the script to a file
 					String filename = settings.getOutputFilename("syntax_tree.lst");
 					LOG.info("writing to '{}'", filename);
-					PrintStream ps = new PrintStream(new FileOutputStream(filename));
+					PrintStream ps = new PrintStream(new FileOutputStream(filename), false, StandardCharsets.UTF_8.name());
 					if (ast != null) {
 						ast.dump(ps);
 					}
@@ -179,7 +180,7 @@ public class Awk {
 				// dump the intermediate code to a human-readable text file
 				String filename = settings.getOutputFilename("avm.lst");
 				LOG.info("writing to '{}'", filename);
-				PrintStream ps = new PrintStream(new FileOutputStream(filename));
+				PrintStream ps = new PrintStream(new FileOutputStream(filename), false, StandardCharsets.UTF_8.name());
 				tuples.dump(ps);
 				ps.close();
 				return;
