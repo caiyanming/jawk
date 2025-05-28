@@ -24,9 +24,12 @@ package org.metricshub.jawk.util;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import org.slf4j.Logger;
 
 /**
@@ -68,8 +71,8 @@ public class ScriptFileSource extends ScriptSource {
 	public Reader getReader() {
 		if ((fileReader == null) && !isIntermediate()) {
 			try {
-				fileReader = new FileReader(filePath);
-			} catch (FileNotFoundException ex) {
+				fileReader = Files.newBufferedReader(Paths.get(filePath), StandardCharsets.UTF_8);
+			} catch (IOException ex) {
 				LOG.error("Failed to open script source for reading: " + filePath, ex);
 			}
 		}
