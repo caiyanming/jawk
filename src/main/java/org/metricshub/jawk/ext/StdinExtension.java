@@ -25,6 +25,7 @@ package org.metricshub.jawk.ext;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.metricshub.jawk.NotImplementedError;
@@ -113,7 +114,7 @@ public class StdinExtension extends AbstractExtension implements JawkExtension {
 		@Override
 		public void block() throws InterruptedException {
 			synchronized (blocker) {
-				if (stdInHasInput() == 0) {
+				while (stdInHasInput() == 0) {
 					blocker.wait();
 				}
 			}
@@ -130,8 +131,7 @@ public class StdinExtension extends AbstractExtension implements JawkExtension {
 		Thread getLineInputThread = new Thread("getLineInputThread") {
 			@Override
 			public void run() {
-				try {
-					BufferedReader br = new BufferedReader(new InputStreamReader(settings.getInput()));
+				try (BufferedReader br = new BufferedReader(new InputStreamReader(settings.getInput(), StandardCharsets.UTF_8))) {
 					String line;
 					while ((line = br.readLine()) != null) {
 						getLineInput.put(line);
@@ -150,7 +150,7 @@ public class StdinExtension extends AbstractExtension implements JawkExtension {
 					getLineInput.put(DONE);
 				} catch (InterruptedException ie) {
 					LOG.error("Should never be interrupted.", ie);
-					System.exit(1);
+					throw new IllegalStateException("Should never be interrupted.", ie);
 				}
 				synchronized (blocker) {
 					blocker.notify();
