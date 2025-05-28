@@ -89,6 +89,7 @@ public class BlockManager {
 
 		List<Thread> threadList = new LinkedList<Thread>();
 		synchronized (this) {
+			notifier = null;
 			for (BlockObject blockobj : bos) {
 				// spawn a thread
 				Thread t = new BlockThread(blockobj);
@@ -97,10 +98,12 @@ public class BlockManager {
 			}
 
 			// now, wait for notification from one of the BlockThreads
-			try {
-				this.wait();
-			} catch (InterruptedException ie) {
-				Thread.currentThread().interrupt();
+			while (notifier == null) {
+				try {
+					this.wait();
+				} catch (InterruptedException ie) {
+					Thread.currentThread().interrupt();
+				}
 			}
 		}
 
@@ -145,7 +148,7 @@ public class BlockManager {
 				currentThread().interrupt();
 			} catch (RuntimeException re) {
 				LOG.error("exitting", re);
-				System.exit(1);
+				throw re;
 			}
 		}
 	}
