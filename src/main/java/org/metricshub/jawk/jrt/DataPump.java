@@ -54,7 +54,7 @@ public class DataPump implements Runnable {
 	 */
 	public DataPump(InputStream in, PrintStream out) {
 		this.is = in;
-		this.os = out;
+		this.os = new PrintStream(out);
 		//setDaemon(true);
 	}
 
