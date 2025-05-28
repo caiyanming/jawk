@@ -117,22 +117,22 @@ public class AssocArray implements Comparator<Object> {
 		// but since the extensions, assoc arrays can become keys as well
 		StringBuilder sb = new StringBuilder().append('{');
 		int cnt = 0;
-		for (Object o : map.keySet()) {
+		for (Map.Entry<Object, Object> entry : map.entrySet()) {
 			if (cnt > 0) {
 				sb.append(", ");
 			}
-			if (o instanceof AssocArray) {
-				sb.append(((AssocArray) o).mapString());
+			Object key = entry.getKey();
+			if (key instanceof AssocArray) {
+				sb.append(((AssocArray) key).mapString());
 			} else {
-				sb.append(o.toString());
+				sb.append(key.toString());
 			}
-			//sb.append('=').append(map.get(o));
 			sb.append('=');
-			Object o2 = map.get(o);
-			if (o2 instanceof AssocArray) {
-				sb.append(((AssocArray) o2).mapString());
+			Object value = entry.getValue();
+			if (value instanceof AssocArray) {
+				sb.append(((AssocArray) value).mapString());
 			} else {
-				sb.append(o2.toString());
+				sb.append(value.toString());
 			}
 			++cnt;
 		}
