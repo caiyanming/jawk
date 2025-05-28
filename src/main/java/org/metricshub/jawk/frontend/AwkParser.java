@@ -27,6 +27,8 @@ import java.io.LineNumberReader;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -142,6 +144,12 @@ public class AwkParser {
 
 	private static final int _EXTENSION_ = s_idx++;
 
+	private static final int _KW_SLEEP_ = s_idx++;
+	private static final int _KW_DUMP_ = s_idx++;
+	private static final int _KW_INTEGER_ = s_idx++;
+	private static final int _KW_DOUBLE_ = s_idx++;
+	private static final int _KW_STRING_ = s_idx++;
+
 	/**
 	 * Contains a mapping of Jawk keywords to their
 	 * token values.
@@ -184,6 +192,12 @@ public class AwkParser {
 		KEYWORDS.put("print", s_idx++);
 		KEYWORDS.put("printf", s_idx++);
 		KEYWORDS.put("getline", s_idx++);
+
+		KEYWORDS.put("_sleep", _KW_SLEEP_);
+		KEYWORDS.put("_dump", _KW_DUMP_);
+		KEYWORDS.put("_INTEGER", _KW_INTEGER_);
+		KEYWORDS.put("_DOUBLE", _KW_DOUBLE_);
+		KEYWORDS.put("_STRING", _KW_STRING_);
 	}
 
 	/**
@@ -192,6 +206,7 @@ public class AwkParser {
 	 * from lexer token values.
 	 */
 	private static int f_idx = 257;
+	private static final int F_EXEC = f_idx++;
 	/**
 	 * A mapping of built-in function names to their
 	 * function token values.
@@ -225,6 +240,7 @@ public class AwkParser {
 		BUILTIN_FUNC_NAMES.put("system", f_idx++);
 		BUILTIN_FUNC_NAMES.put("tolower", f_idx++);
 		BUILTIN_FUNC_NAMES.put("toupper", f_idx++);
+		BUILTIN_FUNC_NAMES.put("exec", F_EXEC);
 	}
 
 	private static final int sp_idx = 257;
@@ -280,36 +296,7 @@ public class AwkParser {
 	public AwkParser(boolean additional_functions, boolean additional_type_functions, Map<String, JawkExtension> extensions) {
 		this.additional_functions = additional_functions;
 		this.additional_type_functions = additional_type_functions;
-		// HACK : When recompiling via exec(),
-		// this code is executed more than once.
-		// As a result, guard against polluting the
-		// KEYWORDS with different symbol ids.
-		// etc.
-		if (additional_functions && (KEYWORDS.get("_sleep") == null)) {
-			// Must not be reentrant!
-			// (See hack notice above.)
-			assert KEYWORDS.get("_sleep") == null;
-			assert KEYWORDS.get("_dump") == null;
-			KEYWORDS.put("_sleep", s_idx++);
-			KEYWORDS.put("_dump", s_idx++);
-			BUILTIN_FUNC_NAMES.put("exec", f_idx++);
-		}
-		if (additional_type_functions && (KEYWORDS.get("_INTEGER") == null)) {
-			// Must not be reentrant!
-			// (See hack notice above.)
-			assert KEYWORDS.get("_INTEGER") == null;
-			assert KEYWORDS.get("_DOUBLE") == null;
-			assert KEYWORDS.get("_STRING") == null;
-			KEYWORDS.put("_INTEGER", s_idx++);
-			KEYWORDS.put("_DOUBLE", s_idx++);
-			KEYWORDS.put("_STRING", s_idx++);
-		}
-		// Special handling for exec().
-		// Need to keep "extensions" around only
-		// for exec(). But, must assign it regardless
-		// even if "additional_functions" is not true
-		// because it is a final field variable.
-		this.extensions = extensions;
+		this.extensions = extensions == null ? java.util.Collections.emptyMap() : new java.util.HashMap<>(extensions);
 	}
 
 	private List<ScriptSource> scriptSources;
@@ -368,12 +355,12 @@ public class AwkParser {
 	 * @throws java.io.IOException upon an IO error.
 	 */
 	public AwkSyntaxTree parse(List<ScriptSource> scriptSources) throws IOException {
-		if ((scriptSources == null) || scriptSources.isEmpty()) {
+		if (scriptSources == null || scriptSources.isEmpty()) {
 			throw new IOException("No script sources supplied");
 		}
-		this.scriptSources = scriptSources;
+		this.scriptSources = java.util.Collections.unmodifiableList(new java.util.ArrayList<>(scriptSources));
 		scriptSourcesCurrentIndex = 0;
-		reader = new LineNumberReader(scriptSources.get(scriptSourcesCurrentIndex).getReader());
+		reader = new LineNumberReader(this.scriptSources.get(scriptSourcesCurrentIndex).getReader());
 		read();
 		lexer();
 		return SCRIPT();
@@ -777,11 +764,23 @@ public class AwkParser {
 			}
 			Integer kw_token = KEYWORDS.get(text.toString());
 			if (kw_token != null) {
-				return token = kw_token.intValue();
+				int kw = kw_token.intValue();
+				if (!additional_functions && (kw == _KW_SLEEP_ || kw == _KW_DUMP_)) {
+					// treat as identifier
+				} else if (!additional_type_functions && (kw == _KW_INTEGER_ || kw == _KW_DOUBLE_ || kw == _KW_STRING_)) {
+					// treat as identifier
+				} else {
+					return token = kw;
+				}
 			}
 			Integer bf_idx = BUILTIN_FUNC_NAMES.get(text.toString());
 			if (bf_idx != null) {
-				return token = _BUILTIN_FUNC_NAME_;
+				int idx = bf_idx.intValue();
+				if (!additional_functions && idx == F_EXEC) {
+					// treat as identifier
+				} else {
+					return token = _BUILTIN_FUNC_NAME_;
+				}
 			}
 			if (c == '(') {
 				return token = _FUNC_ID_;
