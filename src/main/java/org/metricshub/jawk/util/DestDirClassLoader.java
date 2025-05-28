@@ -63,16 +63,12 @@ public final class DestDirClassLoader extends ClassLoader {
 
 	private byte[] loadClassData(String name) throws ClassNotFoundException {
 		String fileName = dirname + File.separator + name + ".class";
-		try {
-			FileInputStream f = new FileInputStream(fileName);
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		try (FileInputStream f = new FileInputStream(fileName); ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 			byte[] b = new byte[4096];
 			int len;
 			while ((len = f.read(b, 0, b.length)) >= 0) {
 				baos.write(b, 0, len);
 			}
-			f.close();
-			baos.close();
 			return baos.toByteArray();
 		} catch (IOException ioe) {
 			throw new ClassNotFoundException("Could not load class " + name + " from file \"" + fileName + "\"", ioe);
