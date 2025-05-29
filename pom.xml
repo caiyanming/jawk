@@ -69,12 +69,11 @@
 		</developer>
 	</developers>
 
-        <properties>
-                <!-- Java 8 -->
-                <maven.compiler.source>8</maven.compiler.source>
-                <maven.compiler.target>8</maven.compiler.target>
+	<properties>
+		<!-- Java 8 -->
+		<maven.compiler.release>8</maven.compiler.release>
 
-                <!-- Reproducible Build -->
+		<!-- Reproducible Build -->
 		<!-- See https://maven.apache.org/guides/mini/guide-reproducible-builds.html -->
 		<project.build.outputTimestamp>2025-04-03T12:56:26Z</project.build.outputTimestamp>
 	</properties>

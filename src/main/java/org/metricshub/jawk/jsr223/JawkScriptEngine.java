@@ -66,7 +66,7 @@ public class JawkScriptEngine extends AbstractScriptEngine {
 			settings.addScriptSource(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, scriptReader, false));
 			Awk awk = new Awk();
 			awk.invoke(settings);
-			String out = result.toString(StandardCharsets.UTF_8);
+			String out = result.toString(StandardCharsets.UTF_8.name());
 			Writer writer = context.getWriter();
 			if (writer != null) {
 				writer.write(out);
