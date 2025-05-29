@@ -34,7 +34,9 @@ public class IllegalAwkArgumentException extends IllegalArgumentException {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * <p>Constructor for IllegalAwkArgumentException.</p>
+	 * <p>
+	 * Constructor for IllegalAwkArgumentException.
+	 * </p>
 	 *
 	 * @param msg a {@link java.lang.String} object
 	 */

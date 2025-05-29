@@ -74,12 +74,12 @@ import org.slf4j.Logger;
  * target associative array.
  * <li><strong>TypeOf</strong> - <code>typestring = TypeOf(item)</code><br>
  * Returns one of the following depending on the argument:
- * 	<ul>
- * 	<li>"String"
- * 	<li>"Integer"
- * 	<li>"AssocArray"
- * 	<li>"Reference" (see below)
- * 	</ul>
+ * <ul>
+ * <li>"String"
+ * <li>"Integer"
+ * <li>"AssocArray"
+ * <li>"Reference" (see below)
+ * </ul>
  * <li><strong>String</strong> - <code>str = String(3)</code><br>
  * Converts its argument to a String.
  * Similar to the _STRING extension, but provided
@@ -108,7 +108,6 @@ import org.slf4j.Logger;
  * <li><strong>NewRef[erence]/Dereference/DeRef/Unreference/UnRef/etc.</strong> -
  * Reference Management Functions. These are described in detail below.
  * </ul>
- *
  * <h2>Reference Management</h2>
  * AWK's memory model provides only 4 types of variables
  * for use within AWK scripts:
@@ -124,7 +123,7 @@ import org.slf4j.Logger;
  * arrays:
  * <ul>
  * <li>Associative array assignments (i.e., assocarray1 = associarray2)
- *	are prohibited.
+ * are prohibited.
  * <li>Functions cannot return associative arrays.
  * </ul>
  * These restrictions, while sufficient for AWK, are detrimental
@@ -134,7 +133,6 @@ import org.slf4j.Logger;
  * to enforce type safety within user extensions. Unfortunately, the
  * memory model restrictions make using associative arrays in this
  * capacity very difficult.
- *
  * <p>
  * We attempt to alleviate these difficulties by adding references
  * to Jawk via the CoreExtension module.
@@ -146,7 +144,6 @@ import org.slf4j.Logger;
  * functions to perform common associative array operations, such as
  * associative array cell lookup and assignment, key existence
  * check, and key iteration.
- *
  * <p>
  * The reference model functions are explained below:
  * <ul>
@@ -156,17 +153,27 @@ import org.slf4j.Logger;
  * <li><strong>DeRef / Dereference</strong> - <code>val = DeRef(handle, key)</code><br>
  * Return the cell value of the associative array referenced by the key.
  * In other words:
- * <blockquote><pre>
- * return assocarray[key]</pre></blockquote>
+ * <blockquote>
+ *
+ * <pre>
+ * return assocarray[key]
+ * </pre>
+ *
+ * </blockquote>
  * <li><strong>UnRef / Unreference</strong> - <code>UnRef(handle)</code><br>
  * Eliminate the reference occupied by the reference cache.
  * <li><strong>InRef</strong> - <code>while(key = InRef(handle)) ...</code><br>
  * Iterate through the key-set of the associative array
  * referred to by handle in the reference cache.
  * This is similar to:
- * <blockquote><pre>
+ * <blockquote>
+ *
+ * <pre>
  * for (key in assocarray)
- * 	...</pre></blockquote>
+ * 	...
+ * </pre>
+ *
+ * </blockquote>
  * where <code>assocarray</code> is the associative array referred to by
  * handle in the reference cache.
  * <br>
@@ -178,9 +185,14 @@ import org.slf4j.Logger;
  * <li><strong>IsInRef</strong> - <code>b = IsInRef(handle, key)</code><br>
  * Checks whether the associative array in the reference cache
  * contains the key. This is similar to:
- * <blockquote><pre>
+ * <blockquote>
+ *
+ * <pre>
  * if (key in assocarray)
- *	...</pre></blockquote>
+ *	...
+ * </pre>
+ *
+ * </blockquote>
  * where <code>assocarray</code> is the associative array referred to by
  * handle in the reference cache.
  * <li><strong>DumpRefs</strong> - <code>DumpRefs()</code><br>
@@ -191,7 +203,8 @@ import org.slf4j.Logger;
  */
 public class CoreExtension extends AbstractExtension implements JawkExtension {
 
-	private static CoreExtension instance = null; // FIXME Ugly form of singleton implementation (which is ugly by itsself)
+	private static CoreExtension instance = null; // FIXME Ugly form of singleton implementation (which is ugly by
+																								// itsself)
 	private static final Object INSTANCE_LOCK = new Object();
 	private static final Logger LOG = AwkLogger.getLogger(CoreExtension.class);
 
@@ -221,7 +234,9 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 	};
 
 	/**
-	 * <p>Constructor for CoreExtension.</p>
+	 * <p>
+	 * Constructor for CoreExtension.
+	 * </p>
 	 */
 	public CoreExtension() {
 		synchronized (INSTANCE_LOCK) {
@@ -243,41 +258,43 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 	@Override
 	public String[] extensionKeywords() {
 		return new String[] {
-			"Array", // i.e. Array(array,1,3,5,7,9,11)
-			"Map", // i.e. Map(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
-			"HashMap", // i.e. HashMap(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
-			"TreeMap", // i.e. TreeMap(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
-			"LinkedMap", // i.e. LinkedMap(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
-			"MapUnion", // i.e. MapUnion(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
-			"MapCopy", // i.e. cnt = MapCopy(aaTarget, aaSource)
-			"TypeOf", // i.e. typestring = TypeOf(item)
-			"String", // i.e. str = String(3)
-			"Double", // i.e. dbl = Double(3)
-			"Halt", // i.e. Halt()
-			"Dereference", // i.e. f(Dereference(r1))
-			"DeRef", // i.e. 	(see above, but replace Dereference with DeRef)
-			"NewReference", // i.e. ref = NewReference(Map("hi","there"))
-			"NewRef", // i.e. 	(see above, but replace Reference with Ref)
-			"Unreference", // i.e. b = Unreference(ref)
-			"UnRef", // i.e. 	(see above, but replace Unreference with UnRef)
-			"InRef", // i.e. while(k = InRef(r2)) [ same as for(k in assocarr) ]
-			"IsInRef", // i.e. if (IsInRef(r1, "key")) [ same as if("key" in assocarr) ]
-			"DumpRefs", // i.e. DumpRefs()
-			"Timeout", // i.e. r = Timeout(300)
-			"Throw", // i.e. Throw("this is an awkruntimeexception")
-			"Version", // i.e. print Version(aa)
-			"Date", // i.e. str = Date()
-			"FileExists" // i.e. b = FileExists("/a/b/c")
+				"Array", // i.e. Array(array,1,3,5,7,9,11)
+				"Map", // i.e. Map(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
+				"HashMap", // i.e. HashMap(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
+				"TreeMap", // i.e. TreeMap(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
+				"LinkedMap", // i.e. LinkedMap(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
+				"MapUnion", // i.e. MapUnion(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
+				"MapCopy", // i.e. cnt = MapCopy(aaTarget, aaSource)
+				"TypeOf", // i.e. typestring = TypeOf(item)
+				"String", // i.e. str = String(3)
+				"Double", // i.e. dbl = Double(3)
+				"Halt", // i.e. Halt()
+				"Dereference", // i.e. f(Dereference(r1))
+				"DeRef", // i.e. (see above, but replace Dereference with DeRef)
+				"NewReference", // i.e. ref = NewReference(Map("hi","there"))
+				"NewRef", // i.e. (see above, but replace Reference with Ref)
+				"Unreference", // i.e. b = Unreference(ref)
+				"UnRef", // i.e. (see above, but replace Unreference with UnRef)
+				"InRef", // i.e. while(k = InRef(r2)) [ same as for(k in assocarr) ]
+				"IsInRef", // i.e. if (IsInRef(r1, "key")) [ same as if("key" in assocarr) ]
+				"DumpRefs", // i.e. DumpRefs()
+				"Timeout", // i.e. r = Timeout(300)
+				"Throw", // i.e. Throw("this is an awkruntimeexception")
+				"Version", // i.e. print Version(aa)
+				"Date", // i.e. str = Date()
+				"FileExists" // i.e. b = FileExists("/a/b/c")
 		};
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public int[] getAssocArrayParameterPositions(String extensionKeyword, int numArgs) {
-		if (
-			(extensionKeyword.equals("Map") || extensionKeyword.equals("HashMap") || extensionKeyword.equals("LinkedMap") || extensionKeyword.equals("TreeMap")) &&
-			((numArgs % 2) == 1)
-		) {
+		if ((extensionKeyword.equals("Map")
+				|| extensionKeyword.equals("HashMap")
+				|| extensionKeyword.equals("LinkedMap")
+				|| extensionKeyword.equals("TreeMap"))
+				&&
+				((numArgs % 2) == 1)) {
 			// first argument of a *Map() function
 			// must be an associative array
 			return new int[] { 0 };
@@ -498,9 +515,10 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 
 		// use an inMap to keep track of existing iterators
 
-		//Iterator<Object> iter = iterators.get(aa);
+		// Iterator<Object> iter = iterators.get(aa);
 		Iterator<?> iter = iterators.get(aa);
-		if (iter == null) { // assoc array during iteration causes a ConcurrentModificationException // without a new Collection, modification to the //iterators.put(aa, iter = aa.keySet().iterator());
+		if (iter == null) { // assoc array during iteration causes a ConcurrentModificationException // without a new
+												// Collection, modification to the //iterators.put(aa, iter = aa.keySet().iterator());
 			iter = new ArrayList<Object>(aa.keySet()).iterator();
 			iterators.put(aa, iter);
 		}
@@ -527,7 +545,7 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 				}
 			}
 			// otherwise, return new reference to this item
-			//return newReference(argCheck, retval);
+			// return newReference(argCheck, retval);
 			return newReference(retval);
 		} else {
 			return retval;
@@ -656,34 +674,36 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 			} else {
 				aa.put("" + i, o);
 			}
-			//aa.put(args[i], args[i+1]);
+			// aa.put(args[i], args[i+1]);
 			++cnt;
 		}
 		return cnt;
 	}
 
-	/*private AssocArray subarray(Object[] args, VariableManager vm) {
-		AssocArray aa = new AssocArray(false);
-		aa.clear();
-		//aa.useLinkedHashMap();
-		aa.useMapType(AssocArray.MT_TREE);
-		String subsep = toAwkString(vm.getSUBSEP());
-		int cnt = 0;
-		for (int i = 1; i <= args.length; ++i) {
-			Object o = args[i - 1];
-			if (o instanceof AssocArray) {
-				AssocArray arr = (AssocArray) o;
-				for (Object key : arr.keySet()) {
-					aa.put("" + i + subsep + key, arr.get(key));
-				}
-			} else {
-				aa.put("" + i, o);
-			}
-			//aa.put(args[i], args[i+1]);
-			++cnt;
-		}
-		return aa;
-	}*/
+	/*
+	 * private AssocArray subarray(Object[] args, VariableManager vm) {
+	 * AssocArray aa = new AssocArray(false);
+	 * aa.clear();
+	 * //aa.useLinkedHashMap();
+	 * aa.useMapType(AssocArray.MT_TREE);
+	 * String subsep = toAwkString(vm.getSUBSEP());
+	 * int cnt = 0;
+	 * for (int i = 1; i <= args.length; ++i) {
+	 * Object o = args[i - 1];
+	 * if (o instanceof AssocArray) {
+	 * AssocArray arr = (AssocArray) o;
+	 * for (Object key : arr.keySet()) {
+	 * aa.put("" + i + subsep + key, arr.get(key));
+	 * }
+	 * } else {
+	 * aa.put("" + i, o);
+	 * }
+	 * //aa.put(args[i], args[i+1]);
+	 * ++cnt;
+	 * }
+	 * return aa;
+	 * }
+	 */
 
 	private int mapCopy(Object[] args) {
 		AssocArray aaTarget = (AssocArray) args[0];

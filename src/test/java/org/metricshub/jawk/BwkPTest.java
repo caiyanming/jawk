@@ -58,7 +58,11 @@ public class BwkPTest {
 			throw new IOException("scripts is not a directory");
 		}
 
-		return Arrays.stream(scriptsDirectory.listFiles()).filter(sf -> sf.getName().startsWith("p.")).map(File::getName).collect(Collectors.toList());
+		return Arrays
+				.stream(scriptsDirectory.listFiles())
+				.filter(sf -> sf.getName().startsWith("p."))
+				.map(File::getName)
+				.collect(Collectors.toList());
 	}
 
 	/** Path to the AWK test script to execute */

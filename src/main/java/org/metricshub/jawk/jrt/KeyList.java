@@ -44,7 +44,9 @@ public interface KeyList {
 	int size();
 
 	/**
-	 * <p>getFirstAndRemove.</p>
+	 * <p>
+	 * getFirstAndRemove.
+	 * </p>
 	 *
 	 * @return a {@link java.lang.Object} object
 	 */

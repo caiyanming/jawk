@@ -65,7 +65,6 @@ import org.slf4j.Logger;
  * Variable access is achieved through the VariableManager interface.
  * The constructor requires a VariableManager instance (which, in
  * this case, is the compiled Jawk class itself).
- *
  * <p>
  * Main services include:
  * <ul>
@@ -77,7 +76,6 @@ import org.slf4j.Logger;
  * <li>Random number engine management.
  * <li>Input field ($0, $1, ...) management.
  * </ul>
- *
  * <p>
  * All static and non-static service methods should be package-private
  * to the resultant AWK script class rather than public. However,
@@ -133,7 +131,7 @@ public class JRT {
 	 * Assign all -v variables.
 	 *
 	 * @param initial_var_map A map containing all initial variable
-	 *   names and their values.
+	 *        names and their values.
 	 */
 	public final void assignInitialVariables(Map<String, Object> initial_var_map) {
 		assert initial_var_map != null;
@@ -148,8 +146,8 @@ public class JRT {
 	 * (in this case, to ENVIRON).
 	 *
 	 * @param aa The associative array to populate with
-	 *   environment variables. The module asserts that
-	 *   the associative array is empty prior to population.
+	 *        environment variables. The module asserts that
+	 *        the associative array is empty prior to population.
 	 */
 	public static void assignEnvironmentVariables(AssocArray aa) {
 		assert aa.keySet().isEmpty();
@@ -232,7 +230,6 @@ public class JRT {
 	 * Convert a String, Integer, or Double to Double.
 	 *
 	 * @param o Object to convert.
-	 *
 	 * @return the "double" value of o, or 0 if invalid
 	 */
 	public static double toDouble(final Object o) {
@@ -277,7 +274,6 @@ public class JRT {
 	 * Convert a String, Long, or Double to Long.
 	 *
 	 * @param o Object to convert.
-	 *
 	 * @return the "long" value of o, or 0 if invalid
 	 */
 	public static long toLong(final Object o) {
@@ -324,11 +320,12 @@ public class JRT {
 	 *
 	 * @param o1 The 1st object.
 	 * @param o2 the 2nd object.
-	 * @param mode <ul>
-	 *   <li>&lt; 0 - Return true if o1 &lt; o2.
-	 *   <li>0 - Return true if o1 == o2.
-	 *   <li>&gt; 0 - Return true if o1 &gt; o2.
-	 *   </ul>
+	 * @param mode
+	 *        <ul>
+	 *        <li>&lt; 0 - Return true if o1 &lt; o2.
+	 *        <li>0 - Return true if o1 == o2.
+	 *        <li>&gt; 0 - Return true if o1 &gt; o2.
+	 *        </ul>
 	 * @return a boolean
 	 */
 	public static boolean compare2(Object o1, Object o2, int mode) {
@@ -402,10 +399,10 @@ public class JRT {
 	 *
 	 * @param o The object to increase.
 	 * @return o+1 if o is an Integer or Double object, or
-	 *   if o is a String object and represents a double.
-	 *   Otherwise, 1 is returned. If the return value
-	 *   is an integer, an Integer object is returned.
-	 *   Otherwise, a Double object is returned.
+	 *         if o is a String object and represents a double.
+	 *         Otherwise, 1 is returned. If the return value
+	 *         is an integer, an Integer object is returned.
+	 *         Otherwise, a Double object is returned.
 	 */
 	public static Object inc(Object o) {
 		assert o != null;
@@ -435,10 +432,10 @@ public class JRT {
 	 *
 	 * @param o The object to increase.
 	 * @return o-1 if o is an Integer or Double object, or
-	 *   if o is a String object and represents a double.
-	 *   Otherwise, -1 is returned. If the return value
-	 *   is an integer, an Integer object is returned.
-	 *   Otherwise, a Double object is returned.
+	 *         if o is a String object and represents a double.
+	 *         Otherwise, -1 is returned. If the return value
+	 *         is an integer, an Integer object is returned.
+	 *         Otherwise, a Double object is returned.
 	 */
 	public static Object dec(Object o) {
 		double ans;
@@ -465,15 +462,15 @@ public class JRT {
 	 *
 	 * @param o The object to convert to a boolean.
 	 * @return For the following class types for o:
-	 * 	<ul>
-	 * 	<li><strong>Integer</strong> - o.intValue() != 0
-	 * 	<li><strong>Long</strong> - o.longValue() != 0
-	 * 	<li><strong>Double</strong> - o.doubleValue() != 0
-	 * 	<li><strong>String</strong> - o.length() &gt; 0
-	 * 	<li><strong>UninitializedObject</strong> - false
-	 * 	<li><strong>Pattern</strong> - $0 ~ o
-	 * 	</ul>
-	 * 	If o is none of these types, an error is thrown.
+	 *         <ul>
+	 *         <li><strong>Integer</strong> - o.intValue() != 0
+	 *         <li><strong>Long</strong> - o.longValue() != 0
+	 *         <li><strong>Double</strong> - o.doubleValue() != 0
+	 *         <li><strong>String</strong> - o.length() &gt; 0
+	 *         <li><strong>UninitializedObject</strong> - false
+	 *         <li><strong>Pattern</strong> - $0 ~ o
+	 *         </ul>
+	 *         If o is none of these types, an error is thrown.
 	 */
 	public final boolean toBoolean(Object o) {
 		boolean val;
@@ -536,7 +533,9 @@ public class JRT {
 		} else if (fs_string.equals("")) {
 			return splitWorker(new CharacterTokenizer(toAwkString(string, convfmt, locale)), (AssocArray) array);
 		} else if (fs_string.length() == 1) {
-			return splitWorker(new SingleCharacterTokenizer(toAwkString(string, convfmt, locale), fs_string.charAt(0)), (AssocArray) array);
+			return splitWorker(
+					new SingleCharacterTokenizer(toAwkString(string, convfmt, locale), fs_string.charAt(0)),
+					(AssocArray) array);
 		} else {
 			return splitWorker(new RegexTokenizer(toAwkString(string, convfmt, locale), fs_string), (AssocArray) array);
 		}
@@ -552,7 +551,9 @@ public class JRT {
 	}
 
 	/**
-	 * <p>Getter for the field <code>partitioningReader</code>.</p>
+	 * <p>
+	 * Getter for the field <code>partitioningReader</code>.
+	 * </p>
 	 *
 	 * @return a {@link org.metricshub.jawk.jrt.PartitioningReader} object
 	 */
@@ -561,7 +562,9 @@ public class JRT {
 	}
 
 	/**
-	 * <p>Getter for the field <code>inputLine</code>.</p>
+	 * <p>
+	 * Getter for the field <code>inputLine</code>.
+	 * </p>
 	 *
 	 * @return a {@link java.lang.String} object
 	 */
@@ -570,7 +573,9 @@ public class JRT {
 	}
 
 	/**
-	 * <p>Setter for the field <code>inputLine</code>.</p>
+	 * <p>
+	 * Setter for the field <code>inputLine</code>.
+	 * </p>
 	 *
 	 * @param inputLine a {@link java.lang.String} object
 	 */
@@ -598,7 +603,7 @@ public class JRT {
 
 			// calculate has_filenames
 
-			int argc = (int) toDouble(vm.getARGC()); //(vm.getVariable("argc_field", true));
+			int argc = (int) toDouble(vm.getARGC()); // (vm.getVariable("argc_field", true));
 			// 1 .. argc doesn't make sense
 			// 1 .. argc-1 does since arguments of:
 			// a b c
@@ -639,7 +644,10 @@ public class JRT {
 					if (!(o instanceof UninitializedObject || o.toString().isEmpty())) {
 						String name_value_or_filename = toAwkString(o, vm.getCONVFMT().toString(), locale);
 						if (name_value_or_filename.indexOf('=') == -1) {
-							partitioningReader = new PartitioningReader(new FileReader(name_value_or_filename), vm.getRS().toString(), true);
+							partitioningReader = new PartitioningReader(
+									new FileReader(name_value_or_filename),
+									vm.getRS().toString(),
+									true);
 							vm.setFILENAME(name_value_or_filename);
 							vm.resetFNR();
 						} else {
@@ -673,7 +681,10 @@ public class JRT {
 							String name_value_or_filename = toAwkString(o, vm.getCONVFMT().toString(), locale);
 							if (name_value_or_filename.indexOf('=') == -1) {
 								// true = from filename list
-								partitioningReader = new PartitioningReader(new FileReader(name_value_or_filename), vm.getRS().toString(), true);
+								partitioningReader = new PartitioningReader(
+										new FileReader(name_value_or_filename),
+										vm.getRS().toString(),
+										true);
 								vm.setFILENAME(name_value_or_filename);
 								vm.resetFNR();
 							} else {
@@ -692,8 +703,8 @@ public class JRT {
 				// when active_input == false, usually means
 				// to instantiate "pr" (PartitioningReader for $0, etc)
 				// for Jawk extensions
-				//if (!active_input)
-				//	return false;
+				// if (!active_input)
+				// return false;
 
 				inputLine = partitioningReader.readRecord();
 				if (inputLine == null) {
@@ -721,7 +732,8 @@ public class JRT {
 		// variable name should be non-blank
 		assert eq_idx >= 0;
 		if (eq_idx == 0) {
-			throw new IllegalArgumentException("Must have a non-blank variable name in a name=value variable assignment argument.");
+			throw new IllegalArgumentException(
+					"Must have a non-blank variable name in a name=value variable assignment argument.");
 		}
 		String name = name_value.substring(0, eq_idx);
 		String value = name_value.substring(eq_idx + 1);
@@ -794,7 +806,9 @@ public class JRT {
 	}
 
 	/**
-	 * <p>jrtGetInputField.</p>
+	 * <p>
+	 * jrtGetInputField.
+	 * </p>
 	 *
 	 * @param fieldnum a int
 	 * @return a {@link java.lang.Object} object
@@ -852,7 +866,9 @@ public class JRT {
 	}
 
 	/**
-	 * <p>jrtConsumeFileInputForGetline.</p>
+	 * <p>
+	 * jrtConsumeFileInputForGetline.
+	 * </p>
 	 *
 	 * @param filename a {@link java.lang.String} object
 	 * @return a {@link java.lang.Integer} object
@@ -877,7 +893,7 @@ public class JRT {
 	 *
 	 * @param cmd_string The command to execute.
 	 * @return Integer(1) if successful, Integer(0) if no more
-	 * 	input is available, Integer(-1) upon an IO error.
+	 *         input is available, Integer(-1) upon an IO error.
 	 */
 	public Integer jrtConsumeCommandInputForGetline(String cmd_string) {
 		try {
@@ -903,7 +919,9 @@ public class JRT {
 	}
 
 	/**
-	 * <p>Getter for the field <code>outputFiles</code>.</p>
+	 * <p>
+	 * Getter for the field <code>outputFiles</code>.
+	 * </p>
 	 *
 	 * @return a {@link java.util.Map} object
 	 */
@@ -923,7 +941,8 @@ public class JRT {
 		PrintStream ps = outputFiles.get(filename);
 		if (ps == null) {
 			try {
-				outputFiles.put(filename, ps = new PrintStream(new FileOutputStream(filename, append), true)); // true = autoflush
+				outputFiles.put(filename, ps = new PrintStream(new FileOutputStream(filename, append), true)); // true =
+																																																				// autoflush
 			} catch (IOException ioe) {
 				throw new AwkRuntimeException("Cannot open " + filename + " for writing: " + ioe);
 			}
@@ -933,7 +952,9 @@ public class JRT {
 	}
 
 	/**
-	 * <p>jrtConsumeFileInput.</p>
+	 * <p>
+	 * jrtConsumeFileInput.
+	 * </p>
 	 *
 	 * @param filename a {@link java.lang.String} object
 	 * @return a boolean
@@ -979,7 +1000,9 @@ public class JRT {
 	}
 
 	/**
-	 * <p>jrtConsumeCommandInput.</p>
+	 * <p>
+	 * jrtConsumeCommandInput.
+	 * </p>
 	 *
 	 * @param cmd a {@link java.lang.String} object
 	 * @return a boolean
@@ -994,7 +1017,10 @@ public class JRT {
 				p.getOutputStream().close();
 				DataPump.dump(cmd, p.getErrorStream(), System.err);
 				command_processes.put(cmd, p);
-				command_readers.put(cmd, pr = new PartitioningReader(new InputStreamReader(p.getInputStream()), vm.getRS().toString()));
+				command_readers
+						.put(
+								cmd,
+								pr = new PartitioningReader(new InputStreamReader(p.getInputStream()), vm.getRS().toString()));
 				vm.setFILENAME("");
 			} catch (IOException ioe) {
 				LOG.warn("IO Exception", ioe);
@@ -1025,7 +1051,7 @@ public class JRT {
 	 *
 	 * @param cmd The command to execute.
 	 * @return The PrintStream which to write to provide
-	 *   input data to the process.
+	 *         input data to the process.
 	 */
 	public PrintStream jrtSpawnForOutput(String cmd) {
 		PrintStream ps = output_streams.get(cmd);
@@ -1057,7 +1083,7 @@ public class JRT {
 	 *
 	 * @param filename The filename/command process to close.
 	 * @return Integer(0) upon a successful close, Integer(-1)
-	 *   otherwise.
+	 *         otherwise.
 	 */
 	public Integer jrtClose(String filename) {
 		boolean b1 = jrtCloseFileReader(filename);
@@ -1069,7 +1095,9 @@ public class JRT {
 	}
 
 	/**
-	 * <p>jrtCloseAll.</p>
+	 * <p>
+	 * jrtCloseAll.
+	 * </p>
 	 */
 	public void jrtCloseAll() {
 		Set<String> set = new HashSet<String>();
@@ -1174,7 +1202,7 @@ public class JRT {
 	 *
 	 * @param cmd The command to execute.
 	 * @return Integer(return_code) of the created
-	 *   process. Integer(-1) is returned on an IO error.
+	 *         process. Integer(-1) is returned on an IO error.
 	 */
 	public static Integer jrtSystem(String cmd) {
 		try {
@@ -1196,7 +1224,9 @@ public class JRT {
 	}
 
 	/**
-	 * <p>sprintfFunctionNoCatch.</p>
+	 * <p>
+	 * sprintfFunctionNoCatch.
+	 * </p>
 	 *
 	 * @param locale a {@link java.util.Locale} object
 	 * @param fmt_arg a {@link java.lang.String} object
@@ -1209,7 +1239,9 @@ public class JRT {
 	}
 
 	/**
-	 * <p>printfFunctionNoCatch.</p>
+	 * <p>
+	 * printfFunctionNoCatch.
+	 * </p>
 	 *
 	 * @param locale a {@link java.util.Locale} object
 	 * @param fmt_arg a {@link java.lang.String} object
@@ -1220,7 +1252,9 @@ public class JRT {
 	}
 
 	/**
-	 * <p>printfFunctionNoCatch.</p>
+	 * <p>
+	 * printfFunctionNoCatch.
+	 * </p>
 	 *
 	 * @param ps a {@link java.io.PrintStream} object
 	 * @param locale a {@link java.util.Locale} object
@@ -1240,6 +1274,7 @@ public class JRT {
 	 * <li>Awk uses &amp; to refer to the matched string
 	 * <li>Java uses $0, $g, or ${name} to refer to the corresponding match groups
 	 * </ul>
+	 *
 	 * @param awkRepl the replace string passed in sub() and gsub()
 	 * @return a string that can be used in Java's Matcher.appendReplacement()
 	 */
@@ -1287,7 +1322,9 @@ public class JRT {
 	}
 
 	/**
-	 * <p>replaceFirst.</p>
+	 * <p>
+	 * replaceFirst.
+	 * </p>
 	 *
 	 * @param orig_value a {@link java.lang.String} object
 	 * @param repl a {@link java.lang.String} object
@@ -1315,6 +1352,7 @@ public class JRT {
 
 	/**
 	 * Replace all occurrences of the regular expression with specified string
+	 *
 	 * @param orig_value String where replace is done
 	 * @param repl Replacement string (with '&amp;' for referring to matching string)
 	 * @param ere Regular expression
@@ -1340,7 +1378,9 @@ public class JRT {
 	}
 
 	/**
-	 * <p>substr.</p>
+	 * <p>
+	 * substr.
+	 * </p>
 	 *
 	 * @param startpos_obj a {@link java.lang.Object} object
 	 * @param str a {@link java.lang.String} object
@@ -1359,7 +1399,9 @@ public class JRT {
 	}
 
 	/**
-	 * <p>substr.</p>
+	 * <p>
+	 * substr.
+	 * </p>
 	 *
 	 * @param size_obj a {@link java.lang.Object} object
 	 * @param startpos_obj a {@link java.lang.Object} object
@@ -1386,7 +1428,9 @@ public class JRT {
 	}
 
 	/**
-	 * <p>timeSeed.</p>
+	 * <p>
+	 * timeSeed.
+	 * </p>
 	 *
 	 * @return a int
 	 */
@@ -1398,7 +1442,9 @@ public class JRT {
 	}
 
 	/**
-	 * <p>newRandom.</p>
+	 * <p>
+	 * newRandom.
+	 * </p>
 	 *
 	 * @param seed a int
 	 * @return a {@link java.util.Random} object
@@ -1408,13 +1454,15 @@ public class JRT {
 	}
 
 	/**
-	 * <p>applyRS.</p>
+	 * <p>
+	 * applyRS.
+	 * </p>
 	 *
 	 * @param rs_obj a {@link java.lang.Object} object
 	 */
 	public void applyRS(Object rs_obj) {
-		//	if (rs_obj.toString().equals(BLANK))
-		//		rs_obj = DEFAULT_RS_REGEX;
+		// if (rs_obj.toString().equals(BLANK))
+		// rs_obj = DEFAULT_RS_REGEX;
 		if (partitioningReader != null) {
 			partitioningReader.setRecordSeparator(rs_obj.toString());
 		}

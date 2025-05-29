@@ -57,22 +57,21 @@ public class BlockManager {
 	 * </ul>
 	 * <p>
 	 * And, the BlockThread algorithm is as follows:
-	 *
 	 * <ul>
 	 * <li>try, catch for InterruptedException ...
-	 *   <ul>
-	 *   <li>Execute the BlockObject block segment.
-	 *   <li>Assign the notifier from this BlockObject
-	 *     if one isn't already assigned (to mitigate
-	 *     a race condition).
-	 *   <li>Notify the BlockManager.
-	 *   </ul>
+	 * <ul>
+	 * <li>Execute the BlockObject block segment.
+	 * <li>Assign the notifier from this BlockObject
+	 * if one isn't already assigned (to mitigate
+	 * a race condition).
+	 * <li>Notify the BlockManager.
+	 * </ul>
 	 * <li>If interrupted, do nothing and return.
 	 * </ul>
 	 *
 	 * @param bo BlockObject to employ. Other block objects
-	 *   may be linked to this block object. In this event,
-	 *   employ all block objects simultaneously.
+	 *        may be linked to this block object. In this event,
+	 *        employ all block objects simultaneously.
 	 * @return a {@link java.lang.String} object
 	 */
 	public String block(BlockObject bo) {
@@ -82,9 +81,9 @@ public class BlockManager {
 		// (either indefinite or timed)
 
 		// for each block object
-		// 	spawn a thread (preferably using a threadpool)
-		// 	do the wait
-		//	signal a break in the block
+		// spawn a thread (preferably using a threadpool)
+		// do the wait
+		// signal a break in the block
 		// interrupt all other threads, resulting in InterruptedExceptions
 
 		List<Thread> threadList = new LinkedList<Thread>();

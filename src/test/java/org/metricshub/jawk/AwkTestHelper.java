@@ -45,6 +45,7 @@ public class AwkTestHelper {
 	/**
 	 * Executes the specified AWK script
 	 * <p>
+	 *
 	 * @param scriptFile File containing the AWK script to execute
 	 * @param inputFile Path to the file to be parsed by the AWK script
 	 * @return the printed output of the script as a String
@@ -59,6 +60,7 @@ public class AwkTestHelper {
 	/**
 	 * Executes the specified AWK script
 	 * <p>
+	 *
 	 * @param scriptFile File containing the AWK script to execute
 	 * @param inputFileList List of files that contain the input to be parsed by the AWK script
 	 * @return the printed output of the script as a String
@@ -66,13 +68,17 @@ public class AwkTestHelper {
 	 * @throws IOException on I/O problems
 	 * @throws ClassNotFoundException
 	 */
-	static String runAwk(File scriptFile, List<File> inputFileList) throws IOException, ExitException, ClassNotFoundException {
+	static String runAwk(File scriptFile, List<File> inputFileList)
+			throws IOException,
+			ExitException,
+			ClassNotFoundException {
 		return runAwk(scriptFile, inputFileList, false);
 	}
 
 	/**
 	 * Executes the specified AWK script
 	 * <p>
+	 *
 	 * @param scriptFile File containing the AWK script to execute
 	 * @param inputFileList List of files that contain the input to be parsed by the AWK script
 	 * @param setTempDir Whether to set the TEMPDIR variable for the AWK script to play with
@@ -81,7 +87,10 @@ public class AwkTestHelper {
 	 * @throws IOException on I/O problems
 	 * @throws ClassNotFoundException
 	 */
-	static String runAwk(File scriptFile, List<File> inputFileList, boolean setTempDir) throws IOException, ExitException, ClassNotFoundException {
+	static String runAwk(File scriptFile, List<File> inputFileList, boolean setTempDir)
+			throws IOException,
+			ExitException,
+			ClassNotFoundException {
 		AwkSettings settings = new AwkSettings();
 
 		// Default record separator should support both CRLF and LF
@@ -89,7 +98,9 @@ public class AwkTestHelper {
 		settings.setDefaultORS("\n");
 
 		// Set the input files
-		settings.getNameValueOrFileNames().addAll(inputFileList.stream().map(File::getAbsolutePath).collect(Collectors.toList()));
+		settings
+				.getNameValueOrFileNames()
+				.addAll(inputFileList.stream().map(File::getAbsolutePath).collect(Collectors.toList()));
 
 		// Set TEMPDIR so the AWK scripts can "play" with it
 		if (setTempDir) {
@@ -120,6 +131,7 @@ public class AwkTestHelper {
 	/**
 	 * Executes the specified script against the specified input
 	 * <p>
+	 *
 	 * @param script AWK script to execute (as a String)
 	 * @param input Text to process (as a String)
 	 * @return result as a String
@@ -134,6 +146,7 @@ public class AwkTestHelper {
 	/**
 	 * Executes the specified script against the specified input
 	 * <p>
+	 *
 	 * @param script AWK script to execute (as a String)
 	 * @param input Text to process (as a String)
 	 * @param setTempDir Whether to set the TEMPDIR variable for the AWK script to play with
@@ -142,7 +155,10 @@ public class AwkTestHelper {
 	 * @throws IOException on I/O problems
 	 * @throws ClassNotFoundException
 	 */
-	static String runAwk(String script, String input, boolean setTempDir) throws IOException, ExitException, ClassNotFoundException {
+	static String runAwk(String script, String input, boolean setTempDir)
+			throws IOException,
+			ExitException,
+			ClassNotFoundException {
 		AwkSettings settings = new AwkSettings();
 
 		// Set the input
@@ -184,6 +200,7 @@ public class AwkTestHelper {
 	/**
 	 * Evaluates the specified AWK expression
 	 * <p>
+	 *
 	 * @param expression AWK expression to evaluate (e.g. <code>2 + "3.0"</code>)
 	 * @return result as a String
 	 * @throws ExitException when the AWK script forces its exit with a specified code
@@ -224,7 +241,9 @@ public class AwkTestHelper {
 	static String readResource(String path) throws IOException {
 		StringBuilder builder = new StringBuilder();
 
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(AwkTestHelper.class.getResourceAsStream(path)))) {
+		try (
+				BufferedReader reader = new BufferedReader(
+						new InputStreamReader(AwkTestHelper.class.getResourceAsStream(path)))) {
 			String l;
 			while ((l = reader.readLine()) != null) {
 				builder.append(l).append('\n');

@@ -20,11 +20,9 @@ import org.junit.runners.Parameterized.Parameters;
 
 /**
  * Test Suite based on unit and non-regression tests from gawk.
- *
  * Each AWK script in the src/test/resources/gawk directory will be
  * executed against the corresponding *.in input, and its output will
  * be compared to the corresponding *.ok file.
- *
  */
 @RunWith(Parameterized.class)
 public class GawkTest {
@@ -37,6 +35,7 @@ public class GawkTest {
 
 	/**
 	 * Initialization of the tests (create a temporary directory for some of the scripts)
+	 *
 	 * @throws Exception
 	 */
 	@BeforeClass
@@ -60,10 +59,10 @@ public class GawkTest {
 		}
 
 		return Arrays
-			.stream(scriptsDir.listFiles())
-			.filter(sf -> sf.getName().toLowerCase().endsWith(".awk"))
-			.map(File::getAbsolutePath)
-			.collect(Collectors.toList());
+				.stream(scriptsDir.listFiles())
+				.filter(sf -> sf.getName().toLowerCase().endsWith(".awk"))
+				.map(File::getAbsolutePath)
+				.collect(Collectors.toList());
 	}
 
 	/** Path to the AWK test script to execute */
@@ -72,6 +71,7 @@ public class GawkTest {
 
 	/**
 	 * Execute the AWK script stored in {@link #awkPath}
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -88,11 +88,11 @@ public class GawkTest {
 
 		// Get the list of input files (usually *.in, but could be *.in1, *.in2, etc.)
 		List<File> inputFileList = IntStream
-			.range(0, 10)
-			.mapToObj(i -> (i == 0 ? "" : String.valueOf(i)))
-			.map(i -> new File(parent, shortName + ".in" + i))
-			.filter(File::isFile)
-			.collect(Collectors.toList());
+				.range(0, 10)
+				.mapToObj(i -> (i == 0 ? "" : String.valueOf(i)))
+				.map(i -> new File(parent, shortName + ".in" + i))
+				.filter(File::isFile)
+				.collect(Collectors.toList());
 
 		String result;
 		try {
@@ -113,18 +113,19 @@ public class GawkTest {
 
 	/**
 	 * Initialization of the tests (create a temporary directory for some of the scripts)
+	 *
 	 * @throws Exception
 	 */
 	@AfterClass
 	public static void afterAll() throws Exception {
 		double successPercentage = ((double) successCount.get() / (double) testCount.get()) * 100d;
 
-		System.out.printf(
-			"\n========\nTEST RESULTS: Jawk compliant with gawk on %d/%d tests (%.1f%%)\n========\n",
-			successCount.get(),
-			testCount.get(),
-			successPercentage
-		);
+		System.out
+				.printf(
+						"\n========\nTEST RESULTS: Jawk compliant with gawk on %d/%d tests (%.1f%%)\n========\n",
+						successCount.get(),
+						testCount.get(),
+						successPercentage);
 		assertTrue("Jawk vs Gawk success rate must be > 19.8%", successPercentage > 19.8);
 	}
 }

@@ -41,7 +41,7 @@ public interface AwkSyntaxTree {
 	 * parent node of this tree node.
 	 *
 	 * @param ps The print stream to dump the text
-	 *   representation.
+	 *        representation.
 	 */
 	void dump(PrintStream ps);
 
@@ -66,7 +66,7 @@ public interface AwkSyntaxTree {
 	 *
 	 * @param tuples The tuples to populate.
 	 * @return The number of items left on the operand stack after
-	 *   these tuples have executed.
+	 *         these tuples have executed.
 	 */
 	int populateTuples(AwkTuples tuples);
 }

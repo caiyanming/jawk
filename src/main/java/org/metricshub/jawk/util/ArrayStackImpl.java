@@ -31,7 +31,6 @@ import java.util.ArrayList;
  * this implementation is non-synchronized to improve performance.
  * <p>
  * It performs quicker than the <code>LinkedListStackImpl</code> version.
- *
  * <p>
  * There is no maximum capacity which is enforced, nor is there any
  * checks if <code>pop()</code> is executed on an empty stack.
@@ -51,7 +50,6 @@ public class ArrayStackImpl<E> extends ArrayList<E> implements MyStack<E> {
 
 	/**
 	 * {@inheritDoc}
-	 *
 	 * Push an item to the stack.
 	 */
 	@Override
@@ -61,7 +59,6 @@ public class ArrayStackImpl<E> extends ArrayList<E> implements MyStack<E> {
 
 	/**
 	 * {@inheritDoc}
-	 *
 	 * Pops an item off the stack.
 	 * <p>
 	 * Warning: no checks are done in terms of size, etc.

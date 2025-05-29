@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -67,12 +69,11 @@
 		</developer>
 	</developers>
 
-        <properties>
-                <!-- Java 8 -->
-                <maven.compiler.source>8</maven.compiler.source>
-                <maven.compiler.target>8</maven.compiler.target>
+	<properties>
+		<!-- Java 8 -->
+		<maven.compiler.release>8</maven.compiler.release>
 
-                <!-- Reproducible Build -->
+		<!-- Reproducible Build -->
 		<!-- See https://maven.apache.org/guides/mini/guide-reproducible-builds.html -->
 		<project.build.outputTimestamp>2025-04-03T12:56:26Z</project.build.outputTimestamp>
 	</properties>
@@ -104,54 +105,38 @@
 			<scope>test</scope>
 		</dependency>
 
-                <dependency>
-                        <groupId>junit</groupId>
-                        <artifactId>junit</artifactId>
-                        <version>4.13.2</version>
-                        <scope>test</scope>
-                </dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.13.2</version>
+			<scope>test</scope>
+		</dependency>
 
-                <dependency>
-                        <groupId>com.github.spotbugs</groupId>
-                        <artifactId>spotbugs-annotations</artifactId>
-                        <version>4.9.3</version>
-                </dependency>
+		<dependency>
+			<groupId>com.github.spotbugs</groupId>
+			<artifactId>spotbugs-annotations</artifactId>
+			<version>4.9.3</version>
+		</dependency>
 
-        </dependencies>
+	</dependencies>
 
 	<build>
-                <plugins>
-
-                        <plugin>
-                                <artifactId>maven-compiler-plugin</artifactId>
-                                <configuration>
-                                        <source>8</source>
-                                        <target>8</target>
-                                </configuration>
-                        </plugin>
+		<plugins>
 
 			<plugin>
-				<groupId>com.hubspot.maven.plugins</groupId>
-				<artifactId>prettier-maven-plugin</artifactId>
-				<version>0.22</version>
+				<groupId>net.revelc.code.formatter</groupId>
+				<artifactId>formatter-maven-plugin</artifactId>
+				<version>2.26.0</version>
 				<executions>
 					<execution>
 						<phase>validate</phase>
 						<goals>
-							<goal>check</goal>
+							<goal>validate</goal>
 						</goals>
 					</execution>
 				</executions>
 				<configuration>
-					<nodePath>${nodePath}</nodePath>
-					<npmPath>${npmPath}</npmPath>
-					<prettierJavaVersion>2.5.0</prettierJavaVersion>
-					<ignoreConfigFile>false</ignoreConfigFile>
-					<ignoreEditorConfig>false</ignoreEditorConfig>
-					<inputGlobs>
-						<inputGlob>src/main/java/**/*.java</inputGlob>
-						<inputGlob>src/test/java/**/*.java</inputGlob>
-					</inputGlobs>
+					<configFile>metricshub-eclipse-formatter.xml</configFile>
 				</configuration>
 			</plugin>
 
@@ -271,7 +256,8 @@
 				<version>3.6.0</version>
 				<configuration>
 					<configLocation>checkstyle.xml</configLocation>
-					<!-- TEMPORARY: These files are excluded via suppressions and should be fixed to comply with checkstyle -->
+					<!-- TEMPORARY: These files are excluded via suppressions and should be fixed to comply
+					with checkstyle -->
 					<suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
 					<encoding>${project.build.sourceEncoding}</encoding>
 					<linkXref>true</linkXref>

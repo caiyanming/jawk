@@ -71,9 +71,11 @@ public final class Main {
 	 * The main method is a simple call to the invoke method.
 	 * The current implementation is basically as follows:
 	 * <blockquote>
+	 *
 	 * <pre>
 	 * System.exit(invoke(args));
 	 * </pre>
+	 *
 	 * </blockquote>
 	 *
 	 * @param args Command line arguments to the VM.

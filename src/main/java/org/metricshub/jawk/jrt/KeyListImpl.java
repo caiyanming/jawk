@@ -45,7 +45,7 @@ public class KeyListImpl implements KeyList {
 	 * @param set a {@link java.util.Set} object
 	 */
 	public KeyListImpl(Set<Object> set) {
-		//super(set);
+		// super(set);
 		list = new ArrayList<Object>(set);
 	}
 

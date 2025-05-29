@@ -40,7 +40,7 @@ public class RegexTokenizer implements Enumeration<Object> {
 	 *
 	 * @param input The input string to tokenize.
 	 * @param delimitterRegexPattern The regular expression delineating tokens
-	 *   within the input string.
+	 *        within the input string.
 	 */
 	public RegexTokenizer(String input, String delimitterRegexPattern) {
 		array = input.split(delimitterRegexPattern, -2);

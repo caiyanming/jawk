@@ -28,10 +28,12 @@ package org.metricshub.jawk.intermediate;
  * This is particularly important for forward-referenced
  * functions. For example:
  * <blockquote>
+ *
  * <pre>
  * BEGIN { f(3) }
  * function f(x) { print x*x }
  * </pre>
+ *
  * </blockquote>
  * f() is referred to prior to its definition. Therefore,
  * the getFunctionAddress() call within the BEGIN block

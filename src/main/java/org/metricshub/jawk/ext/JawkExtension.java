@@ -32,12 +32,10 @@ import org.metricshub.jawk.util.AwkSettings;
  * Instances of this interface are eligible for insertion
  * into Jawk as an extension to the language. Extensions
  * appear within a Jawk script as function calls.
- *
  * <p>
  * Extensions introduce native Java modules into the Jawk language.
  * This enables special services into Jawk, such as Sockets,
  * GUIs, databases, etc. natively into Jawk.
- *
  * <p>
  * Extension functions can be used anywhere an AWK function,
  * builtin or user-defined, can be used. One immediate consideration
@@ -56,7 +54,6 @@ import org.metricshub.jawk.util.AwkSettings;
  * provide some sort of poll or block call to avoid
  * out-of-control CPU resource consumption.
  * </blockquote>
- *
  * <p>
  * Extensions introduce keywords into the Jawk parser.
  * Keywords are of type _EXTENSION_ tokens. As a result,
@@ -82,7 +79,9 @@ public interface JawkExtension {
 	void init(VariableManager vm, JRT jrt, final AwkSettings settings);
 
 	/**
-	 * <p>getExtensionName.</p>
+	 * <p>
+	 * getExtensionName.
+	 * </p>
 	 *
 	 * @return name of the extension package.
 	 */
@@ -110,10 +109,10 @@ public interface JawkExtension {
 	 * @param extensionKeyword The extension keyword to check.
 	 * @param numArgs How many actual parameters are used in the call.
 	 * @return An array of parameter indexes containing associative arrays.
-	 *   <strong>Note:</strong> non-inclusion of a parameter index
-	 *   into this array makes no implication as to whether the
-	 *   parameter is a scalar or an associative array. It means
-	 *   that its type is not guaranteed to be an associative array.
+	 *         <strong>Note:</strong> non-inclusion of a parameter index
+	 *         into this array makes no implication as to whether the
+	 *         parameter is a scalar or an associative array. It means
+	 *         that its type is not guaranteed to be an associative array.
 	 */
 	int[] getAssocArrayParameterPositions(String extensionKeyword, int numArgs);
 

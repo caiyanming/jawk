@@ -45,12 +45,14 @@ public interface MyStack<E> {
 	 * to the callee.
 	 *
 	 * @return The top of the stack, which is subsequently
-	 *   removed from the stack.
+	 *         removed from the stack.
 	 */
 	E pop();
 
 	/**
-	 * <p>size.</p>
+	 * <p>
+	 * size.
+	 * </p>
 	 *
 	 * @return The number of elements within the stack.
 	 */

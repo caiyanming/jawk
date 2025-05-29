@@ -59,10 +59,10 @@ import org.slf4j.Logger;
  * <ul>
  * <li>Parse the Jawk script, producing an abstract syntax tree.
  * <li>Traverse the abstract syntax tree, producing a list of
- *	 instruction tuples for the interpreter.
+ * instruction tuples for the interpreter.
  * <li>Traverse the list of tuples, providing a runtime which
- *	 ultimately executes the Jawk script, <strong>or</strong>
- *   Command-line parameters dictate which action is to take place.
+ * ultimately executes the Jawk script, <strong>or</strong>
+ * Command-line parameters dictate which action is to take place.
  * </ul>
  * Two additional semantic checks on the syntax tree are employed
  * (both to resolve function calls for defined functions).
@@ -86,8 +86,9 @@ import org.slf4j.Logger;
  */
 public class Awk {
 
-	private static final String DEFAULT_EXTENSIONS =
-		org.metricshub.jawk.ext.CoreExtension.class.getName() + "#" + org.metricshub.jawk.ext.StdinExtension.class.getName();
+	private static final String DEFAULT_EXTENSIONS = org.metricshub.jawk.ext.CoreExtension.class.getName()
+			+ "#"
+			+ org.metricshub.jawk.ext.StdinExtension.class.getName();
 
 	private static final Logger LOG = AwkLogger.getLogger(Awk.class);
 
@@ -97,16 +98,18 @@ public class Awk {
 	public Awk() {}
 
 	/**
-	 * <p>invoke.</p>
+	 * <p>
+	 * invoke.
+	 * </p>
 	 *
 	 * @param settings This tells AWK what to do
-	 *   (where to get input from, where to write it to, in what mode to run,
-	 *   ...)
+	 *        (where to get input from, where to write it to, in what mode to run,
+	 *        ...)
 	 * @throws java.io.IOException upon an IO error.
 	 * @throws java.lang.ClassNotFoundException if intermediate code is specified
-	 *           but deserialization fails to load in the JVM
+	 *         but deserialization fails to load in the JVM
 	 * @throws org.metricshub.jawk.ExitException if interpretation is requested,
-	 *	 and a specific exit code is requested.
+	 *         and a specific exit code is requested.
 	 */
 	public void invoke(AwkSettings settings) throws IOException, ClassNotFoundException, ExitException {
 		AVM avm = null;
@@ -128,13 +131,17 @@ public class Awk {
 			for (ScriptSource scriptSource : settings.getScriptSources()) {
 				if (scriptSource.isIntermediate()) {
 					// read the intermediate file, bypassing frontend processing
-					tuples = (AwkTuples) readObjectFromInputStream(scriptSource.getInputStream()); // FIXME only the last intermediate file is used!
+					tuples = (AwkTuples) readObjectFromInputStream(scriptSource.getInputStream()); // FIXME only the last
+																																													// intermediate file is used!
 				} else {
 					notIntermediateScriptSources.add(scriptSource);
 				}
 			}
 			if (!notIntermediateScriptSources.isEmpty()) {
-				AwkParser parser = new AwkParser(settings.isAdditionalFunctions(), settings.isAdditionalTypeFunctions(), extensions);
+				AwkParser parser = new AwkParser(
+						settings.isAdditionalFunctions(),
+						settings.isAdditionalTypeFunctions(),
+						extensions);
 				// parse the script
 				AwkSyntaxTree ast = parser.parse(notIntermediateScriptSources);
 
@@ -212,7 +219,7 @@ public class Awk {
 	private static Map<String, JawkExtension> getJawkExtensions() {
 		String extensionsStr = System.getProperty("jawk.extensions", null);
 		if (extensionsStr == null) {
-			//return Collections.emptyMap();
+			// return Collections.emptyMap();
 			extensionsStr = DEFAULT_EXTENSIONS;
 		} else {
 			extensionsStr = DEFAULT_EXTENSIONS + "#" + extensionsStr;
@@ -249,14 +256,22 @@ public class Awk {
 					for (String keyword : keywords) {
 						if (retval.get(keyword) != null) {
 							throw new IllegalArgumentException(
-								"keyword collision : " + keyword + " for both " + retval.get(keyword).getExtensionName() + " and " + ji.getExtensionName()
-							);
+									"keyword collision : "
+											+ keyword
+											+ " for both "
+											+ retval.get(keyword).getExtensionName()
+											+ " and "
+											+ ji.getExtensionName());
 						}
 						retval.put(keyword, ji);
 					}
 				} catch (
-					InstantiationException | IllegalAccessException | NoSuchMethodException | SecurityException | IllegalArgumentException | InvocationTargetException e
-				) {
+						InstantiationException
+						| IllegalAccessException
+						| NoSuchMethodException
+						| SecurityException
+						| IllegalArgumentException
+						| InvocationTargetException e) {
 					LOG.warn("Cannot instantiate " + c.getName(), e);
 				}
 			} catch (ClassNotFoundException cnfe) {

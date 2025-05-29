@@ -22,7 +22,9 @@ public class ExtensionTest {
 	@Test
 	public void testExtension() throws Exception {
 		JawkExtension myExtension = new TestExtension();
-		Map<String, JawkExtension> myExtensionMap = Arrays.stream(myExtension.extensionKeywords()).collect(Collectors.toMap(k -> k, k -> myExtension));
+		Map<String, JawkExtension> myExtensionMap = Arrays
+				.stream(myExtension.extensionKeywords())
+				.collect(Collectors.toMap(k -> k, k -> myExtension));
 
 		AwkSettings settings = new AwkSettings();
 
@@ -36,7 +38,12 @@ public class ExtensionTest {
 		settings.setOutputStream(new PrintStream(resultBytesStream));
 
 		// Sets the AWK script to execute
-		settings.addScriptSource(new ScriptSource("Body", new StringReader("BEGIN { ab[1] = \"a\"; ab[2] = \"b\"; printf myExtensionFunction(3, ab) }"), false));
+		settings
+				.addScriptSource(
+						new ScriptSource(
+								"Body",
+								new StringReader("BEGIN { ab[1] = \"a\"; ab[2] = \"b\"; printf myExtensionFunction(3, ab) }"),
+								false));
 
 		// Execute the awk script against the specified input
 		AVM avm = null;

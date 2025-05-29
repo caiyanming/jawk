@@ -37,11 +37,9 @@ import java.util.Set;
  * BlockObjects are chained. The BlockManager
  * blocks on all chained BlockObjects until one
  * is unblocked.
- *
  * <p>
  * Subclasses must provide meaningful block()
  * and getNotifierTag() routines.
- *
  * <p>
  * BlockObjects do not actually perform the client
  * blocking. This is done by the BlockManager at the
@@ -58,7 +56,9 @@ public abstract class BlockObject {
 	private BlockObject nextBlockObject = null;
 
 	/**
-	 * <p>Constructor for BlockObject.</p>
+	 * <p>
+	 * Constructor for BlockObject.
+	 * </p>
 	 */
 	protected BlockObject() {}
 
@@ -98,7 +98,9 @@ public abstract class BlockObject {
 	}
 
 	/**
-	 * <p>Getter for the field <code>nextBlockObject</code>.</p>
+	 * <p>
+	 * Getter for the field <code>nextBlockObject</code>.
+	 * </p>
 	 *
 	 * @return a {@link org.metricshub.jawk.jrt.BlockObject} object
 	 */
@@ -113,9 +115,9 @@ public abstract class BlockObject {
 	 * to be thrown.
 	 *
 	 * @return A List of chained BlockObjects, including
-	 *   this one.
+	 *         this one.
 	 * @throws org.metricshub.jawk.jrt.AwkRuntimeException if the BlockObject
-	 *   chain contains a cycle.
+	 *         chain contains a cycle.
 	 */
 	public List<BlockObject> getBlockObjects() {
 		List<BlockObject> retval = new LinkedList<BlockObject>();
@@ -123,7 +125,8 @@ public abstract class BlockObject {
 		BlockObject ref = this;
 		while (ref != null) {
 			if (blockObjects.contains(ref)) {
-				throw new AwkRuntimeException("Block chain contains a cycle (duplicate) : " + ref.getClass().getName() + " / " + ref.getNotifierTag());
+				throw new AwkRuntimeException(
+						"Block chain contains a cycle (duplicate) : " + ref.getClass().getName() + " / " + ref.getNotifierTag());
 			} else {
 				blockObjects.add(ref);
 			}
@@ -135,7 +138,6 @@ public abstract class BlockObject {
 
 	/**
 	 * {@inheritDoc}
-	 *
 	 * Ensure non-evaluation of a BlockObject by throwing an AWK Runtime
 	 * exception, in case it leaks into AWK evaluation space.
 	 */

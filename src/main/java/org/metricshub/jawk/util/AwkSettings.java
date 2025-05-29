@@ -163,7 +163,9 @@ public class AwkSettings {
 	private String defaultORS = System.getProperty("line.separator", "\n");
 
 	/**
-	 * <p>toDescriptionString.</p>
+	 * <p>
+	 * toDescriptionString.
+	 * </p>
 	 *
 	 * @return a human readable representation of the parameters values.
 	 */
@@ -242,12 +244,14 @@ public class AwkSettings {
 	}
 
 	/**
-	 * <p>Getter for the field <code>outputFilename</code>.</p>
+	 * <p>
+	 * Getter for the field <code>outputFilename</code>.
+	 * </p>
 	 *
 	 * @param defaultFileName The filename to return if -o argument
-	 *   is not used.
+	 *        is not used.
 	 * @return the optarg for the -o parameter, or the defaultFileName
-	 *   parameter if -o is not utilized.
+	 *         parameter if -o is not utilized.
 	 */
 	public String getOutputFilename(String defaultFileName) {
 		if (getOutputFilename() == null) {
@@ -258,13 +262,15 @@ public class AwkSettings {
 	}
 
 	/**
-	 * <p>Getter for the field <code>scriptSources</code>.</p>
+	 * <p>
+	 * Getter for the field <code>scriptSources</code>.
+	 * </p>
 	 *
 	 * @return the script sources meta info.
-	 * This will usually be either one String container,
-	 * made up of the script given on the command line directly,
-	 * with the first non-"-" parameter,
-	 * or one or multiple script file names (if provided with -f switches).
+	 *         This will usually be either one String container,
+	 *         made up of the script given on the command line directly,
+	 *         with the first non-"-" parameter,
+	 *         or one or multiple script file names (if provided with -f switches).
 	 */
 	public List<ScriptSource> getScriptSources() {
 		return scriptSources;
@@ -574,7 +580,7 @@ public class AwkSettings {
 	 * Compiled destination directory (if provided).
 	 *
 	 * @param destinationDirectory the destinationDirectory to set,
-	 *   <code>"."</code> by default.
+	 *        <code>"."</code> by default.
 	 */
 	public void setDestinationDirectory(String destinationDirectory) {
 		if (destinationDirectory == null) {
@@ -607,7 +613,9 @@ public class AwkSettings {
 	}
 
 	/**
-	 * <p>Getter for the field <code>locale</code>.</p>
+	 * <p>
+	 * Getter for the field <code>locale</code>.
+	 * </p>
 	 *
 	 * @return the Locale that will be used for outputting numbers
 	 */
@@ -625,7 +633,9 @@ public class AwkSettings {
 	}
 
 	/**
-	 * <p>Getter for the field <code>defaultRS</code>.</p>
+	 * <p>
+	 * Getter for the field <code>defaultRS</code>.
+	 * </p>
 	 *
 	 * @return the default RS, when not set by the AWK script
 	 */
@@ -643,7 +653,9 @@ public class AwkSettings {
 	}
 
 	/**
-	 * <p>Getter for the field <code>defaultORS</code>.</p>
+	 * <p>
+	 * Getter for the field <code>defaultORS</code>.
+	 * </p>
 	 *
 	 * @return the default ORS, when not set by the AWK script
 	 */

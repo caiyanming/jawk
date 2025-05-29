@@ -40,59 +40,57 @@ import org.slf4j.Logger;
  * Enable stdin processing in Jawk, to be used in conjunction with the -ni parameter.
  * Since normal input processing is turned off via -ni, this is provided to enable a way
  * to read input from stdin.
- *
  * <p>
  * To use:
- * <blockquote><pre>
+ * <blockquote>
+ *
+ * <pre>
  * StdinGetline() == 1 { print "--&gt; " $0 }
- * </pre></blockquote>
+ * </pre>
  *
- *
+ * </blockquote>
  * <p>
  * The extension functions are as follows:
  * <ul>
  * <li>
- *   <p>
- *   <strong><em>StdinHasInput</em></strong> -<br/>
- *   Returns 1 when StdinGetline() does not block (i.e., when input is available
- *   or upon an EOF), 0 otherwise.<br/>
- *   <strong>Parameters:</strong>
- *   <ul>
- *   <li>none
- *   </ul>
- *   <strong>Returns:</strong>
- *   <ul>
- *   <li>1 when StdinGetline() does not block, 0 otherwise.
- *   </ul>
- *
+ * <p>
+ * <strong><em>StdinHasInput</em></strong> -<br/>
+ * Returns 1 when StdinGetline() does not block (i.e., when input is available
+ * or upon an EOF), 0 otherwise.<br/>
+ * <strong>Parameters:</strong>
+ * <ul>
+ * <li>none
+ * </ul>
+ * <strong>Returns:</strong>
+ * <ul>
+ * <li>1 when StdinGetline() does not block, 0 otherwise.
+ * </ul>
  * <li>
- *   <p>
- *   <strong><em>StdinGetline</em></strong> -<br/>
- *   Retrieve a line of input from stdin. The operation
- *   will block until input is available, EOF, or an IO error.<br/>
- *   <strong>Parameters:</strong>
- *   <ul>
- *   <li>none
- *   </ul>
- *   <strong>Returns:</strong>
- *   <ul>
- *   <li>1 upon successful read of a line of input from stdin,
- *     0 upon an EOF, and -1 when an IO error occurs.
- *   </ul>
- *
+ * <p>
+ * <strong><em>StdinGetline</em></strong> -<br/>
+ * Retrieve a line of input from stdin. The operation
+ * will block until input is available, EOF, or an IO error.<br/>
+ * <strong>Parameters:</strong>
+ * <ul>
+ * <li>none
+ * </ul>
+ * <strong>Returns:</strong>
+ * <ul>
+ * <li>1 upon successful read of a line of input from stdin,
+ * 0 upon an EOF, and -1 when an IO error occurs.
+ * </ul>
  * <li>
- *   <p>
- *   <strong><em>StdinBlock</em></strong> -<br/>
- *   Block until a call to StdinGetline() would not block.<br/>
- *   <strong>Parameters:</strong>
- *   <ul>
- *   <li>chained block function - optional
- *   </ul>
- *   <strong>Returns:</strong>
- *   <ul>
- *   <li>"Stdin" if this block object is triggered
- *   </ul>
- *
+ * <p>
+ * <strong><em>StdinBlock</em></strong> -<br/>
+ * Block until a call to StdinGetline() would not block.<br/>
+ * <strong>Parameters:</strong>
+ * <ul>
+ * <li>chained block function - optional
+ * </ul>
+ * <strong>Returns:</strong>
+ * <ul>
+ * <li>"Stdin" if this block object is triggered
+ * </ul>
  * </ul>
  *
  * @author Danny Daglas
@@ -131,7 +129,9 @@ public class StdinExtension extends AbstractExtension implements JawkExtension {
 		Thread getLineInputThread = new Thread("getLineInputThread") {
 			@Override
 			public void run() {
-				try (BufferedReader br = new BufferedReader(new InputStreamReader(settings.getInput(), StandardCharsets.UTF_8))) {
+				try (
+						BufferedReader br = new BufferedReader(
+								new InputStreamReader(settings.getInput(), StandardCharsets.UTF_8))) {
 					String line;
 					while ((line = br.readLine()) != null) {
 						getLineInput.put(line);
@@ -171,10 +171,10 @@ public class StdinExtension extends AbstractExtension implements JawkExtension {
 	@Override
 	public String[] extensionKeywords() {
 		return new String[] {
-			// keyboard stuff
-			"StdinHasInput", // i.e. b = StdinHasInput()
-			"StdinGetline", // i.e. retcode = StdinGetline() # $0 = the input
-			"StdinBlock" // i.e. StdinBlock(...)
+				// keyboard stuff
+				"StdinHasInput", // i.e. b = StdinHasInput()
+				"StdinGetline", // i.e. retcode = StdinGetline() # $0 = the input
+				"StdinBlock" // i.e. StdinBlock(...)
 		};
 	}
 
@@ -218,7 +218,7 @@ public class StdinExtension extends AbstractExtension implements JawkExtension {
 
 	/**
 	 * @return 1 upon successful read,
-	 *   0 upon EOF, and -1 if an IO error occurs
+	 *         0 upon EOF, and -1 if an IO error occurs
 	 */
 	private Object stdInGetLine() {
 		try {

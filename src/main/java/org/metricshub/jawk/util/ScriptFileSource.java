@@ -46,7 +46,9 @@ public class ScriptFileSource extends ScriptSource {
 	private InputStream fileInputStream;
 
 	/**
-	 * <p>Constructor for ScriptFileSource.</p>
+	 * <p>
+	 * Constructor for ScriptFileSource.
+	 * </p>
 	 *
 	 * @param filePath a {@link java.lang.String} object
 	 */
@@ -58,7 +60,9 @@ public class ScriptFileSource extends ScriptSource {
 	}
 
 	/**
-	 * <p>Getter for the field <code>filePath</code>.</p>
+	 * <p>
+	 * Getter for the field <code>filePath</code>.
+	 * </p>
 	 *
 	 * @return a {@link java.lang.String} object
 	 */

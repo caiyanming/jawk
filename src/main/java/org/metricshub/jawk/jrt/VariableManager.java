@@ -39,56 +39,72 @@ package org.metricshub.jawk.jrt;
  */
 public interface VariableManager {
 	/**
-	 * <p>getARGC.</p>
+	 * <p>
+	 * getARGC.
+	 * </p>
 	 *
 	 * @return the contents of the ARGC variable.
 	 */
 	Object getARGC();
 
 	/**
-	 * <p>getARGV.</p>
+	 * <p>
+	 * getARGV.
+	 * </p>
 	 *
 	 * @return the contents of the ARGV variable.
 	 */
 	Object getARGV();
 
 	/**
-	 * <p>getCONVFMT.</p>
+	 * <p>
+	 * getCONVFMT.
+	 * </p>
 	 *
 	 * @return the contents of the CONVFMT variable.
 	 */
 	Object getCONVFMT();
 
 	/**
-	 * <p>getFS.</p>
+	 * <p>
+	 * getFS.
+	 * </p>
 	 *
 	 * @return the contents of the FS variable.
 	 */
 	Object getFS();
 
 	/**
-	 * <p>getRS.</p>
+	 * <p>
+	 * getRS.
+	 * </p>
 	 *
 	 * @return the contents of the RS variable.
 	 */
 	Object getRS();
 
 	/**
-	 * <p>getOFS.</p>
+	 * <p>
+	 * getOFS.
+	 * </p>
 	 *
 	 * @return the contents of the OFS variable.
 	 */
 	Object getOFS();
 
 	/**
-	 * <p>getORS.</p>
+	 * <p>
+	 * getORS.
+	 * </p>
 	 *
 	 * @return the contents of the ORS variable.
 	 */
 	Object getORS();
 
 	/**
-	 * <p>getSUBSEP.</p>
+	 * <p>
+	 * getSUBSEP.
+	 * </p>
 	 *
 	 * @return the contents of the SUBSEP variable.
 	 */
