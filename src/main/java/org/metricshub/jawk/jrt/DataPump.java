@@ -55,15 +55,15 @@ public class DataPump implements Runnable {
 	public DataPump(InputStream in, PrintStream out) {
 		this.is = in;
 		this.os = new PrintStream(out);
-		//setDaemon(true);
+		// setDaemon(true);
 	}
 
 	/**
 	 * Allocate the data pump and start the thread.
 	 *
 	 * @param desc A human-readable description of this data pump.
-	 *   It is part of the thread name, and, therefore, visible
-	 *   upon a VM thread dump.
+	 *        It is part of the thread name, and, therefore, visible
+	 *        upon a VM thread dump.
 	 * @param in The input stream.
 	 * @param out The output stream.
 	 */
@@ -73,7 +73,6 @@ public class DataPump implements Runnable {
 
 	/**
 	 * {@inheritDoc}
-	 *
 	 * VM entry point for the thread. It performs the data
 	 * relay.
 	 */

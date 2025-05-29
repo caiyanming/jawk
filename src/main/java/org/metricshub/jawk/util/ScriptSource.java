@@ -45,7 +45,9 @@ public class ScriptSource {
 	private boolean intermediate;
 
 	/**
-	 * <p>Constructor for ScriptSource.</p>
+	 * <p>
+	 * Constructor for ScriptSource.
+	 * </p>
 	 *
 	 * @param description a {@link java.lang.String} object
 	 * @param reader a {@link java.io.Reader} object
@@ -58,7 +60,9 @@ public class ScriptSource {
 	}
 
 	/**
-	 * <p>Getter for the field <code>description</code>.</p>
+	 * <p>
+	 * Getter for the field <code>description</code>.
+	 * </p>
 	 *
 	 * @return a {@link java.lang.String} object
 	 */
@@ -72,8 +76,8 @@ public class ScriptSource {
 	 * returns <code>false</code>.
 	 *
 	 * @return The reader which contains the intermediate file, null if
-	 *   either the -f argument is not used, or the argument does not
-	 *   refer to an intermediate file.
+	 *         either the -f argument is not used, or the argument does not
+	 *         refer to an intermediate file.
 	 * @throws java.io.IOException if any.
 	 */
 	public Reader getReader() throws IOException {
@@ -100,7 +104,7 @@ public class ScriptSource {
 	 * That is, the content of the file is not checked.
 	 *
 	 * @return <code>true</code> if the "-f optarg" is an intermediate file
-	 *   (a file ending in ".ai"), <code>false</code> otherwise.
+	 *         (a file ending in ".ai"), <code>false</code> otherwise.
 	 */
 	public final boolean isIntermediate() {
 		return intermediate;

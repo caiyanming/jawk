@@ -23,19 +23,25 @@ package org.metricshub.jawk.intermediate;
  */
 
 /**
- * <p>UninitializedObject class.</p>
+ * <p>
+ * UninitializedObject class.
+ * </p>
  *
  * @author Danny Daglas
  */
 public class UninitializedObject {
 
 	/**
-	 * <p>Constructor for UninitializedObject.</p>
+	 * <p>
+	 * Constructor for UninitializedObject.
+	 * </p>
 	 */
 	public UninitializedObject() {}
 
 	/**
-	 * <p>toString.</p>
+	 * <p>
+	 * toString.
+	 * </p>
 	 *
 	 * @return a {@link java.lang.String} object
 	 */

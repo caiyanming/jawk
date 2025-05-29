@@ -34,7 +34,9 @@ package org.metricshub.jawk.intermediate;
  */
 public interface PositionForCompilation extends Position {
 	/**
-	 * <p>index.</p>
+	 * <p>
+	 * index.
+	 * </p>
 	 *
 	 * @return a int
 	 */

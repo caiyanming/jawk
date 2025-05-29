@@ -34,7 +34,9 @@ public class AwkRuntimeException extends RuntimeException {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * <p>Constructor for AwkRuntimeException.</p>
+	 * <p>
+	 * Constructor for AwkRuntimeException.
+	 * </p>
 	 *
 	 * @param msg a {@link java.lang.String} object
 	 */
@@ -43,7 +45,9 @@ public class AwkRuntimeException extends RuntimeException {
 	}
 
 	/**
-	 * <p>Constructor for AwkRuntimeException.</p>
+	 * <p>
+	 * Constructor for AwkRuntimeException.
+	 * </p>
 	 *
 	 * @param lineno a int
 	 * @param msg a {@link java.lang.String} object

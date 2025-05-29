@@ -43,10 +43,12 @@ public interface PositionForInterpretation extends Position {
 	void jump(Address address);
 
 	/**
-	 * <p>current.</p>
+	 * <p>
+	 * current.
+	 * </p>
 	 *
 	 * @return The current index into the tuple list (queue)
-	 *	of the tuple located at the current position.
+	 *         of the tuple located at the current position.
 	 */
 	int current();
 

@@ -56,7 +56,7 @@ public abstract class AbstractExtension implements JawkExtension {
 	 *
 	 * @param obj The Jawk variable to convert to a Jawk string.
 	 * @return A string representation of obj after CONVFMT
-	 *   has been applied.
+	 *         has been applied.
 	 */
 	protected final String toAwkString(Object obj) {
 		return JRT.toAwkString(obj, getVm().getCONVFMT().toString(), settings.getLocale());
@@ -64,7 +64,6 @@ public abstract class AbstractExtension implements JawkExtension {
 
 	/**
 	 * {@inheritDoc}
-	 *
 	 * Assume no guarantee of any extension parameter being an
 	 * associative array.
 	 */
@@ -95,7 +94,9 @@ public abstract class AbstractExtension implements JawkExtension {
 	}
 
 	/**
-	 * <p>Getter for the field <code>jrt</code>.</p>
+	 * <p>
+	 * Getter for the field <code>jrt</code>.
+	 * </p>
 	 *
 	 * @return the Runtime
 	 */
@@ -104,7 +105,9 @@ public abstract class AbstractExtension implements JawkExtension {
 	}
 
 	/**
-	 * <p>Getter for the field <code>vm</code>.</p>
+	 * <p>
+	 * Getter for the field <code>vm</code>.
+	 * </p>
 	 *
 	 * @return the Variable Manager
 	 */
@@ -113,7 +116,9 @@ public abstract class AbstractExtension implements JawkExtension {
 	}
 
 	/**
-	 * <p>Getter for the field <code>settings</code>.</p>
+	 * <p>
+	 * Getter for the field <code>settings</code>.
+	 * </p>
 	 *
 	 * @return the Settings
 	 */

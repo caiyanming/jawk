@@ -34,7 +34,9 @@ public class ConditionPair {
 	private boolean within = false;
 
 	/**
-	 * <p>Constructor for ConditionPair.</p>
+	 * <p>
+	 * Constructor for ConditionPair.
+	 * </p>
 	 */
 	public ConditionPair() {}
 
@@ -43,9 +45,9 @@ public class ConditionPair {
 	 * whether the begin and end conditions match or not
 	 *
 	 * @param startMatches True if the start condition is true, which means
-	 *                     we're entering the range
+	 *        we're entering the range
 	 * @param endMatches True if the end condition is true, which means
-	 *                   we're leaving the range
+	 *        we're leaving the range
 	 * @return wether we're within the range
 	 */
 	public boolean update(boolean startMatches, boolean endMatches) {

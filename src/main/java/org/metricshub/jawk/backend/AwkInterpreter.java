@@ -38,7 +38,7 @@ public interface AwkInterpreter {
 	 *
 	 * @param tuples The tuples to compile.
 	 * @throws org.metricshub.jawk.ExitException indicates that the interpreter would like
-	 *   the application to exit.
+	 *         the application to exit.
 	 * @throws IOException in case of I/O problems (with getline typically)
 	 */
 	void interpret(AwkTuples tuples) throws ExitException, IOException;

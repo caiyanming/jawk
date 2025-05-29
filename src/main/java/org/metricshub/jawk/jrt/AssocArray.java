@@ -52,7 +52,9 @@ public class AssocArray implements Comparator<Object> {
 	private Map<Object, Object> map;
 
 	/**
-	 * <p>Constructor for AssocArray.</p>
+	 * <p>
+	 * Constructor for AssocArray.
+	 * </p>
 	 *
 	 * @param sortedArrayKeys Whether keys must be kept sorted
 	 */
@@ -85,22 +87,22 @@ public class AssocArray implements Comparator<Object> {
 	 * into one of HashMap, LinkedHashMap, or TreeMap.
 	 *
 	 * @param mapType Can be one of MT_HASH, MT_LINKED,
-	 *   or MT_TREE.
+	 *        or MT_TREE.
 	 */
 	public void useMapType(int mapType) {
 		assert map.isEmpty();
 		switch (mapType) {
-			case MT_HASH:
-				map = new HashMap<Object, Object>();
-				break;
-			case MT_LINKED:
-				map = new LinkedHashMap<Object, Object>();
-				break;
-			case MT_TREE:
-				map = new TreeMap<Object, Object>(this);
-				break;
-			default:
-				throw new Error("Invalid map type : " + mapType);
+		case MT_HASH:
+			map = new HashMap<Object, Object>();
+			break;
+		case MT_LINKED:
+			map = new LinkedHashMap<Object, Object>();
+			break;
+		case MT_TREE:
+			map = new TreeMap<Object, Object>(this);
+			break;
+		default:
+			throw new Error("Invalid map type : " + mapType);
 		}
 	}
 
@@ -113,7 +115,7 @@ public class AssocArray implements Comparator<Object> {
 	 */
 	public String mapString() {
 		// was:
-		//return map.toString();
+		// return map.toString();
 		// but since the extensions, assoc arrays can become keys as well
 		StringBuilder sb = new StringBuilder().append('{');
 		int cnt = 0;
@@ -143,29 +145,33 @@ public class AssocArray implements Comparator<Object> {
 	private static final UninitializedObject BLANK = new UninitializedObject();
 
 	/**
-	 * <p>isIn.</p>
+	 * <p>
+	 * isIn.
+	 * </p>
 	 *
 	 * @param key Key to be checked
 	 * @return whether a particular key is
-	 * contained within the associative array.
-	 * Unlike get(), which adds a blank (null)
-	 * reference to the associative array if the
-	 * element is not found, isIn will not.
-	 * It exists to support the IN keyword.
+	 *         contained within the associative array.
+	 *         Unlike get(), which adds a blank (null)
+	 *         reference to the associative array if the
+	 *         element is not found, isIn will not.
+	 *         It exists to support the IN keyword.
 	 */
 	public boolean isIn(Object key) {
 		return map.get(key) != null;
 	}
 
 	/**
-	 * <p>get.</p>
+	 * <p>
+	 * get.
+	 * </p>
 	 *
 	 * @param key Key to retrieve in the array
 	 * @return the value of an associative array
-	 * element given a particular key.
-	 * If the key does not exist, a null value
-	 * (blank string) is inserted into the array
-	 * with this key, and the null value is returned.
+	 *         element given a particular key.
+	 *         If the key does not exist, a null value
+	 *         (blank string) is inserted into the array
+	 *         with this key, and the null value is returned.
 	 */
 	public Object get(Object key) {
 		if (key == null || key instanceof UninitializedObject) {
@@ -231,7 +237,9 @@ public class AssocArray implements Comparator<Object> {
 	}
 
 	/**
-	 * <p>keySet.</p>
+	 * <p>
+	 * keySet.
+	 * </p>
 	 *
 	 * @return the set of keys
 	 */
@@ -258,7 +266,6 @@ public class AssocArray implements Comparator<Object> {
 
 	/**
 	 * {@inheritDoc}
-	 *
 	 * Do nothing. Should not be called in this state.
 	 */
 	@Override
@@ -268,7 +275,6 @@ public class AssocArray implements Comparator<Object> {
 
 	/**
 	 * {@inheritDoc}
-	 *
 	 * Comparator implementation used by the TreeMap
 	 * when keys are to be maintained in sorted order.
 	 */
@@ -293,7 +299,9 @@ public class AssocArray implements Comparator<Object> {
 	}
 
 	/**
-	 * <p>getMapVersion.</p>
+	 * <p>
+	 * getMapVersion.
+	 * </p>
 	 *
 	 * @return the specification version of this class
 	 */

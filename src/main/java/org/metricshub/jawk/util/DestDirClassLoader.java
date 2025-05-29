@@ -46,7 +46,9 @@ public final class DestDirClassLoader extends ClassLoader {
 	private String dirname;
 
 	/**
-	 * <p>Constructor for DestDirClassLoader.</p>
+	 * <p>
+	 * Constructor for DestDirClassLoader.
+	 * </p>
 	 *
 	 * @param dirname a {@link java.lang.String} object
 	 */

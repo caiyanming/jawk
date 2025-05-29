@@ -31,7 +31,6 @@ import java.util.regex.Pattern;
 /**
  * A reader which consumes one record at a time from
  * an underlying input reader.
- *
  * <h2>Greedy Regex Matching</h2>
  * The current implementation matches setRecordSeparator against
  * contents of an input buffer (the underlying input
@@ -39,7 +38,6 @@ import java.util.regex.Pattern;
  * split against the matched regular expression
  * input, treating the regular expression as a
  * record separator.
- *
  * <p>
  * By default, greedy regular expression matching
  * for setRecordSeparator is turned off. It is assumed
@@ -88,8 +86,8 @@ public class PartitioningReader extends FilterReader {
 	 * @param r The reader containing the input data stream.
 	 * @param recordSeparator The record separator, as a regular expression.
 	 * @param fromFileNameList Whether the underlying input reader
-	 *   is a file from the filename list (the parameters passed
-	 *   into AWK after the script argument).
+	 *        is a file from the filename list (the parameters passed
+	 *        into AWK after the script argument).
 	 */
 	public PartitioningReader(Reader r, String recordSeparator, boolean fromFileNameList) {
 		super(r);
@@ -123,10 +121,12 @@ public class PartitioningReader extends FilterReader {
 	}
 
 	/**
-	 * <p>fromFilenameList.</p>
+	 * <p>
+	 * fromFilenameList.
+	 * </p>
 	 *
 	 * @return true whether the underlying input reader is from a
-	 *	filename list argument; false otherwise
+	 *         filename list argument; false otherwise
 	 */
 	public boolean fromFilenameList() {
 		return fromFileNameList;

@@ -35,7 +35,6 @@ package org.metricshub.jawk.intermediate;
  * An address may not necessarily have an index assigned upon creation.
  * However, upon tuple traversal, all address indexes must
  * point to a valid tuple.
- *
  * <p>
  * All addresses should have a meaningful label.
  *
@@ -56,12 +55,14 @@ public interface Address {
 	 * but the index must be assigned prior to traversing the tuples.
 	 *
 	 * @param idx The tuple location within the tuple list (queue)
-	 *   for this address.
+	 *        for this address.
 	 */
 	void assignIndex(int idx);
 
 	/**
-	 * <p>index.</p>
+	 * <p>
+	 * index.
+	 * </p>
 	 *
 	 * @return The index into the tuple queue/array.
 	 */

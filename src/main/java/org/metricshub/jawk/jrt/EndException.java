@@ -39,7 +39,9 @@ public class EndException extends RuntimeException {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * <p>Constructor for EndException.</p>
+	 * <p>
+	 * Constructor for EndException.
+	 * </p>
 	 *
 	 * @param s a {@link java.lang.String} object
 	 */
@@ -48,7 +50,9 @@ public class EndException extends RuntimeException {
 	}
 
 	/**
-	 * <p>Constructor for EndException.</p>
+	 * <p>
+	 * Constructor for EndException.
+	 * </p>
 	 */
 	public EndException() {
 		super();

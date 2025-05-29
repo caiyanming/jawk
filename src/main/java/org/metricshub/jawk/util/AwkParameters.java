@@ -33,51 +33,50 @@ import org.slf4j.Logger;
 /**
  * Manages the command-line parameters accepted by Jawk.
  * The parameters and their meanings are provided below:
- *
  * <ul>
  * <li>-v name=val [-v name=val] ... <br/>
- *   Variable assignments prior to the execution of the script.
+ * Variable assignments prior to the execution of the script.
  * <li>-F regexp <br/>
- *   Field separator (FS).
+ * Field separator (FS).
  * <li>-f filename <br/>
- *   Use the text contained in filename as the script rather than
- *   obtaining it from the command-line.
+ * Use the text contained in filename as the script rather than
+ * obtaining it from the command-line.
  * <li><i>Extension</i> -c <br/>
- *   Write intermediate file. Intermediate file can be used as
- *   an argument to -f.
+ * Write intermediate file. Intermediate file can be used as
+ * an argument to -f.
  * <li><i>Extension</i> -o filename <br/>
- *   Output filename for intermediate file, tuples, or syntax tree.
+ * Output filename for intermediate file, tuples, or syntax tree.
  * <li><i>Extension</i> -s <br/>
- *   Dump the intermediate code.
+ * Dump the intermediate code.
  * <li><i>Extension</i> -S <br/>
- *   Dump the syntax tree.
+ * Dump the syntax tree.
  * <li><i>Extension</i> -x <br/>
- *   Enables _sleep, _dump, and exec keywords/functions.
+ * Enables _sleep, _dump, and exec keywords/functions.
  * <li><i>Extension</i> -y <br/>
- *   Enables _INTEGER, _DOUBLE, and _STRING type casting keywords.
+ * Enables _INTEGER, _DOUBLE, and _STRING type casting keywords.
  * <li><i>Extension</i> -t <br/>
- *   Maintain array keys in sorted order (using a TreeMap instead of a HashMap)
+ * Maintain array keys in sorted order (using a TreeMap instead of a HashMap)
  * <li><i>Extension</i> -r <br/>
- *   Do NOT error for <code>IllegalFormatException</code> when using
- *   <code>java.util.Formatter</code> for <code>sprintf</code>
- *   and <code>printf</code>.
+ * Do NOT error for <code>IllegalFormatException</code> when using
+ * <code>java.util.Formatter</code> for <code>sprintf</code>
+ * and <code>printf</code>.
  * <li><i>Extension</i> -ext <br/>
- *   Enabled user-defined extensions. Works together with the
- *   -Djawk.extensions property.
- *   It also disables blank rule as mapping to a print $0 statement.
+ * Enabled user-defined extensions. Works together with the
+ * -Djawk.extensions property.
+ * It also disables blank rule as mapping to a print $0 statement.
  * <li><i>Extension</i> -ni <br/>
- *   Do NOT consume stdin or files from ARGC/V through input rules.
- *   The motivation is to leave input rules for blocking extensions
- *   (i.e., Sockets, Dialogs, etc).
+ * Do NOT consume stdin or files from ARGC/V through input rules.
+ * The motivation is to leave input rules for blocking extensions
+ * (i.e., Sockets, Dialogs, etc).
  * </ul>
  * followed by the script (if -f is not provided), then followed
  * by a list containing zero or more of the following parameters:
  * <ul>
  * <li>name=val <br/>
- *   Variable assignments occurring just prior to receiving input
- *   (but after the BEGIN blocks, if any).
+ * Variable assignments occurring just prior to receiving input
+ * (but after the BEGIN blocks, if any).
  * <li>filename <br/>
- *   Filenames to treat as input to the script.
+ * Filenames to treat as input to the script.
  * </ul>
  * <p>
  * If no filenames are provided, stdin is used as input
@@ -109,15 +108,15 @@ public class AwkParameters {
 	 * The command-line argument semantics are as follows:
 	 * <ul>
 	 * <li>First, "-" arguments are processed until first non-"-" argument
-	 *   is encountered, or the "-" itself is provided.
+	 * is encountered, or the "-" itself is provided.
 	 * <li>Next, a script is expected (unless the -f argument was provided).
 	 * <li>Then, subsequent parameters are passed into the script
-	 *   via the ARGC/ARGV variables.
+	 * via the ARGC/ARGV variables.
 	 * </ul>
 	 *
 	 * @param args The command-line arguments provided by the user.
 	 * @return a new instance of AwkSettings that reflects the configuration
-	 *   set in the command line arguments
+	 *         set in the command line arguments
 	 */
 	public static AwkSettings parseCommandLineArguments(String[] args) {
 		AwkSettings settings = new AwkSettings();
@@ -193,9 +192,12 @@ public class AwkParameters {
 					throw new IllegalArgumentException("Awk script not provided.");
 				}
 				String scriptContent = args[argIdx++];
-				settings.addScriptSource(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, new StringReader(scriptContent), false));
+				settings
+						.addScriptSource(
+								new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, new StringReader(scriptContent), false));
 			} else {
-				// XXX Maybe we should delay that to a later stage? The only difference would be, that errors (for example: File not found, or unable to read) would occure later
+				// XXX Maybe we should delay that to a later stage? The only difference would be, that errors (for example: File
+				// not found, or unable to read) would occure later
 				// initialize the Readers or InputStreams
 				for (ScriptSource scriptSource : settings.getScriptSources()) {
 					try {
@@ -228,27 +230,27 @@ public class AwkParameters {
 	 * Dump usage to stderr; exit with a non-zero error code.
 	 */
 	private static void usage(PrintStream dest) {
-		//String cls = Awk.class.getName();
+		// String cls = Awk.class.getName();
 		dest.println("Usage:");
-		dest.println(
-			"java -jar " +
-			JAR_NAME +
-			" [-F fs_val]" +
-			" [-f script-filename]" +
-			" [-o output-filename]" +
-			" [-c]" +
-			" [-S]" +
-			" [-s]" +
-			" [-x]" +
-			" [-y]" +
-			" [-r]" +
-			" [--locale locale]" +
-			" [-ext]" +
-			" [-t]" +
-			" [-v name=val]..." +
-			" [script]" +
-			" [name=val | input_filename]..."
-		);
+		dest
+				.println(
+						"java -jar " +
+								JAR_NAME +
+								" [-F fs_val]" +
+								" [-f script-filename]" +
+								" [-o output-filename]" +
+								" [-c]" +
+								" [-S]" +
+								" [-s]" +
+								" [-x]" +
+								" [-y]" +
+								" [-r]" +
+								" [--locale locale]" +
+								" [-ext]" +
+								" [-t]" +
+								" [-v name=val]..." +
+								" [script]" +
+								" [name=val | input_filename]...");
 		dest.println();
 		dest.println(" -F fs_val = Use fs_val for FS.");
 		dest.println(" -f filename = Use contents of filename for script.");

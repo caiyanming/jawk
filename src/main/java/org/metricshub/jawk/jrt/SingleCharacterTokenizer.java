@@ -41,7 +41,7 @@ public class SingleCharacterTokenizer implements Enumeration<Object> {
 	 *
 	 * @param input The input string to tokenize.
 	 * @param splitChar The character which delineates tokens
-	 *   within the input string.
+	 *        within the input string.
 	 */
 	public SingleCharacterTokenizer(String input, int splitChar) {
 		// input + sentinel

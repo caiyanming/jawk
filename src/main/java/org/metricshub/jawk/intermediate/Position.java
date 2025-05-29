@@ -29,10 +29,12 @@ package org.metricshub.jawk.intermediate;
  */
 public interface Position {
 	/**
-	 * <p>isEOF.</p>
+	 * <p>
+	 * isEOF.
+	 * </p>
 	 *
 	 * @return true whether we are at the end
-	 *   of the tuple list, false otherwise
+	 *         of the tuple list, false otherwise
 	 */
 	boolean isEOF();
 
@@ -43,10 +45,12 @@ public interface Position {
 	void next();
 
 	/**
-	 * <p>opcode.</p>
+	 * <p>
+	 * opcode.
+	 * </p>
 	 *
 	 * @return the opcode for the tuple at this
-	 *	position
+	 *         position
 	 */
 	int opcode();
 

@@ -46,7 +46,9 @@ public class ExitException extends Exception {
 	}
 
 	/**
-	 * <p>Constructor for ExitException.</p>
+	 * <p>
+	 * Constructor for ExitException.
+	 * </p>
 	 *
 	 * @param code a int
 	 */
@@ -55,7 +57,9 @@ public class ExitException extends Exception {
 	}
 
 	/**
-	 * <p>Constructor for ExitException.</p>
+	 * <p>
+	 * Constructor for ExitException.
+	 * </p>
 	 *
 	 * @param message a {@link java.lang.String} object
 	 */
@@ -64,7 +68,9 @@ public class ExitException extends Exception {
 	}
 
 	/**
-	 * <p>Constructor for ExitException.</p>
+	 * <p>
+	 * Constructor for ExitException.
+	 * </p>
 	 *
 	 * @param code a int
 	 * @param message a {@link java.lang.String} object
@@ -74,7 +80,9 @@ public class ExitException extends Exception {
 	}
 
 	/**
-	 * <p>Constructor for ExitException.</p>
+	 * <p>
+	 * Constructor for ExitException.
+	 * </p>
 	 *
 	 * @param code a int
 	 * @param cause a {@link java.lang.Throwable} object
@@ -84,7 +92,9 @@ public class ExitException extends Exception {
 	}
 
 	/**
-	 * <p>Constructor for ExitException.</p>
+	 * <p>
+	 * Constructor for ExitException.
+	 * </p>
 	 *
 	 * @param code a int
 	 * @param message a {@link java.lang.String} object
