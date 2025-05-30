@@ -295,7 +295,7 @@ public class AwkParser {
 			Map<String, JawkExtension> extensions) {
 		this.additional_functions = additional_functions;
 		this.additional_type_functions = additional_type_functions;
-		this.extensions = extensions == null ? java.util.Collections.emptyMap() : new java.util.HashMap<>(extensions);
+		this.extensions = extensions == null ? Collections.emptyMap() : new HashMap<>(extensions);
 	}
 
 	private List<ScriptSource> scriptSources;
@@ -364,7 +364,7 @@ public class AwkParser {
 		if (scriptSources == null || scriptSources.isEmpty()) {
 			throw new IOException("No script sources supplied");
 		}
-		this.scriptSources = java.util.Collections.unmodifiableList(new java.util.ArrayList<>(scriptSources));
+		this.scriptSources = Collections.unmodifiableList(new ArrayList<>(scriptSources));
 		scriptSourcesCurrentIndex = 0;
 		reader = new LineNumberReader(this.scriptSources.get(scriptSourcesCurrentIndex).getReader());
 		read();
@@ -779,22 +779,21 @@ public class AwkParser {
 			Integer kw_token = KEYWORDS.get(text.toString());
 			if (kw_token != null) {
 				int kw = kw_token.intValue();
-				if (!additional_functions && (kw == _KW_SLEEP_ || kw == _KW_DUMP_)) {
-					// treat as identifier
-				} else if (!additional_type_functions && (kw == _KW_INTEGER_ || kw == _KW_DOUBLE_ || kw == _KW_STRING_)) {
-					// treat as identifier
-				} else {
+				boolean treatAsIdentifier = (!additional_functions && (kw == _KW_SLEEP_ || kw == _KW_DUMP_))
+						||
+						(!additional_type_functions && (kw == _KW_INTEGER_ || kw == _KW_DOUBLE_ || kw == _KW_STRING_));
+				if (!treatAsIdentifier) {
 					return token = kw;
 				}
+				// treat as identifier
 			}
 			Integer bf_idx = BUILTIN_FUNC_NAMES.get(text.toString());
 			if (bf_idx != null) {
 				int idx = bf_idx.intValue();
-				if (!additional_functions && idx == F_EXEC) {
-					// treat as identifier
-				} else {
+				if (additional_functions || idx != F_EXEC) {
 					return token = _BUILTIN_FUNC_NAME_;
 				}
+				// treat as identifier
 			}
 			if (c == '(') {
 				return token = _FUNC_ID_;
