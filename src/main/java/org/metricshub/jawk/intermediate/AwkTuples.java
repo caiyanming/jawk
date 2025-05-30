@@ -33,6 +33,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import org.metricshub.jawk.util.AwkLogger;
@@ -3278,7 +3279,7 @@ public class AwkTuples implements Serializable {
 	 * @return a {@link java.util.Map} object
 	 */
 	public Map<String, Integer> getGlobalVariableOffsetMap() {
-		return global_var_offset_map;
+		return Collections.unmodifiableMap(global_var_offset_map);
 	}
 
 	/**
@@ -3289,7 +3290,7 @@ public class AwkTuples implements Serializable {
 	 * @return a {@link java.util.Map} object
 	 */
 	public Map<String, Boolean> getGlobalVariableAarrayMap() {
-		return global_var_aarray_map;
+		return Collections.unmodifiableMap(global_var_aarray_map);
 	}
 
 	/**
@@ -3301,7 +3302,7 @@ public class AwkTuples implements Serializable {
 	 */
 	public Set<String> getFunctionNameSet() {
 		assert function_names != null;
-		return function_names;
+		return Collections.unmodifiableSet(function_names);
 	}
 
 	/** linenumber stack ... */
