@@ -220,7 +220,7 @@ public class AwkParameters {
 		// name=val or filename mode
 		while (argIdx < args.length) {
 			String nameValueOrFileName = args[argIdx++];
-			settings.getNameValueOrFileNames().add(nameValueOrFileName);
+			settings.addNameValueOrFileName(nameValueOrFileName);
 		}
 
 		return settings;
@@ -321,6 +321,6 @@ public class AwkParameters {
 			}
 		}
 		// note: this can overwrite previously defined variables
-		settings.getVariables().put(name, value);
+		settings.putVariable(name, value);
 	}
 }

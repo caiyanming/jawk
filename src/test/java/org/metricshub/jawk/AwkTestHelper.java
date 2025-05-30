@@ -98,13 +98,13 @@ public class AwkTestHelper {
 		settings.setDefaultORS("\n");
 
 		// Set the input files
-		settings
-				.getNameValueOrFileNames()
-				.addAll(inputFileList.stream().map(File::getAbsolutePath).collect(Collectors.toList()));
+		for (String name : inputFileList.stream().map(File::getAbsolutePath).collect(Collectors.toList())) {
+			settings.addNameValueOrFileName(name);
+		}
 
 		// Set TEMPDIR so the AWK scripts can "play" with it
 		if (setTempDir) {
-			settings.getVariables().put("TEMPDIR", tempDirectory);
+			settings.putVariable("TEMPDIR", tempDirectory);
 		}
 
 		// Create the OutputStream, to collect the result as a String
@@ -177,7 +177,7 @@ public class AwkTestHelper {
 
 		// Set TEMPDIR so the AWK scripts can "play" with it
 		if (setTempDir) {
-			settings.getVariables().put("TEMPDIR", tempDirectory);
+			settings.putVariable("TEMPDIR", tempDirectory);
 		}
 
 		// Sets the AWK script to execute
