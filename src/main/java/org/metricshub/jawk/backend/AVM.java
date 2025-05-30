@@ -25,6 +25,7 @@ package org.metricshub.jawk.backend;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -328,8 +329,13 @@ public class AVM implements AwkInterpreter, VariableManager {
 					PrintStream ps = jrt.getOutputFiles().get(key);
 					if (ps == null) {
 						try {
-							jrt.getOutputFiles().put(key, ps = new PrintStream(new FileOutputStream(key, append), true)); // true =
-																																																						// autoflush
+							jrt
+									.getOutputFiles()
+									.put(
+											key,
+											ps = new PrintStream(new FileOutputStream(key, append), true, StandardCharsets.UTF_8.name())); // true
+							// =
+							// autoflush
 						} catch (IOException ioe) {
 							throw new AwkRuntimeException(position.lineNumber(), "Cannot open " + key + " for writing: " + ioe);
 						}
@@ -374,8 +380,13 @@ public class AVM implements AwkInterpreter, VariableManager {
 					PrintStream ps = jrt.getOutputFiles().get(key);
 					if (ps == null) {
 						try {
-							jrt.getOutputFiles().put(key, ps = new PrintStream(new FileOutputStream(key, append), true)); // true =
-																																																						// autoflush
+							jrt
+									.getOutputFiles()
+									.put(
+											key,
+											ps = new PrintStream(new FileOutputStream(key, append), true, StandardCharsets.UTF_8.name())); // true
+							// =
+							// autoflush
 						} catch (IOException ioe) {
 							throw new AwkRuntimeException(position.lineNumber(), "Cannot open " + key + " for writing: " + ioe);
 						}
@@ -1608,7 +1619,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// stack[0] = offset
 					subsep_offset = position.intArg(0);
 					assert subsep_offset != NULL_OFFSET;
-					assign(subsep_offset, new String(new byte[] { 28 }), true, position);
+					assign(subsep_offset, String.valueOf((char) 28), true, position);
 					pop(); // clean up the stack after the assignment
 					position.next();
 					break;

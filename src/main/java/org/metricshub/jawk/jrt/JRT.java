@@ -29,11 +29,12 @@ package org.metricshub.jawk.jrt;
 // not have to refer to jawk.jar!
 
 import java.io.FileOutputStream;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
@@ -645,7 +646,7 @@ public class JRT {
 						String name_value_or_filename = toAwkString(o, vm.getCONVFMT().toString(), locale);
 						if (name_value_or_filename.indexOf('=') == -1) {
 							partitioningReader = new PartitioningReader(
-									new FileReader(name_value_or_filename),
+									new InputStreamReader(new FileInputStream(name_value_or_filename), StandardCharsets.UTF_8),
 									vm.getRS().toString(),
 									true);
 							vm.setFILENAME(name_value_or_filename);
@@ -654,14 +655,18 @@ public class JRT {
 							setFilelistVariable(name_value_or_filename);
 							if (!has_filenames) {
 								// stdin with a variable!
-								partitioningReader = new PartitioningReader(new InputStreamReader(input), vm.getRS().toString());
+								partitioningReader = new PartitioningReader(
+										new InputStreamReader(input, StandardCharsets.UTF_8),
+										vm.getRS().toString());
 								vm.setFILENAME("");
 							} else {
 								continue;
 							}
 						}
 					} else if (!has_filenames) {
-						partitioningReader = new PartitioningReader(new InputStreamReader(input), vm.getRS().toString());
+						partitioningReader = new PartitioningReader(
+								new InputStreamReader(input, StandardCharsets.UTF_8),
+								vm.getRS().toString());
 						vm.setFILENAME("");
 					} else {
 						return false;
@@ -682,7 +687,7 @@ public class JRT {
 							if (name_value_or_filename.indexOf('=') == -1) {
 								// true = from filename list
 								partitioningReader = new PartitioningReader(
-										new FileReader(name_value_or_filename),
+										new InputStreamReader(new FileInputStream(name_value_or_filename), StandardCharsets.UTF_8),
 										vm.getRS().toString(),
 										true);
 								vm.setFILENAME(name_value_or_filename);
@@ -941,8 +946,12 @@ public class JRT {
 		PrintStream ps = outputFiles.get(filename);
 		if (ps == null) {
 			try {
-				outputFiles.put(filename, ps = new PrintStream(new FileOutputStream(filename, append), true)); // true =
-																																																				// autoflush
+				outputFiles
+						.put(
+								filename,
+								ps = new PrintStream(new FileOutputStream(filename, append), true, StandardCharsets.UTF_8.name())); // true
+				// =
+				// autoflush
 			} catch (IOException ioe) {
 				throw new AwkRuntimeException("Cannot open " + filename + " for writing: " + ioe);
 			}
@@ -964,7 +973,12 @@ public class JRT {
 		PartitioningReader pr = file_readers.get(filename);
 		if (pr == null) {
 			try {
-				file_readers.put(filename, pr = new PartitioningReader(new FileReader(filename), vm.getRS().toString()));
+				file_readers
+						.put(
+								filename,
+								pr = new PartitioningReader(
+										new InputStreamReader(new FileInputStream(filename), StandardCharsets.UTF_8),
+										vm.getRS().toString()));
 				vm.setFILENAME(filename);
 			} catch (IOException ioe) {
 				LOG.warn("IO Exception", ioe);
@@ -1020,7 +1034,9 @@ public class JRT {
 				command_readers
 						.put(
 								cmd,
-								pr = new PartitioningReader(new InputStreamReader(p.getInputStream()), vm.getRS().toString()));
+								pr = new PartitioningReader(
+										new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8),
+										vm.getRS().toString()));
 				vm.setFILENAME("");
 			} catch (IOException ioe) {
 				LOG.warn("IO Exception", ioe);
@@ -1065,7 +1081,13 @@ public class JRT {
 				throw new AwkRuntimeException("Can't spawn " + cmd + ": " + ioe);
 			}
 			output_processes.put(cmd, p);
-			output_streams.put(cmd, ps = new PrintStream(p.getOutputStream(), true)); // true = auto-flush
+			try {
+				output_streams.put(cmd, ps = new PrintStream(p.getOutputStream(), true, StandardCharsets.UTF_8.name())); // true
+																																																									// =
+				// auto-flush
+			} catch (java.io.UnsupportedEncodingException e) {
+				throw new IllegalStateException(e);
+			}
 		}
 		return ps;
 	}

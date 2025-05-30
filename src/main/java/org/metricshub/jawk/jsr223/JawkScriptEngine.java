@@ -62,7 +62,11 @@ public class JawkScriptEngine extends AbstractScriptEngine {
 			settings.setDefaultRS("\n");
 			settings.setDefaultORS("\n");
 			ByteArrayOutputStream result = new ByteArrayOutputStream();
-			settings.setOutputStream(new PrintStream(result));
+			try {
+				settings.setOutputStream(new PrintStream(result, false, StandardCharsets.UTF_8.name()));
+			} catch (java.io.UnsupportedEncodingException e) {
+				throw new IllegalStateException(e);
+			}
 			settings.addScriptSource(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, scriptReader, false));
 			Awk awk = new Awk();
 			awk.invoke(settings);
