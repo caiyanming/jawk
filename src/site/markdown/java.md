@@ -38,7 +38,9 @@ private String runAwk(File scriptFile, List<String> inputFileList) throws IOExce
     AwkSettings settings = new AwkSettings();
 
     // Set the input files
-    settings.getNameValueOrFileNames().addAll(inputFileList);
+    for (String name : inputFileList) {
+        settings.addNameValueOrFileName(name);
+    }
 
     // Create the OutputStream, to collect the result as a String
     ByteArrayOutputStream resultBytesStream = new ByteArrayOutputStream();

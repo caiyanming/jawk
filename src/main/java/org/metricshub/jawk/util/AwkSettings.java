@@ -240,7 +240,7 @@ public class AwkSettings {
 			}
 		}
 		// note: can overwrite previously defined variables
-		getVariables().put(name, value);
+		putVariable(name, value);
 	}
 
 	/**
@@ -266,14 +266,14 @@ public class AwkSettings {
 	 * Getter for the field <code>scriptSources</code>.
 	 * </p>
 	 *
-	 * @return the script sources meta info.
+	 * @return a copy of the script sources meta info.
 	 *         This will usually be either one String container,
 	 *         made up of the script given on the command line directly,
 	 *         with the first non-"-" parameter,
 	 *         or one or multiple script file names (if provided with -f switches).
 	 */
 	public List<ScriptSource> getScriptSources() {
-		return scriptSources;
+		return new ArrayList<ScriptSource>(scriptSources);
 	}
 
 	/**
@@ -314,7 +314,7 @@ public class AwkSettings {
 	 * @return the variables
 	 */
 	public Map<String, Object> getVariables() {
-		return variables;
+		return new HashMap<String, Object>(variables);
 	}
 
 	/**
@@ -326,7 +326,17 @@ public class AwkSettings {
 	 * @param variables the variables to set
 	 */
 	public void setVariables(Map<String, Object> variables) {
-		this.variables = variables;
+		this.variables = new HashMap<String, Object>(variables);
+	}
+
+	/**
+	 * Put or replace a variable entry.
+	 *
+	 * @param name Variable name
+	 * @param value Variable value
+	 */
+	public void putVariable(String name, Object value) {
+		variables.put(name, value);
 	}
 
 	/**
@@ -337,18 +347,16 @@ public class AwkSettings {
 	 * @return the nameValueOrFileNames
 	 */
 	public List<String> getNameValueOrFileNames() {
-		return nameValueOrFileNames;
+		return new ArrayList<String>(nameValueOrFileNames);
 	}
 
 	/**
-	 * Contains name=value or filename entries.
-	 * Order is important, which is why name=value and filenames
-	 * are listed in the same List container.
+	 * Add a name=value or filename entry.
 	 *
-	 * @param nameValueOrFileNames the nameValueOrFileNames to set
+	 * @param entry entry to add
 	 */
-	public void setNameValueOrFileNames(List<String> nameValueOrFileNames) {
-		this.nameValueOrFileNames = nameValueOrFileNames;
+	public void addNameValueOrFileName(String entry) {
+		nameValueOrFileNames.add(entry);
 	}
 
 	/**
@@ -361,7 +369,7 @@ public class AwkSettings {
 	 * @param scriptSources the scriptSources to set
 	 */
 	public void setScriptSources(List<ScriptSource> scriptSources) {
-		this.scriptSources = scriptSources;
+		this.scriptSources = new ArrayList<ScriptSource>(scriptSources);
 	}
 
 	/**
