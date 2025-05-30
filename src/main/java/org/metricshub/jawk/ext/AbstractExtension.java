@@ -22,6 +22,7 @@ package org.metricshub.jawk.ext;
  * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
  */
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.metricshub.jawk.jrt.IllegalAwkArgumentException;
 import org.metricshub.jawk.jrt.JRT;
 import org.metricshub.jawk.jrt.VariableManager;
@@ -44,6 +45,7 @@ public abstract class AbstractExtension implements JawkExtension {
 
 	/** {@inheritDoc} */
 	@Override
+	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Extension needs direct access to runtime, VM and settings")
 	public void init(VariableManager vm, JRT jrt, final AwkSettings settings) {
 		this.vm = vm;
 		this.jrt = jrt;
