@@ -22,12 +22,19 @@ package org.metricshub.jawk;
  * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
  */
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.Reader;
+import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
@@ -201,6 +208,383 @@ public class Awk {
 				avm.waitForIO();
 			}
 		}
+	}
+
+	/**
+	 * Executes the specified AWK script against the given input and returns the
+	 * printed output as a {@link String}.
+	 *
+	 * @param script AWK script to execute
+	 * @param input text to process
+	 * @return result of the execution as a String
+	 * @throws IOException if an I/O error occurs
+	 * @throws ClassNotFoundException if intermediate code cannot be loaded
+	 * @throws ExitException if the script terminates with a non-zero exit code
+	 */
+	public static String run(String script, String input)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		run(script, input, out);
+		return out.toString(StandardCharsets.UTF_8.name());
+	}
+
+	/**
+	 * Executes the specified AWK script against the given input and writes the
+	 * result to the provided {@link OutputStream}.
+	 *
+	 * @param script AWK script to execute
+	 * @param input text to process
+	 * @param output destination for the printed output
+	 * @throws IOException if an I/O error occurs
+	 * @throws ClassNotFoundException if intermediate code cannot be loaded
+	 * @throws ExitException if the script terminates with a non-zero exit code
+	 */
+	public static void run(String script, String input, OutputStream output)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		run(new StringReader(script), toInputStream(input), output, true);
+	}
+
+	/**
+	 * Executes the specified AWK script against the given input and returns the
+	 * printed output as a {@link String}.
+	 *
+	 * @param script AWK script to execute (as a {@link Reader})
+	 * @param input text to process
+	 * @return result of the execution as a String
+	 * @throws IOException if an I/O error occurs
+	 * @throws ClassNotFoundException if intermediate code cannot be loaded
+	 * @throws ExitException if the script terminates with a non-zero exit code
+	 */
+	public static String run(Reader script, String input)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		run(script, input, out);
+		return out.toString(StandardCharsets.UTF_8.name());
+	}
+
+	/**
+	 * Executes the specified AWK script against the given input and writes the
+	 * result to the provided {@link OutputStream}.
+	 *
+	 * @param script AWK script to execute (as a {@link Reader})
+	 * @param input text to process
+	 * @param output destination for the printed output
+	 * @throws IOException if an I/O error occurs
+	 * @throws ClassNotFoundException if intermediate code cannot be loaded
+	 * @throws ExitException if the script terminates with a non-zero exit code
+	 */
+	public static void run(Reader script, String input, OutputStream output)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		run(script, toInputStream(input), output, true);
+	}
+
+	/**
+	 * Executes the specified AWK script against the given input and returns the
+	 * printed output as a {@link String}.
+	 *
+	 * @param script AWK script to execute
+	 * @param input text reader to process
+	 * @return result of the execution as a String
+	 * @throws IOException if an I/O error occurs
+	 * @throws ClassNotFoundException if intermediate code cannot be loaded
+	 * @throws ExitException if the script terminates with a non-zero exit code
+	 */
+	public static String run(String script, Reader input)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		run(script, input, out);
+		return out.toString(StandardCharsets.UTF_8.name());
+	}
+
+	/**
+	 * Executes the specified AWK script against the given input and writes the
+	 * result to the provided {@link OutputStream}.
+	 *
+	 * @param script AWK script to execute
+	 * @param input text reader to process
+	 * @param output destination for the printed output
+	 * @throws IOException if an I/O error occurs
+	 * @throws ClassNotFoundException if intermediate code cannot be loaded
+	 * @throws ExitException if the script terminates with a non-zero exit code
+	 */
+	public static void run(String script, Reader input, OutputStream output)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		run(new StringReader(script), toInputStream(input), output, true);
+	}
+
+	/**
+	 * Executes the specified AWK script against the given input and returns the
+	 * printed output as a {@link String}.
+	 *
+	 * @param script AWK script to execute (as a {@link Reader})
+	 * @param input text reader to process
+	 * @return result of the execution as a String
+	 * @throws IOException if an I/O error occurs
+	 * @throws ClassNotFoundException if intermediate code cannot be loaded
+	 * @throws ExitException if the script terminates with a non-zero exit code
+	 */
+	public static String run(Reader script, Reader input)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		run(script, input, out);
+		return out.toString(StandardCharsets.UTF_8.name());
+	}
+
+	/**
+	 * Executes the specified AWK script against the given input and writes the
+	 * result to the provided {@link OutputStream}.
+	 *
+	 * @param script AWK script to execute (as a {@link Reader})
+	 * @param input text reader to process
+	 * @param output destination for the printed output
+	 * @throws IOException if an I/O error occurs
+	 * @throws ClassNotFoundException if intermediate code cannot be loaded
+	 * @throws ExitException if the script terminates with a non-zero exit code
+	 */
+	public static void run(Reader script, Reader input, OutputStream output)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		run(script, toInputStream(input), output, true);
+	}
+
+	/**
+	 * Executes the specified AWK script against the given input file and returns
+	 * the printed output as a {@link String}.
+	 *
+	 * @param script AWK script to execute
+	 * @param input file containing text to process
+	 * @return result of the execution as a String
+	 * @throws IOException if an I/O error occurs
+	 * @throws ClassNotFoundException if intermediate code cannot be loaded
+	 * @throws ExitException if the script terminates with a non-zero exit code
+	 */
+	public static String run(String script, File input)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		try (InputStream in = new FileInputStream(input)) {
+			return run(script, in);
+		}
+	}
+
+	/**
+	 * Executes the specified AWK script against the given input file and writes
+	 * the printed output to the provided {@link OutputStream}.
+	 *
+	 * @param script AWK script to execute
+	 * @param input file containing text to process
+	 * @param output destination for the printed output
+	 * @throws IOException if an I/O error occurs
+	 * @throws ClassNotFoundException if intermediate code cannot be loaded
+	 * @throws ExitException if the script terminates with a non-zero exit code
+	 */
+	public static void run(String script, File input, OutputStream output)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		try (InputStream in = new FileInputStream(input)) {
+			run(script, in, output);
+		}
+	}
+
+	/**
+	 * Executes the specified AWK script against the given input file and returns
+	 * the printed output as a {@link String}.
+	 *
+	 * @param script AWK script to execute (as a {@link Reader})
+	 * @param input file containing text to process
+	 * @return result of the execution as a String
+	 * @throws IOException if an I/O error occurs
+	 * @throws ClassNotFoundException if intermediate code cannot be loaded
+	 * @throws ExitException if the script terminates with a non-zero exit code
+	 */
+	public static String run(Reader script, File input)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		try (InputStream in = new FileInputStream(input)) {
+			return run(script, in);
+		}
+	}
+
+	/**
+	 * Executes the specified AWK script against the given input file and writes
+	 * the printed output to the provided {@link OutputStream}.
+	 *
+	 * @param script AWK script to execute (as a {@link Reader})
+	 * @param input file containing text to process
+	 * @param output destination for the printed output
+	 * @throws IOException if an I/O error occurs
+	 * @throws ClassNotFoundException if intermediate code cannot be loaded
+	 * @throws ExitException if the script terminates with a non-zero exit code
+	 */
+	public static void run(Reader script, File input, OutputStream output)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		try (InputStream in = new FileInputStream(input)) {
+			run(script, in, output);
+		}
+	}
+
+	/**
+	 * Executes the specified AWK script against the provided input stream and
+	 * returns the printed output as a {@link String}.
+	 *
+	 * @param script AWK script to execute
+	 * @param input stream to process
+	 * @return result of the execution as a String
+	 * @throws IOException if an I/O error occurs
+	 * @throws ClassNotFoundException if intermediate code cannot be loaded
+	 * @throws ExitException if the script terminates with a non-zero exit code
+	 */
+	public static String run(String script, InputStream input)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		run(script, input, out);
+		return out.toString(StandardCharsets.UTF_8.name());
+	}
+
+	/**
+	 * Executes the specified AWK script against the provided input stream and
+	 * writes the result to the given {@link OutputStream}.
+	 *
+	 * @param script AWK script to execute
+	 * @param input stream to process
+	 * @param output destination for the printed output
+	 * @throws IOException if an I/O error occurs
+	 * @throws ClassNotFoundException if intermediate code cannot be loaded
+	 * @throws ExitException if the script terminates with a non-zero exit code
+	 */
+	public static void run(String script, InputStream input, OutputStream output)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		run(new StringReader(script), input, output, false);
+	}
+
+	/**
+	 * Executes the specified AWK script against the provided input stream and
+	 * returns the printed output as a {@link String}.
+	 *
+	 * @param script AWK script to execute (as a {@link Reader})
+	 * @param input stream to process
+	 * @return result of the execution as a String
+	 * @throws IOException if an I/O error occurs
+	 * @throws ClassNotFoundException if intermediate code cannot be loaded
+	 * @throws ExitException if the script terminates with a non-zero exit code
+	 */
+	public static String run(Reader script, InputStream input)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		run(script, input, out);
+		return out.toString(StandardCharsets.UTF_8.name());
+	}
+
+	/**
+	 * Executes the specified AWK script against the provided input stream and
+	 * writes the result to the given {@link OutputStream}.
+	 *
+	 * @param script AWK script to execute (as a {@link Reader})
+	 * @param input stream to process
+	 * @param output destination for the printed output
+	 * @throws IOException if an I/O error occurs
+	 * @throws ClassNotFoundException if intermediate code cannot be loaded
+	 * @throws ExitException if the script terminates with a non-zero exit code
+	 */
+	public static void run(Reader script, InputStream input, OutputStream output)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		run(script, input, output, false);
+	}
+
+	/**
+	 * Internal method that configures default {@link AwkSettings} and executes
+	 * the AWK script.
+	 */
+	private static void run(
+			Reader scriptReader,
+			InputStream inputStream,
+			OutputStream outputStream,
+			boolean textInput)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		AwkSettings settings = new AwkSettings();
+		if (inputStream != null) {
+			settings.setInput(inputStream);
+		}
+		if (textInput) {
+			settings.setDefaultRS("\n");
+			settings.setDefaultORS("\n");
+		}
+		settings
+				.setOutputStream(
+						new PrintStream(
+								outputStream,
+								false,
+								StandardCharsets.UTF_8.name()));
+		settings
+				.addScriptSource(
+						new ScriptSource(
+								ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
+								scriptReader,
+								false));
+		Awk awk = new Awk();
+		try {
+			awk.invoke(settings);
+		} catch (ExitException e) {
+			if (e.getCode() != 0) {
+				throw e;
+			}
+		}
+	}
+
+	/**
+	 * Converts a text input into an {@link InputStream} using UTF-8 encoding.
+	 */
+	private static InputStream toInputStream(String input) {
+		if (input == null) {
+			return new ByteArrayInputStream(new byte[0]);
+		}
+		return new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
+	}
+
+	/**
+	 * Reads all characters from the supplied {@link Reader} and returns an
+	 * {@link InputStream} containing the same data using UTF-8 encoding.
+	 */
+	private static InputStream toInputStream(Reader reader) throws IOException {
+		if (reader == null) {
+			return new ByteArrayInputStream(new byte[0]);
+		}
+		StringBuilder sb = new StringBuilder();
+		char[] buf = new char[4096];
+		int len;
+		while ((len = reader.read(buf)) != -1) {
+			sb.append(buf, 0, len);
+		}
+		return new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
 	}
 
 	private static Object readObjectFromInputStream(InputStream is) throws IOException, ClassNotFoundException {
