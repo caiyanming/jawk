@@ -24,6 +24,7 @@ package org.metricshub.jawk.util;
 
 import java.io.InputStream;
 import java.io.PrintStream;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -561,6 +562,7 @@ public class AwkSettings {
 	 *
 	 * @return the output stream
 	 */
+	@SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "OutputStream reference is intentionally shared so callers can control output.")
 	public PrintStream getOutputStream() {
 		return outputStream;
 	}
@@ -570,6 +572,7 @@ public class AwkSettings {
 	 *
 	 * @param pOutputStream OutputStream to use for print statements
 	 */
+	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Caller-supplied PrintStream must be used directly; no defensive copy possible.")
 	public void setOutputStream(PrintStream pOutputStream) {
 		outputStream = pOutputStream;
 	}
