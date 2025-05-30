@@ -21,7 +21,20 @@ Jawk artifacts are published on Maven Central, so the dependency can be resolved
 
 ## Examples
 
-### Invoke AWK scripts files on input files
+### Quick execution with `Awk.run()`
+
+The `Awk` class offers static `run(...)` methods for the most common cases:
+
+```java
+String result = Awk.run("{ print toupper($0) }", "hello world");
+```
+
+### Advanced examples
+
+The examples below show how to configure `AwkSettings` directly to customize
+input sources, output handling or to register `JawkExtension`s.
+
+#### Invoke AWK script files on input files
 
 ```java
 /**
@@ -59,7 +72,7 @@ private String runAwk(File scriptFile, List<String> inputFileList) throws IOExce
 }
 ```
 
-### Execute AWK script (as String) on String input
+#### Execute AWK script (as String) on String input
 
 ```java
 /**

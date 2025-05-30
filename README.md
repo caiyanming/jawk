@@ -18,7 +18,13 @@ See [Jawk CLI documentation](https://metricshub.org/Jawk/cli.html)
 
 ## Run AWK inside Java
 
-See [AWK in Java documentation](https://metricshub.org/Jawk/java.html)
+Execute a script in just one line using the convenience methods on `Awk`:
+
+```java
+String result = Awk.run("{ print toupper($0) }", "hello world");
+```
+
+See [AWK in Java documentation](https://metricshub.org/Jawk/java.html) for more details and advanced usage.
 
 ## Contributing
 

@@ -20,7 +20,14 @@ See [usage and examples of Jawk CLI](cli.html).
 
 ## Run AWK inside Java
 
-See [AWK in Java documentation](java.html).
+The `Awk` class provides several `run(...)` helpers to execute a script with one
+line of code:
+
+```java
+String output = Awk.run("{ print $1 }", "foo bar");
+```
+
+See [AWK in Java documentation](java.html) for advanced examples.
 
 ## Features
 
