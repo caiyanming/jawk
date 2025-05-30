@@ -213,7 +213,7 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 	private Map<AssocArray, Iterator<?>> iterators = new HashMap<AssocArray, Iterator<?>>();
 	private static final Integer ZERO = Integer.valueOf(0);
 	private static final Integer ONE = Integer.valueOf(1);
-	private int waitInt = 0;
+	private volatile int waitInt = 0;
 
 	// single threaded, so one Date object (unsynchronized) will do
 	private final Date dateObj = new Date();
@@ -294,7 +294,7 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 				|| extensionKeyword.equals("LinkedMap")
 				|| extensionKeyword.equals("TreeMap"))
 				&&
-				((numArgs % 2) == 1)) {
+				((numArgs & 1) != 0)) {
 			// first argument of a *Map() function
 			// must be an associative array
 			return new int[] { 0 };
@@ -425,12 +425,7 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 		// get next refmapIdx
 		int refIdx = instance.refMapIdx++;
 		// inspect the argument
-		String argStr;
-		if (arg instanceof AssocArray) { // FIXME This does not make sense with the FIXME marked line above
-			argStr = arg.getClass().getName();
-		} else {
-			argStr = arg.toString();
-		}
+		String argStr = arg.getClass().getName();
 		if (argStr.length() > 63) {
 			argStr = argStr.substring(0, 60) + "...";
 		}
@@ -539,9 +534,9 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 
 		if (retval instanceof AssocArray) {
 			// search if item is referred to already
-			for (String ref : referenceMap.keySet()) {
-				if (referenceMap.get(ref) == retval) {
-					return ref;
+			for (Map.Entry<String, Object> e : referenceMap.entrySet()) {
+				if (e.getValue() == retval) {
+					return e.getKey();
 				}
 			}
 			// otherwise, return new reference to this item

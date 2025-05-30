@@ -54,12 +54,14 @@ public class DataPump implements Runnable {
 	 * @param out The output stream.
 	 */
 	public DataPump(InputStream in, PrintStream out) {
-		this.is = in;
+		PrintStream ps;
 		try {
-			this.os = new PrintStream(out, false, StandardCharsets.UTF_8.name());
+			ps = new PrintStream(out, false, StandardCharsets.UTF_8.name());
 		} catch (java.io.UnsupportedEncodingException e) {
 			throw new IllegalStateException(e);
 		}
+		this.is = in;
+		this.os = ps;
 		// setDaemon(true);
 	}
 

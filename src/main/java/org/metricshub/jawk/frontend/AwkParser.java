@@ -913,11 +913,7 @@ public class AwkParser {
 			return null;
 		}
 		opt_terminator(); // newline or ; (maybe)
-		if (rule_or_function == null) {
-			return RULE_LIST();
-		} else {
-			return new RuleList_AST(rule_or_function, RULE_LIST());
-		}
+		return new RuleList_AST(rule_or_function, RULE_LIST());
 	}
 
 	AST FUNCTION() throws IOException {
@@ -1785,7 +1781,7 @@ public class AwkParser {
 			}
 			expr1 = expr1.ast1;
 			// analyze expr1 to make sure it's a singleton ID_AST
-			if (expr1 == null || !(expr1 instanceof ID_AST)) {
+			if (!(expr1 instanceof ID_AST)) {
 				throw new ParserException("Expecting an ID for 'in' statement. Got : " + expr1);
 			}
 			// in
@@ -1947,16 +1943,17 @@ public class AwkParser {
 	AST GETLINE_EXPRESSION(AST pipe_expr, boolean not_in_print_root, boolean allow_in_keyword) throws IOException {
 		expectKeyword("getline");
 		AST lvalue = LVALUE(not_in_print_root, allow_in_keyword);
+		if (lvalue == null) {
+			throw new ParserException("Missing lvalue in getline expression");
+		}
 		if (token == _LT_) {
 			lexer();
 			AST assignment_expr = ASSIGNMENT_EXPRESSION(not_in_print_root, allow_in_keyword, false); // do NOT allow multidim
 																																																// indices expressions
-			if (pipe_expr != null) {
-				throw new ParserException("Cannot have both pipe expression and redirect into a getline.");
-			}
-			return new Getline_AST(pipe_expr, lvalue, assignment_expr);
+			return pipe_expr == null ?
+					new Getline_AST(null, lvalue, assignment_expr) : new Getline_AST(pipe_expr, lvalue, assignment_expr);
 		} else {
-			return new Getline_AST(pipe_expr, lvalue, null);
+			return pipe_expr == null ? new Getline_AST(null, lvalue, null) : new Getline_AST(pipe_expr, lvalue, null);
 		}
 	}
 

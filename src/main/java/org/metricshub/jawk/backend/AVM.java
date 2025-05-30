@@ -194,7 +194,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 	private static final Integer ZERO = Integer.valueOf(0);
 	private static final Integer ONE = Integer.valueOf(1);
 
-	private Random random_number_generator;
+	private final Random random_number_generator = new Random();
 	private int oldseed;
 
 	private Address exit_address = null;
@@ -246,8 +246,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 
 	private void setNumOnJRT(int fieldNum, double num) {
 		String numString;
-		if (num == (long) num) {
-			numString = Long.toString((long) num);
+		if (JRT.isActuallyLong(num)) {
+			numString = Long.toString((long) Math.rint(num));
 		} else {
 			numString = Double.toString(num);
 		}
@@ -520,8 +520,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// stack[0] = item to numerically negate
 
 					double d = JRT.toDouble(pop());
-					if (d == (long) d) {
-						push((long) -d);
+					if (JRT.isActuallyLong(d)) {
+						push((long) -Math.rint(d));
 					} else {
 						push(-d);
 					}
@@ -531,8 +531,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 				case AwkTuples._UNARY_PLUS_: {
 					// stack[0] = item to convert to a number
 					double d = JRT.toDouble(pop());
-					if (d == (long) d) {
-						push((long) d);
+					if (JRT.isActuallyLong(d)) {
+						push((long) Math.rint(d));
 					} else {
 						push(d);
 					}
@@ -647,8 +647,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 						throw new Error("Invalid op code here: " + opcode);
 					}
 
-					if (new_val == (long) new_val) {
-						assignArray(offset, arr_idx, (long) new_val, is_global);
+					if (JRT.isActuallyLong(new_val)) {
+						assignArray(offset, arr_idx, (long) Math.rint(new_val), is_global);
 					} else {
 						assignArray(offset, arr_idx, new_val, is_global);
 					}
@@ -728,9 +728,10 @@ public class AVM implements AwkInterpreter, VariableManager {
 					default:
 						throw new Error("Invalid opcode here: " + opcode);
 					}
-					if (ans == (long) ans) {
-						push((long) ans);
-						runtime_stack.setVariable(position.intArg(0), (int) ans, is_global);
+					if (JRT.isActuallyLong(ans)) {
+						long integral = (long) Math.rint(ans);
+						push(integral);
+						runtime_stack.setVariable(position.intArg(0), integral, is_global);
 					} else {
 						push(ans);
 						runtime_stack.setVariable(position.intArg(0), ans, is_global);
@@ -828,8 +829,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					Object o = aa.get(key);
 					assert o != null;
 					double ans = JRT.toDouble(o) + 1;
-					if (ans == (long) ans) {
-						aa.put(key, (long) ans);
+					if (JRT.isActuallyLong(ans)) {
+						aa.put(key, (long) Math.rint(ans));
 					} else {
 						aa.put(key, ans);
 					}
@@ -850,8 +851,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					Object o = aa.get(key);
 					assert o != null;
 					double ans = JRT.toDouble(o) - 1;
-					if (ans == (long) ans) {
-						aa.put(key, (long) ans);
+					if (JRT.isActuallyLong(ans)) {
+						aa.put(key, (long) Math.rint(ans));
 					} else {
 						aa.put(key, ans);
 					}
@@ -940,18 +941,13 @@ public class AVM implements AwkInterpreter, VariableManager {
 							}
 						}
 					}
-					random_number_generator = new Random(seed);
+					random_number_generator.setSeed(seed);
 					push(oldseed);
 					oldseed = seed;
 					position.next();
 					break;
 				}
 				case AwkTuples._RAND_: {
-					if (random_number_generator == null) {
-						int seed = JRT.timeSeed();
-						random_number_generator = new Random(seed);
-						oldseed = seed;
-					}
 					push(random_number_generator.nextDouble());
 					position.next();
 					break;
@@ -1336,8 +1332,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					double d1 = JRT.toDouble(o1);
 					double d2 = JRT.toDouble(o2);
 					double ans = d1 + d2;
-					if (ans == (long) ans) {
-						push((long) ans);
+					if (JRT.isActuallyLong(ans)) {
+						push((long) Math.rint(ans));
 					} else {
 						push(ans);
 					}
@@ -1352,8 +1348,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					double d1 = JRT.toDouble(o1);
 					double d2 = JRT.toDouble(o2);
 					double ans = d1 - d2;
-					if (ans == (long) ans) {
-						push((long) ans);
+					if (JRT.isActuallyLong(ans)) {
+						push((long) Math.rint(ans));
 					} else {
 						push(ans);
 					}
@@ -1368,8 +1364,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					double d1 = JRT.toDouble(o1);
 					double d2 = JRT.toDouble(o2);
 					double ans = d1 * d2;
-					if (ans == (long) ans) {
-						push((long) ans);
+					if (JRT.isActuallyLong(ans)) {
+						push((long) Math.rint(ans));
 					} else {
 						push(ans);
 					}
@@ -1384,8 +1380,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					double d1 = JRT.toDouble(o1);
 					double d2 = JRT.toDouble(o2);
 					double ans = d1 / d2;
-					if (ans == (long) ans) {
-						push((long) ans);
+					if (JRT.isActuallyLong(ans)) {
+						push((long) Math.rint(ans));
 					} else {
 						push(ans);
 					}
@@ -1400,8 +1396,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					double d1 = JRT.toDouble(o1);
 					double d2 = JRT.toDouble(o2);
 					double ans = d1 % d2;
-					if (ans == (long) ans) {
-						push((long) ans);
+					if (JRT.isActuallyLong(ans)) {
+						push((long) Math.rint(ans));
 					} else {
 						push(ans);
 					}
@@ -1416,8 +1412,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					double d1 = JRT.toDouble(o1);
 					double d2 = JRT.toDouble(o2);
 					double ans = Math.pow(d1, d2);
-					if (ans == (long) ans) {
-						push((long) ans);
+					if (JRT.isActuallyLong(ans)) {
+						push((long) Math.rint(ans));
 					} else {
 						push(ans);
 					}
@@ -1752,7 +1748,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// we can allocate the initial variables
 
 					// assign -v variables (from initial_variables container)
-					for (String key : initial_variables.keySet()) {
+					for (Map.Entry<String, Object> entry : initial_variables.entrySet()) {
+						String key = entry.getKey();
 						if (function_names.contains(key)) {
 							throw new IllegalArgumentException("Cannot assign a scalar to a function name (" + key + ").");
 						}
@@ -1763,7 +1760,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 							if (array_obj.booleanValue()) {
 								throw new IllegalArgumentException("Cannot assign a scalar to a non-scalar variable (" + key + ").");
 							} else {
-								Object obj = initial_variables.get(key);
+								Object obj = entry.getValue();
 								runtime_stack.setFilelistVariable(offset_obj.intValue(), obj);
 							}
 						}
@@ -2068,8 +2065,9 @@ public class AVM implements AwkInterpreter, VariableManager {
 		if (aa_array == null) {
 			// dump the runtime stack
 			Object[] globals = runtime_stack.getNumGlobals();
-			for (String name : global_variable_offsets.keySet()) {
-				int idx = global_variable_offsets.get(name);
+			for (Map.Entry<String, Integer> e : global_variable_offsets.entrySet()) {
+				String name = e.getKey();
+				int idx = e.getValue();
 				Object value = globals[idx];
 				if (value instanceof AssocArray) {
 					AssocArray aa = (AssocArray) value;

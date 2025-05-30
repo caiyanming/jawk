@@ -171,9 +171,9 @@ public class JRT {
 		if (o instanceof Number) {
 			// It is a number, some processing is required here
 			double d = ((Number) o).doubleValue();
-			if (d == (long) d) {
+			if (isActuallyLong(d)) {
 				// If an integer, represent it as an integer (no floating point and decimals)
-				return Long.toString((long) d);
+				return Long.toString((long) Math.rint(d));
 			} else {
 				// It's not a integer, represent it with the specified format
 				try {
@@ -269,6 +269,18 @@ public class JRT {
 
 		// Failed (not even with one char)
 		return 0;
+	}
+
+	/**
+	 * Determines whether a double value actually represents a long integer
+	 * within the limits of floating point precision.
+	 *
+	 * @param d the double value to examine
+	 * @return {@code true} if {@code d} is effectively an integer
+	 */
+	public static boolean isActuallyLong(double d) {
+		double r = Math.rint(d);
+		return Math.abs(d - r) < Math.ulp(d);
 	}
 
 	/**
@@ -417,8 +429,8 @@ public class JRT {
 				ans = 1;
 			}
 		}
-		if (ans == (long) ans) {
-			return (long) ans;
+		if (isActuallyLong(ans)) {
+			return (long) Math.rint(ans);
 		} else {
 			return ans;
 		}
@@ -449,8 +461,8 @@ public class JRT {
 				ans = 1;
 			}
 		}
-		if (ans == (long) ans) {
-			return (long) ans;
+		if (isActuallyLong(ans)) {
+			return (long) Math.rint(ans);
 		} else {
 			return ans;
 		}
