@@ -157,17 +157,42 @@
 			</plugin>
 
 			<!-- surefire -->
-			<plugin>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<configuration>
-					<excludes>
-						<exclude>**/*GawkTest.java</exclude>
-						<exclude>**/BwkTTest.java</exclude>
-						<exclude>**/BwkMiscTest.java</exclude>
-					</excludes>
-					<workingDirectory>${project.build.directory}/test-classes</workingDirectory>
-				</configuration>
-			</plugin>
+                        <plugin>
+                                <artifactId>maven-surefire-plugin</artifactId>
+                                <executions>
+                                        <execution>
+                                                <id>default-test</id>
+                                                <phase>test</phase>
+                                                <goals>
+                                                        <goal>test</goal>
+                                                </goals>
+                                                <configuration>
+                                                        <excludes>
+                                                                <exclude>**/*GawkTest.java</exclude>
+                                                                <exclude>**/BwkTTest.java</exclude>
+                                                                <exclude>**/BwkMiscTest.java</exclude>
+                                                        </excludes>
+                                                        <workingDirectory>${project.build.directory}/test-classes</workingDirectory>
+                                                </configuration>
+                                        </execution>
+                                        <execution>
+                                                <id>bwk-tests</id>
+                                                <phase>site</phase>
+                                                <goals>
+                                                        <goal>test</goal>
+                                                </goals>
+                                                <configuration>
+                                                        <skipTests>false</skipTests>
+                                                        <testFailureIgnore>true</testFailureIgnore>
+                                                        <reportsDirectory>${project.build.directory}/bwk-surefire-reports</reportsDirectory>
+                                                        <excludes>
+                                                                <exclude>**/*GawkTest.java</exclude>
+                                                        </excludes>
+                                                        <workingDirectory>${project.build.directory}/test-classes</workingDirectory>
+                                                </configuration>
+                                        </execution>
+                                </executions>
+                        </plugin>
 
 			<!-- jar -->
 			<plugin>
@@ -253,6 +278,12 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-report-plugin</artifactId>
+                    <configuration>
+                            <reportsDirectories>
+                                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                                    <reportsDirectory>${project.build.directory}/bwk-surefire-reports</reportsDirectory>
+                            </reportsDirectories>
+                    </configuration>
                 </plugin>
 
                 <!-- checkstyle -->
