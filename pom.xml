@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
@@ -123,6 +122,7 @@
 	<build>
 		<plugins>
 
+			<!--formatter -->
 			<plugin>
 				<groupId>net.revelc.code.formatter</groupId>
 				<artifactId>formatter-maven-plugin</artifactId>
@@ -136,7 +136,29 @@
 					</execution>
 				</executions>
 				<configuration>
+					<directories>
+						<directory>${project.build.sourceDirectory}</directory>
+						<directory>${project.build.testSourceDirectory}</directory>
+						<directory>${project.basedir}</directory>
+					</directories>
+					<includes>
+						<include>**/*.java</include>
+						<include>pom.xml</include>
+					</includes>
+					<excludes>
+						<exclude>**/target/**</exclude>
+					</excludes>
 					<configFile>metricshub-eclipse-formatter.xml</configFile>
+				</configuration>
+			</plugin>
+
+			<!-- checkstyle -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<configuration>
+					<linkXref>true</linkXref>
+					<failOnViolation>false</failOnViolation>
 				</configuration>
 			</plugin>
 
@@ -157,42 +179,40 @@
 			</plugin>
 
 			<!-- surefire -->
-                        <plugin>
-                                <artifactId>maven-surefire-plugin</artifactId>
-                                <executions>
-                                        <execution>
-                                                <id>default-test</id>
-                                                <phase>test</phase>
-                                                <goals>
-                                                        <goal>test</goal>
-                                                </goals>
-                                                <configuration>
-                                                        <excludes>
-                                                                <exclude>**/*GawkTest.java</exclude>
-                                                                <exclude>**/BwkTTest.java</exclude>
-                                                                <exclude>**/BwkMiscTest.java</exclude>
-                                                        </excludes>
-                                                        <workingDirectory>${project.build.directory}/test-classes</workingDirectory>
-                                                </configuration>
-                                        </execution>
-                                        <execution>
-                                                <id>bwk-tests</id>
-                                                <phase>site</phase>
-                                                <goals>
-                                                        <goal>test</goal>
-                                                </goals>
-                                                <configuration>
-                                                        <skipTests>false</skipTests>
-                                                        <testFailureIgnore>true</testFailureIgnore>
-                                                        <reportsDirectory>${project.build.directory}/bwk-surefire-reports</reportsDirectory>
-                                                        <excludes>
-                                                                <exclude>**/*GawkTest.java</exclude>
-                                                        </excludes>
-                                                        <workingDirectory>${project.build.directory}/test-classes</workingDirectory>
-                                                </configuration>
-                                        </execution>
-                                </executions>
-                        </plugin>
+			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>**/*GawkTest.java</exclude>
+						<exclude>**/BwkTTest.java</exclude>
+						<exclude>**/BwkMiscTest.java</exclude>
+					</excludes>
+					<workingDirectory>${project.build.directory}/surefire-workingdir</workingDirectory>
+				</configuration>
+			</plugin>
+
+			<!-- failsafe for compatibility tests -->
+			<plugin>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<configuration>
+					<includes>
+						<include>**/BwkPTest.java</include>
+						<include>**/BwkTTest.java</include>
+						<include>**/BwkMiscTest.java</include>
+						<!--include>**/GawkTest.java</include-->
+					</includes>
+					<testFailureIgnore>true</testFailureIgnore>
+					<workingDirectory>${project.build.directory}/failsafe-workingdir</workingDirectory>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 
 			<!-- jar -->
 			<plugin>
@@ -225,11 +245,11 @@
 							<filters>
 								<filter>
 									<!--
-										Exclude files that sign a jar
-										(one or multiple of the dependencies).
-										One may not repack a signed jar without
-										this, or you will get a
-										SecurityException at program start.
+																		Exclude files that sign a jar
+																		(one or multiple of the dependencies).
+																		One may not repack a signed jar without
+																		this, or you will get a
+																		SecurityException at program start.
 									-->
 									<artifact>*:*</artifact>
 									<excludes>
@@ -250,11 +270,11 @@
 		<plugins>
 
 			<!-- Default project-info-reports -->
-                <plugin>
-                    <artifactId>maven-project-info-reports-plugin</artifactId>
-                    <reportSets>
-                        <reportSet>
-                            <reports>
+			<plugin>
+				<artifactId>maven-project-info-reports-plugin</artifactId>
+				<reportSets>
+					<reportSet>
+						<reports>
 							<report>ci-management</report>
 							<report>dependencies</report>
 							<report>dependency-info</report>
@@ -269,34 +289,16 @@
 							<report>scm</report>
 							<report>summary</report>
 							<report>team</report>
-                            </reports>
-                        </reportSet>
-                    </reportSets>
-                </plugin>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
 
-                <!-- surefire report -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-report-plugin</artifactId>
-                    <configuration>
-                            <reportsDirectories>
-                                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
-                                    <reportsDirectory>${project.build.directory}/bwk-surefire-reports</reportsDirectory>
-                            </reportsDirectories>
-                    </configuration>
-                </plugin>
-
-                <!-- checkstyle -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-checkstyle-plugin</artifactId>
-				<version>3.6.0</version>
-                                <configuration>
-                                        <configLocation>checkstyle.xml</configLocation>
-                                        <encoding>${project.build.sourceEncoding}</encoding>
-                                        <linkXref>true</linkXref>
-                                        <failOnViolation>false</failOnViolation>
-                                </configuration>
+			<!-- surefire report -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-report-plugin</artifactId>
+				<version>3.5.3</version>
 			</plugin>
 
 		</plugins>
