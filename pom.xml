@@ -225,11 +225,11 @@
 		<plugins>
 
 			<!-- Default project-info-reports -->
-			<plugin>
-				<artifactId>maven-project-info-reports-plugin</artifactId>
-				<reportSets>
-					<reportSet>
-						<reports>
+                <plugin>
+                    <artifactId>maven-project-info-reports-plugin</artifactId>
+                    <reportSets>
+                        <reportSet>
+                            <reports>
 							<report>ci-management</report>
 							<report>dependencies</report>
 							<report>dependency-info</report>
@@ -244,15 +244,21 @@
 							<report>scm</report>
 							<report>summary</report>
 							<report>team</report>
-						</reports>
-					</reportSet>
-				</reportSets>
-			</plugin>
+                            </reports>
+                        </reportSet>
+                    </reportSets>
+                </plugin>
 
-			<!-- checkstyle -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-checkstyle-plugin</artifactId>
+                <!-- surefire report -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-report-plugin</artifactId>
+                </plugin>
+
+                <!-- checkstyle -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
 				<version>3.6.0</version>
 				<configuration>
 					<configLocation>checkstyle.xml</configLocation>
