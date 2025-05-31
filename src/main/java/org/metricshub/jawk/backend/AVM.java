@@ -68,6 +68,7 @@ import org.metricshub.jawk.util.MyStack;
 import org.metricshub.jawk.util.ScriptSource;
 import org.metricshub.printf4j.Printf4J;
 import org.slf4j.Logger;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * The Jawk interpreter.
@@ -156,6 +157,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 	 *        interpreter.
 	 * @param extensions Map of the extensions to load
 	 */
+	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "constructor stores provided settings and extension map for later use")
 	public AVM(final AwkSettings parameters, final Map<String, JawkExtension> extensions) {
 		if (parameters == null) {
 			throw new IllegalArgumentException("AwkSettings can not be null");

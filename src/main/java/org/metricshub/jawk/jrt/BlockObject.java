@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * An item which blocks until something useful can be
@@ -93,6 +94,7 @@ public abstract class BlockObject {
 	 *
 	 * @param bo a {@link org.metricshub.jawk.jrt.BlockObject} object
 	 */
+	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Block chain uses direct references between block objects")
 	public void setNextBlockObject(BlockObject bo) {
 		this.nextBlockObject = bo;
 	}
