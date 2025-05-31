@@ -52,6 +52,7 @@ import java.util.regex.Pattern;
 import org.metricshub.jawk.intermediate.UninitializedObject;
 import org.metricshub.jawk.util.AwkLogger;
 import org.slf4j.Logger;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * The Jawk runtime coordinator.
@@ -124,6 +125,7 @@ public class JRT {
 	 *
 	 * @param vm The VariableManager to use with this JRT.
 	 */
+	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "JRT must hold the provided VariableManager for later use")
 	public JRT(VariableManager vm) {
 		this.vm = vm;
 	}
@@ -570,6 +572,7 @@ public class JRT {
 	 *
 	 * @return a {@link org.metricshub.jawk.jrt.PartitioningReader} object
 	 */
+	@SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "PartitioningReader is shared across callers")
 	public PartitioningReader getPartitioningReader() {
 		return partitioningReader;
 	}
@@ -942,6 +945,7 @@ public class JRT {
 	 *
 	 * @return a {@link java.util.Map} object
 	 */
+	@SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Callers modify the map of output files directly")
 	public Map<String, PrintStream> getOutputFiles() {
 		return outputFiles;
 	}
