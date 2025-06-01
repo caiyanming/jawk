@@ -76,7 +76,7 @@ public interface JawkExtension {
 	 * @param jrt Reference to the Runtime
 	 * @param settings Reference to the settings
 	 */
-	void init(VariableManager vm, JRT jrt, final AwkSettings settings);
+	void init(VariableManager vm, JRT jrt, AwkSettings settings);
 
 	/**
 	 * <p>
