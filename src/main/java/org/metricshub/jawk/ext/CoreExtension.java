@@ -203,8 +203,8 @@ import org.slf4j.Logger;
  */
 public class CoreExtension extends AbstractExtension implements JawkExtension {
 
-	private static CoreExtension instance = null; // FIXME Ugly form of singleton implementation (which is ugly by
-																								// itsself)
+	// Singleton instance for this extension
+	private static CoreExtension instance = null;
 	private static final Object INSTANCE_LOCK = new Object();
 	private static final Logger LOG = AwkLogger.getLogger(CoreExtension.class);
 
@@ -416,7 +416,8 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 	}
 
 	static String newReference(Object arg) {
-		if (!(arg instanceof AssocArray)) { // FIXME see other FIXME below
+		// argument must be an associative array
+		if (!(arg instanceof AssocArray)) {
 			throw new IllegalAwkArgumentException("NewRef[erence] requires an assoc array, not " + arg.getClass().getName());
 		}
 
