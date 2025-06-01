@@ -6,19 +6,17 @@ package org.metricshub.jawk.backend;
  * ჻჻჻჻჻჻
  * Copyright (C) 2006 - 2025 MetricsHub
  * ჻჻჻჻჻჻
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Lesser Public License for more details.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU General Lesser Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0.html>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
  */
 
@@ -102,31 +100,31 @@ public class AVM implements AwkInterpreter, VariableManager {
 	private static final Logger LOG = AwkLogger.getLogger(AVM.class);
 	private static final boolean IS_WINDOWS = System.getProperty("os.name").indexOf("Windows") >= 0;
 
-	private RuntimeStack runtime_stack = new RuntimeStack();
+	private RuntimeStack runtimeStack = new RuntimeStack();
 
 	// 16 slots by default
 	// (could be a parameter)
-	// private Deque<Object> operand_stack = new ArrayDeque<Object>(16);
-	// private MyStack<Object> operand_stack = new LinkedListStackImpl<Object>();
-	private MyStack<Object> operand_stack = new ArrayStackImpl<Object>();
+	// private Deque<Object> operandStack = new ArrayDeque<Object>(16);
+	// private MyStack<Object> operandStack = new LinkedListStackImpl<Object>();
+	private MyStack<Object> operandStack = new ArrayStackImpl<Object>();
 	private List<String> arguments;
-	private boolean sorted_array_keys;
-	private Map<String, Object> initial_variables;
-	private String initial_fs_value;
-	private boolean trap_illegal_format_exceptions;
+	private boolean sortedArrayKeys;
+	private Map<String, Object> initialVariables;
+	private String initialFsValue;
+	private boolean trapIllegalFormatExceptions;
 	private JRT jrt;
 	private final Locale locale;
 	private Map<String, JawkExtension> extensions;
 
 	// stack methods
-	// private Object pop() { return operand_stack.removeFirst(); }
-	// private void push(Object o) { operand_stack.addLast(o); }
+	// private Object pop() { return operandStack.removeFirst(); }
+	// private void push(Object o) { operandStack.addLast(o); }
 	private Object pop() {
-		return operand_stack.pop();
+		return operandStack.pop();
 	}
 
 	private void push(Object o) {
-		operand_stack.push(o);
+		operandStack.push(o);
 	}
 
 	private final AwkSettings settings;
@@ -140,10 +138,10 @@ public class AVM implements AwkInterpreter, VariableManager {
 	public AVM() {
 		settings = null;
 		arguments = new ArrayList<String>();
-		sorted_array_keys = false;
-		initial_variables = new HashMap<String, Object>();
-		initial_fs_value = null;
-		trap_illegal_format_exceptions = false;
+		sortedArrayKeys = false;
+		initialVariables = new HashMap<String, Object>();
+		initialFsValue = null;
+		trapIllegalFormatExceptions = false;
 		jrt = new JRT(this); // this = VariableManager
 		locale = Locale.getDefault();
 		this.extensions = Collections.emptyMap();
@@ -163,19 +161,19 @@ public class AVM implements AwkInterpreter, VariableManager {
 			this.settings = parameters;
 			locale = settings.getLocale();
 			arguments = parameters.getNameValueOrFileNames();
-			sorted_array_keys = parameters.isUseSortedArrayKeys();
-			initial_variables = parameters.getVariables();
-			initial_fs_value = parameters.getFieldSeparator();
-			trap_illegal_format_exceptions = parameters.isCatchIllegalFormatExceptions();
+			sortedArrayKeys = parameters.isUseSortedArrayKeys();
+			initialVariables = parameters.getVariables();
+			initialFsValue = parameters.getFieldSeparator();
+			trapIllegalFormatExceptions = parameters.isCatchIllegalFormatExceptions();
 			this.extensions = extensions;
 		} else {
 			this.settings = null;
 			locale = Locale.getDefault();
 			arguments = new ArrayList<String>();
-			sorted_array_keys = false;
-			initial_variables = new HashMap<String, Object>();
-			initial_fs_value = null;
-			trap_illegal_format_exceptions = false;
+			sortedArrayKeys = false;
+			initialVariables = new HashMap<String, Object>();
+			initialFsValue = null;
+			trapIllegalFormatExceptions = false;
 			this.extensions = Collections.emptyMap();
 		}
 
@@ -185,59 +183,59 @@ public class AVM implements AwkInterpreter, VariableManager {
 		}
 	}
 
-	private long nf_offset = NULL_OFFSET;
-	private long nr_offset = NULL_OFFSET;
-	private long fnr_offset = NULL_OFFSET;
-	private long fs_offset = NULL_OFFSET;
-	private long rs_offset = NULL_OFFSET;
-	private long ofs_offset = NULL_OFFSET;
-	private long ors_offset = NULL_OFFSET;
-	private long rstart_offset = NULL_OFFSET;
-	private long rlength_offset = NULL_OFFSET;
-	private long filename_offset = NULL_OFFSET;
-	private long subsep_offset = NULL_OFFSET;
-	private long convfmt_offset = NULL_OFFSET;
-	private long ofmt_offset = NULL_OFFSET;
-	private long environ_offset = NULL_OFFSET;
-	private long argc_offset = NULL_OFFSET;
-	private long argv_offset = NULL_OFFSET;
+	private long nfOffset = NULL_OFFSET;
+	private long nrOffset = NULL_OFFSET;
+	private long fnrOffset = NULL_OFFSET;
+	private long fsOffset = NULL_OFFSET;
+	private long rsOffset = NULL_OFFSET;
+	private long ofsOffset = NULL_OFFSET;
+	private long orsOffset = NULL_OFFSET;
+	private long rstartOffset = NULL_OFFSET;
+	private long rlengthOffset = NULL_OFFSET;
+	private long filenameOffset = NULL_OFFSET;
+	private long subsepOffset = NULL_OFFSET;
+	private long convfmtOffset = NULL_OFFSET;
+	private long ofmtOffset = NULL_OFFSET;
+	private long environOffset = NULL_OFFSET;
+	private long argcOffset = NULL_OFFSET;
+	private long argvOffset = NULL_OFFSET;
 
 	private static final Integer ZERO = Integer.valueOf(0);
 	private static final Integer ONE = Integer.valueOf(1);
 
-	private final Random random_number_generator = new Random();
+	private final Random randomNumberGenerator = new Random();
 	private int oldseed;
 
-	private Address exit_address = null;
+	private Address exitAddress = null;
 
 	/**
 	 * <code>true</code> if execution position is within an END block;
 	 * <code>false</code> otherwise.
 	 */
-	private boolean within_end_blocks = false;
+	private boolean withinEndBlocks = false;
 
 	/**
 	 * Exit code set by the <code>exit NN</code> command (0 by default)
 	 */
-	private int exit_code = 0;
+	private int exitCode = 0;
 
 	/**
 	 * Whether <code>exit</code> has been called and we should throw ExitException
 	 */
-	private boolean throw_exit_exception = false;
+	private boolean throwExitException = false;
 
 	/**
 	 * Maps global variable names to their global array offsets.
 	 * It is useful when passing variable assignments from the file-list
 	 * portion of the command-line arguments.
 	 */
-	private Map<String, Integer> global_variable_offsets;
+	private Map<String, Integer> globalVariableOffsets;
 	/**
 	 * Indicates whether the variable, by name, is a scalar
 	 * or not. If not, then it is an Associative Array.
 	 */
-	private Map<String, Boolean> global_variable_arrays;
-	private Set<String> function_names;
+	private Map<String, Boolean> globalVariableArrays;
+	private Set<String> functionNames;
 
 	private static int parseIntField(Object obj, PositionForInterpretation position) {
 		int fieldVal;
@@ -275,16 +273,16 @@ public class AVM implements AwkInterpreter, VariableManager {
 	private String execSubOrGSub(PositionForInterpretation position, int gsubArgPos) {
 		String newString;
 
-		// arg[gsubArgPos] = is_gsub
+		// arg[gsubArgPos] = isGsub
 		// stack[0] = original field value
 		// stack[1] = replacement string
 		// stack[2] = ere
-		boolean is_gsub = position.boolArg(gsubArgPos);
+		boolean isGsub = position.boolArg(gsubArgPos);
 		String convfmt = getCONVFMT().toString();
 		String orig = JRT.toAwkString(pop(), convfmt, locale);
 		String repl = JRT.toAwkString(pop(), convfmt, locale);
 		String ere = JRT.toAwkString(pop(), convfmt, locale);
-		if (is_gsub) {
+		if (isGsub) {
 			newString = replaceAll(orig, ere, repl);
 		} else {
 			newString = replaceFirst(orig, ere, repl);
@@ -303,11 +301,11 @@ public class AVM implements AwkInterpreter, VariableManager {
 	@Override
 	public void interpret(AwkTuples tuples) throws ExitException, IOException {
 		Map<String, Pattern> regexps = new HashMap<String, Pattern>();
-		Map<Integer, ConditionPair> condition_pairs = new HashMap<Integer, ConditionPair>();
+		Map<Integer, ConditionPair> conditionPairs = new HashMap<Integer, ConditionPair>();
 
-		global_variable_offsets = tuples.getGlobalVariableOffsetMap();
-		global_variable_arrays = tuples.getGlobalVariableAarrayMap();
-		function_names = tuples.getFunctionNameSet();
+		globalVariableOffsets = tuples.getGlobalVariableOffsetMap();
+		globalVariableArrays = tuples.getGlobalVariableAarrayMap();
+		functionNames = tuples.getFunctionNameSet();
 
 		PositionForInterpretation position = (PositionForInterpretation) tuples.top();
 
@@ -322,8 +320,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// stack[0] = item 1
 					// stack[1] = item 2
 					// etc.
-					long num_args = position.intArg(0);
-					printTo(settings.getOutputStream(), num_args);
+					long numArgs = position.intArg(0);
+					printTo(settings.getOutputStream(), numArgs);
 					position.next();
 					break;
 				}
@@ -334,7 +332,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// stack[1] = item 1
 					// stack[2] = item 2
 					// etc.
-					long num_args = position.intArg(0);
+					long numArgs = position.intArg(0);
 					boolean append = position.boolArg(1);
 					String key = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
 					PrintStream ps = jrt.getOutputFiles().get(key);
@@ -351,7 +349,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 							throw new AwkRuntimeException(position.lineNumber(), "Cannot open " + key + " for writing: " + ioe);
 						}
 					}
-					printTo(ps, num_args);
+					printTo(ps, numArgs);
 					position.next();
 					break;
 				}
@@ -361,10 +359,10 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// stack[1] = item 1
 					// stack[2] = item 2
 					// etc.
-					long num_args = position.intArg(0);
+					long numArgs = position.intArg(0);
 					String cmd = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
 					PrintStream ps = jrt.jrtSpawnForOutput(cmd);
-					printTo(ps, num_args);
+					printTo(ps, numArgs);
 					position.next();
 					break;
 				}
@@ -373,8 +371,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// stack[0] = format string
 					// stack[1] = item 1
 					// etc.
-					long num_args = position.intArg(0);
-					printfTo(settings.getOutputStream(), num_args);
+					long numArgs = position.intArg(0);
+					printfTo(settings.getOutputStream(), numArgs);
 					position.next();
 					break;
 				}
@@ -385,7 +383,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// stack[1] = format string
 					// stack[2] = item 1
 					// etc.
-					long num_args = position.intArg(0);
+					long numArgs = position.intArg(0);
 					boolean append = position.boolArg(1);
 					String key = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
 					PrintStream ps = jrt.getOutputFiles().get(key);
@@ -402,7 +400,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 							throw new AwkRuntimeException(position.lineNumber(), "Cannot open " + key + " for writing: " + ioe);
 						}
 					}
-					printfTo(ps, num_args);
+					printfTo(ps, numArgs);
 					position.next();
 					break;
 				}
@@ -412,10 +410,10 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// stack[1] = format string
 					// stack[2] = item 1
 					// etc.
-					long num_args = position.intArg(0);
+					long numArgs = position.intArg(0);
 					String cmd = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
 					PrintStream ps = jrt.jrtSpawnForOutput(cmd);
-					printfTo(ps, num_args);
+					printfTo(ps, numArgs);
 					position.next();
 					break;
 				}
@@ -424,8 +422,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// stack[0] = arg1 (format string)
 					// stack[1] = arg2
 					// etc.
-					long num_args = position.intArg(0);
-					push(sprintfFunction(num_args));
+					long numArgs = position.intArg(0);
+					push(sprintfFunction(numArgs));
 					position.next();
 					break;
 				}
@@ -517,7 +515,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					} else if (o instanceof UninitializedObject) {
 						result = false;
 					} else {
-						throw new Error("Unknown operand_stack type: " + o.getClass() + " for value " + o);
+						throw new Error("Unknown operandStack type: " + o.getClass() + " for value " + o);
 					}
 					if (result) {
 						push(0);
@@ -567,34 +565,34 @@ public class AVM implements AwkInterpreter, VariableManager {
 					String convfmt = getCONVFMT().toString();
 					String s2 = JRT.toAwkString(pop(), convfmt, locale);
 					String s1 = JRT.toAwkString(pop(), convfmt, locale);
-					String result_string = s1 + s2;
-					push(result_string);
+					String resultString = s1 + s2;
+					push(resultString);
 					position.next();
 					break;
 				}
 				case AwkTuples._ASSIGN_: {
 					// arg[0] = offset
-					// arg[1] = is_global
+					// arg[1] = isGlobal
 					// stack[0] = value
 					Object value = pop();
-					boolean is_global = position.boolArg(1);
-					assign(position.intArg(0), value, is_global, position);
+					boolean isGlobal = position.boolArg(1);
+					assign(position.intArg(0), value, isGlobal, position);
 					position.next();
 					break;
 				}
 				case AwkTuples._ASSIGN_ARRAY_: {
 					// arg[0] = offset
-					// arg[1] = is_global
+					// arg[1] = isGlobal
 					// stack[0] = array index
 					// stack[1] = value
-					Object arr_idx = pop();
+					Object arrIdx = pop();
 					Object rhs = pop();
 					if (rhs == null) {
 						rhs = BLANK;
 					}
 					long offset = position.intArg(0);
-					boolean is_global = position.boolArg(1);
-					assignArray(offset, arr_idx, rhs, is_global);
+					boolean isGlobal = position.boolArg(1);
+					assignArray(offset, arrIdx, rhs, isGlobal);
 					position.next();
 					break;
 				}
@@ -605,63 +603,63 @@ public class AVM implements AwkInterpreter, VariableManager {
 				case AwkTuples._MOD_EQ_ARRAY_:
 				case AwkTuples._POW_EQ_ARRAY_: {
 					// arg[0] = offset
-					// arg[1] = is_global
+					// arg[1] = isGlobal
 					// stack[0] = array index
 					// stack[1] = value
-					Object arr_idx = pop();
+					Object arrIdx = pop();
 					Object rhs = pop();
 					if (rhs == null) {
 						rhs = BLANK;
 					}
 					long offset = position.intArg(0);
-					boolean is_global = position.boolArg(1);
+					boolean isGlobal = position.boolArg(1);
 
 					double val = JRT.toDouble(rhs);
 
 					// from _DEREF_ARRAY_
 					// stack[0] = AssocArray
 					// stack[1] = array index
-					Object o1 = runtime_stack.getVariable(offset, is_global); // map
+					Object o1 = runtimeStack.getVariable(offset, isGlobal); // map
 					if (o1 == null || o1 instanceof UninitializedObject) {
-						runtime_stack.setVariable(offset, o1 = new AssocArray(sorted_array_keys), is_global);
+						runtimeStack.setVariable(offset, o1 = new AssocArray(sortedArrayKeys), isGlobal);
 					} else {
 						assert o1 instanceof AssocArray;
 					}
 
 					AssocArray array = (AssocArray) o1;
-					Object o = array.get(arr_idx);
+					Object o = array.get(arrIdx);
 					assert o != null;
-					double orig_val = JRT.toDouble(o);
+					double origVal = JRT.toDouble(o);
 
-					double new_val;
+					double newVal;
 
 					switch (opcode) {
 					case AwkTuples._PLUS_EQ_ARRAY_:
-						new_val = orig_val + val;
+						newVal = origVal + val;
 						break;
 					case AwkTuples._MINUS_EQ_ARRAY_:
-						new_val = orig_val - val;
+						newVal = origVal - val;
 						break;
 					case AwkTuples._MULT_EQ_ARRAY_:
-						new_val = orig_val * val;
+						newVal = origVal * val;
 						break;
 					case AwkTuples._DIV_EQ_ARRAY_:
-						new_val = orig_val / val;
+						newVal = origVal / val;
 						break;
 					case AwkTuples._MOD_EQ_ARRAY_:
-						new_val = orig_val % val;
+						newVal = origVal % val;
 						break;
 					case AwkTuples._POW_EQ_ARRAY_:
-						new_val = Math.pow(orig_val, val);
+						newVal = Math.pow(origVal, val);
 						break;
 					default:
 						throw new Error("Invalid op code here: " + opcode);
 					}
 
-					if (JRT.isActuallyLong(new_val)) {
-						assignArray(offset, arr_idx, (long) Math.rint(new_val), is_global);
+					if (JRT.isActuallyLong(newVal)) {
+						assignArray(offset, arrIdx, (long) Math.rint(newVal), isGlobal);
 					} else {
-						assignArray(offset, arr_idx, new_val, is_global);
+						assignArray(offset, arrIdx, newVal, isGlobal);
 					}
 					position.next();
 					break;
@@ -677,24 +675,24 @@ public class AVM implements AwkInterpreter, VariableManager {
 				case AwkTuples._ASSIGN_AS_INPUT_FIELD_: {
 					// stack[0] = field number
 					// stack[1] = value
-					Object field_num_obj = pop();
-					int field_num;
-					if (field_num_obj instanceof Number) {
-						field_num = ((Number) field_num_obj).intValue();
+					Object fieldNumObj = pop();
+					int fieldNum;
+					if (fieldNumObj instanceof Number) {
+						fieldNum = ((Number) fieldNumObj).intValue();
 					} else {
 						try {
-							field_num = Integer.parseInt(field_num_obj.toString());
+							fieldNum = Integer.parseInt(fieldNumObj.toString());
 						} catch (NumberFormatException nfe) {
-							field_num = 0;
+							fieldNum = 0;
 						}
 					}
 					String value = pop().toString();
 					push(value); // leave the result on the stack
-					if (field_num == 0) {
+					if (fieldNum == 0) {
 						jrt.setInputLine(value);
 						jrt.jrtParseFields();
 					} else {
-						jrt.jrtSetInputField(value, field_num);
+						jrt.jrtSetInputField(value, fieldNum);
 					}
 					position.next();
 					break;
@@ -706,10 +704,10 @@ public class AVM implements AwkInterpreter, VariableManager {
 				case AwkTuples._MOD_EQ_:
 				case AwkTuples._POW_EQ_: {
 					// arg[0] = offset
-					// arg[1] = is_global
+					// arg[1] = isGlobal
 					// stack[0] = value
-					boolean is_global = position.boolArg(1);
-					Object o1 = runtime_stack.getVariable(position.intArg(0), is_global);
+					boolean isGlobal = position.boolArg(1);
+					Object o1 = runtimeStack.getVariable(position.intArg(0), isGlobal);
 					if (o1 == null) {
 						o1 = BLANK;
 					}
@@ -742,10 +740,10 @@ public class AVM implements AwkInterpreter, VariableManager {
 					if (JRT.isActuallyLong(ans)) {
 						long integral = (long) Math.rint(ans);
 						push(integral);
-						runtime_stack.setVariable(position.intArg(0), integral, is_global);
+						runtimeStack.setVariable(position.intArg(0), integral, isGlobal);
 					} else {
 						push(ans);
-						runtime_stack.setVariable(position.intArg(0), ans, is_global);
+						runtimeStack.setVariable(position.intArg(0), ans, isGlobal);
 					}
 					position.next();
 					break;
@@ -756,7 +754,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 				case AwkTuples._DIV_EQ_INPUT_FIELD_:
 				case AwkTuples._MOD_EQ_INPUT_FIELD_:
 				case AwkTuples._POW_EQ_INPUT_FIELD_: {
-					// stack[0] = dollar_field_number
+					// stack[0] = dollar_fieldNumber
 					// stack[1] = inc value
 
 					// same code as _GET_INPUT_FIELD_:
@@ -764,26 +762,26 @@ public class AVM implements AwkInterpreter, VariableManager {
 					double incval = JRT.toDouble(pop());
 
 					// except here, get the number, and add the incvalue
-					Object num_obj = jrt.jrtGetInputField(fieldnum);
+					Object numObj = jrt.jrtGetInputField(fieldnum);
 					double num;
 					switch (opcode) {
 					case AwkTuples._PLUS_EQ_INPUT_FIELD_:
-						num = JRT.toDouble(num_obj) + incval;
+						num = JRT.toDouble(numObj) + incval;
 						break;
 					case AwkTuples._MINUS_EQ_INPUT_FIELD_:
-						num = JRT.toDouble(num_obj) - incval;
+						num = JRT.toDouble(numObj) - incval;
 						break;
 					case AwkTuples._MULT_EQ_INPUT_FIELD_:
-						num = JRT.toDouble(num_obj) * incval;
+						num = JRT.toDouble(numObj) * incval;
 						break;
 					case AwkTuples._DIV_EQ_INPUT_FIELD_:
-						num = JRT.toDouble(num_obj) / incval;
+						num = JRT.toDouble(numObj) / incval;
 						break;
 					case AwkTuples._MOD_EQ_INPUT_FIELD_:
-						num = JRT.toDouble(num_obj) % incval;
+						num = JRT.toDouble(numObj) % incval;
 						break;
 					case AwkTuples._POW_EQ_INPUT_FIELD_:
-						num = Math.pow(JRT.toDouble(num_obj), incval);
+						num = Math.pow(JRT.toDouble(numObj), incval);
 						break;
 					default:
 						throw new Error("Invalid opcode here: " + opcode);
@@ -798,21 +796,21 @@ public class AVM implements AwkInterpreter, VariableManager {
 				}
 				case AwkTuples._INC_: {
 					// arg[0] = offset
-					// arg[1] = is_global
+					// arg[1] = isGlobal
 					inc(position.intArg(0), position.boolArg(1));
 					position.next();
 					break;
 				}
 				case AwkTuples._DEC_: {
 					// arg[0] = offset
-					// arg[1] = is_global
+					// arg[1] = isGlobal
 					dec(position.intArg(0), position.boolArg(1));
 					position.next();
 					break;
 				}
 				case AwkTuples._POSTINC_: {
 					// arg[0] = offset
-					// arg[1] = is_global
+					// arg[1] = isGlobal
 					pop();
 					push(inc(position.intArg(0), position.boolArg(1)));
 					position.next();
@@ -820,7 +818,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 				}
 				case AwkTuples._POSTDEC_: {
 					// arg[0] = offset
-					// arg[1] = is_global
+					// arg[1] = isGlobal
 					pop();
 					push(dec(position.intArg(0), position.boolArg(1)));
 					position.next();
@@ -828,12 +826,12 @@ public class AVM implements AwkInterpreter, VariableManager {
 				}
 				case AwkTuples._INC_ARRAY_REF_: {
 					// arg[0] = offset
-					// arg[1] = is_global
+					// arg[1] = isGlobal
 					// stack[0] = array index
-					boolean is_global = position.boolArg(1);
-					Object o1 = runtime_stack.getVariable(position.intArg(0), is_global);
+					boolean isGlobal = position.boolArg(1);
+					Object o1 = runtimeStack.getVariable(position.intArg(0), isGlobal);
 					if (o1 == null || o1 instanceof UninitializedObject) {
-						runtime_stack.setVariable(position.intArg(0), o1 = new AssocArray(sorted_array_keys), is_global);
+						runtimeStack.setVariable(position.intArg(0), o1 = new AssocArray(sortedArrayKeys), isGlobal);
 					}
 					AssocArray aa = (AssocArray) o1;
 					Object key = pop();
@@ -850,12 +848,12 @@ public class AVM implements AwkInterpreter, VariableManager {
 				}
 				case AwkTuples._DEC_ARRAY_REF_: {
 					// arg[0] = offset
-					// arg[1] = is_global
+					// arg[1] = isGlobal
 					// stack[0] = array index
-					boolean is_global = position.boolArg(1);
-					Object o1 = runtime_stack.getVariable(position.intArg(0), is_global);
+					boolean isGlobal = position.boolArg(1);
+					Object o1 = runtimeStack.getVariable(position.intArg(0), isGlobal);
 					if (o1 == null || o1 instanceof UninitializedObject) {
-						runtime_stack.setVariable(position.intArg(0), o1 = new AssocArray(sorted_array_keys), is_global);
+						runtimeStack.setVariable(position.intArg(0), o1 = new AssocArray(sortedArrayKeys), isGlobal);
 					}
 					AssocArray aa = (AssocArray) o1;
 					Object key = pop();
@@ -876,8 +874,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					int fieldnum = parseIntField(pop(), position);
 					// except here, get the number, and add one
 					// push(avmGetInputField(fieldnum));
-					Object num_obj = jrt.jrtGetInputField(fieldnum);
-					double num = JRT.toDouble(num_obj) + 1;
+					Object numObj = jrt.jrtGetInputField(fieldnum);
+					double num = JRT.toDouble(numObj) + 1;
 					setNumOnJRT(fieldnum, num);
 
 					position.next();
@@ -889,8 +887,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					int fieldnum = parseIntField(pop(), position);
 					// except here, get the number, and add one
 					// push(avmGetInputField(fieldnum));
-					Object num_obj = jrt.jrtGetInputField(fieldnum);
-					double num = JRT.toDouble(num_obj) - 1;
+					Object numObj = jrt.jrtGetInputField(fieldnum);
+					double num = JRT.toDouble(numObj) - 1;
 					setNumOnJRT(fieldnum, num);
 
 					position.next();
@@ -898,15 +896,15 @@ public class AVM implements AwkInterpreter, VariableManager {
 				}
 				case AwkTuples._DEREFERENCE_: {
 					// arg[0] = offset
-					// arg[1] = is_global
-					boolean is_global = position.boolArg(2);
-					Object o = runtime_stack.getVariable(position.intArg(0), is_global);
+					// arg[1] = isGlobal
+					boolean isGlobal = position.boolArg(2);
+					Object o = runtimeStack.getVariable(position.intArg(0), isGlobal);
 					if (o == null) {
 						if (position.boolArg(1)) {
 							// is_array
-							push(runtime_stack.setVariable(position.intArg(0), new AssocArray(sorted_array_keys), is_global));
+							push(runtimeStack.setVariable(position.intArg(0), new AssocArray(sortedArrayKeys), isGlobal));
 						} else {
-							push(runtime_stack.setVariable(position.intArg(0), BLANK, is_global));
+							push(runtimeStack.setVariable(position.intArg(0), BLANK, isGlobal));
 						}
 					} else {
 						push(o);
@@ -929,11 +927,11 @@ public class AVM implements AwkInterpreter, VariableManager {
 					break;
 				}
 				case AwkTuples._SRAND_: {
-					// arg[0] = num_args (where 0 = no args, anything else = one argument)
-					// stack[0] = seed (only if num_args != 0)
-					long numargs = position.intArg(0);
+					// arg[0] = numArgs (where 0 = no args, anything else = one argument)
+					// stack[0] = seed (only if numArgs != 0)
+					long numArgs = position.intArg(0);
 					int seed;
-					if (numargs == 0) {
+					if (numArgs == 0) {
 						// use the time of day for the seed
 						seed = JRT.timeSeed();
 					} else {
@@ -952,14 +950,14 @@ public class AVM implements AwkInterpreter, VariableManager {
 							}
 						}
 					}
-					random_number_generator.setSeed(seed);
+					randomNumberGenerator.setSeed(seed);
 					push(oldseed);
 					oldseed = seed;
 					position.next();
 					break;
 				}
 				case AwkTuples._RAND_: {
-					push(random_number_generator.nextDouble());
+					push(randomNumberGenerator.nextDouble());
 					position.next();
 					break;
 				}
@@ -1019,9 +1017,9 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// check if IGNORECASE set
 					int flags = 0;
 
-					if (global_variable_offsets.containsKey("IGNORECASE")) {
-						Integer offset_obj = global_variable_offsets.get("IGNORECASE");
-						Object ignorecase = runtime_stack.getVariable(offset_obj, true);
+					if (globalVariableOffsets.containsKey("IGNORECASE")) {
+						Integer offsetObj = globalVariableOffsets.get("IGNORECASE");
+						Object ignorecase = runtimeStack.getVariable(offsetObj, true);
 
 						if (JRT.toDouble(ignorecase) != 0) {
 							flags |= Pattern.CASE_INSENSITIVE;
@@ -1032,13 +1030,13 @@ public class AVM implements AwkInterpreter, VariableManager {
 					Matcher matcher = pattern.matcher(s);
 					boolean result = matcher.find();
 					if (result) {
-						assign(rstart_offset, matcher.start() + 1, true, position);
-						assign(rlength_offset, matcher.end() - matcher.start(), true, position);
+						assign(rstartOffset, matcher.start() + 1, true, position);
+						assign(rlengthOffset, matcher.end() - matcher.start(), true, position);
 						pop();
 						// end up with RSTART on the stack
 					} else {
-						assign(rstart_offset, ZERO, true, position);
-						assign(rlength_offset, -1, true, position);
+						assign(rstartOffset, ZERO, true, position);
+						assign(rlengthOffset, -1, true, position);
 						pop();
 						// end up with RSTART on the stack
 					}
@@ -1056,16 +1054,16 @@ public class AVM implements AwkInterpreter, VariableManager {
 					break;
 				}
 				case AwkTuples._SUB_FOR_DOLLAR_0_: {
-					// arg[0] = is_global
+					// arg[0] = isGlobal
 					// stack[0] = replacement string
 					// stack[1] = ere
-					boolean is_gsub = position.boolArg(0);
+					boolean isGsub = position.boolArg(0);
 					String convfmt = getCONVFMT().toString();
 					String repl = JRT.toAwkString(pop(), convfmt, locale);
 					String ere = JRT.toAwkString(pop(), convfmt, locale);
 					String orig = JRT.toAwkString(jrt.jrtGetInputField(0), convfmt, locale);
 					String newstring;
-					if (is_gsub) {
+					if (isGsub) {
 						newstring = replaceAll(orig, ere, repl);
 					} else {
 						newstring = replaceFirst(orig, ere, repl);
@@ -1077,19 +1075,19 @@ public class AVM implements AwkInterpreter, VariableManager {
 					break;
 				}
 				case AwkTuples._SUB_FOR_DOLLAR_REFERENCE_: {
-					// arg[0] = is_global
+					// arg[0] = isGlobal
 					// stack[0] = field num
 					// stack[1] = original field value
 					// stack[2] = replacement string
 					// stack[3] = ere
-					boolean is_gsub = position.boolArg(0);
+					boolean isGsub = position.boolArg(0);
 					String convfmt = getCONVFMT().toString();
 					int fieldNum = (int) JRT.toDouble(pop());
 					String orig = JRT.toAwkString(pop(), convfmt, locale);
 					String repl = JRT.toAwkString(pop(), convfmt, locale);
 					String ere = JRT.toAwkString(pop(), convfmt, locale);
 					String newstring;
-					if (is_gsub) {
+					if (isGsub) {
 						newstring = replaceAll(orig, ere, repl);
 					} else {
 						newstring = replaceFirst(orig, ere, repl);
@@ -1106,35 +1104,35 @@ public class AVM implements AwkInterpreter, VariableManager {
 				}
 				case AwkTuples._SUB_FOR_VARIABLE_: {
 					// arg[0] = offset
-					// arg[1] = is_global
-					// arg[2] = is_gsub
+					// arg[1] = isGlobal
+					// arg[2] = isGsub
 					// stack[0] = original variable value
 					// stack[1] = replacement string
 					// stack[2] = ere
 					long offset = position.intArg(0);
-					boolean is_global = position.boolArg(1);
+					boolean isGlobal = position.boolArg(1);
 					String newString = execSubOrGSub(position, 2);
 					// assign it to "offset/global"
-					assign(offset, newString, is_global, position);
+					assign(offset, newString, isGlobal, position);
 					pop();
 					position.next();
 					break;
 				}
 				case AwkTuples._SUB_FOR_ARRAY_REFERENCE_: {
 					// arg[0] = offset
-					// arg[1] = is_global
-					// arg[2] = is_gsub
+					// arg[1] = isGlobal
+					// arg[2] = isGsub
 					// stack[0] = original variable value
 					// stack[1] = replacement string
 					// stack[2] = ere
 					// stack[3] = array index
-					// ARRAY reference offset/is_global
+					// ARRAY reference offset/isGlobal
 					long offset = position.intArg(0);
-					boolean is_global = position.boolArg(1);
-					Object arr_idx = pop();
+					boolean isGlobal = position.boolArg(1);
+					Object arrIdx = pop();
 					String newString = execSubOrGSub(position, 2);
-					// assign it to "offset/arr_idx/global"
-					assignArray(offset, arr_idx, newString, is_global);
+					// assign it to "offset/arrIdx/global"
+					assignArray(offset, arrIdx, newString, isGlobal);
 					pop();
 					position.next();
 					break;
@@ -1145,14 +1143,14 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// stack[1] = array
 					// stack[2] = string
 					String convfmt = getCONVFMT().toString();
-					long numargs = position.intArg(0);
-					String fs_string;
-					if (numargs == 2) {
-						fs_string = JRT.toAwkString(getFS(), convfmt, locale);
-					} else if (numargs == 3) {
-						fs_string = JRT.toAwkString(pop(), convfmt, locale);
+					long numArgs = position.intArg(0);
+					String fsString;
+					if (numArgs == 2) {
+						fsString = JRT.toAwkString(getFS(), convfmt, locale);
+					} else if (numArgs == 3) {
+						fsString = JRT.toAwkString(pop(), convfmt, locale);
 					} else {
-						throw new Error("Invalid # of args. split() requires 2 or 3. Got: " + numargs);
+						throw new Error("Invalid # of args. split() requires 2 or 3. Got: " + numArgs);
 					}
 					Object o = pop();
 					if (!(o instanceof AssocArray)) {
@@ -1160,21 +1158,21 @@ public class AVM implements AwkInterpreter, VariableManager {
 					}
 					String s = JRT.toAwkString(pop(), convfmt, locale);
 					Enumeration<Object> tokenizer;
-					if (fs_string.equals(" ")) {
+					if (fsString.equals(" ")) {
 						tokenizer = new StringTokenizer(s);
-					} else if (fs_string.length() == 1) {
-						tokenizer = new SingleCharacterTokenizer(s, fs_string.charAt(0));
-					} else if (fs_string.isEmpty()) {
+					} else if (fsString.length() == 1) {
+						tokenizer = new SingleCharacterTokenizer(s, fsString.charAt(0));
+					} else if (fsString.isEmpty()) {
 						tokenizer = new CharacterTokenizer(s);
 					} else {
-						tokenizer = new RegexTokenizer(s, fs_string);
+						tokenizer = new RegexTokenizer(s, fsString);
 					}
 
-					AssocArray assoc_array = (AssocArray) o;
-					assoc_array.clear();
+					AssocArray assocArray = (AssocArray) o;
+					assocArray.clear();
 					int cnt = 0;
 					while (tokenizer.hasMoreElements()) {
-						assoc_array.put(++cnt, tokenizer.nextElement());
+						assocArray.put(++cnt, tokenizer.nextElement());
 					}
 					push(cnt);
 					position.next();
@@ -1185,19 +1183,19 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// stack[0] = length (only if num args == 3)
 					// stack[1] = start pos
 					// stack[2] = string
-					long numargs = position.intArg(0);
+					long numArgs = position.intArg(0);
 					int startPos, length;
 					String s;
-					if (numargs == 3) {
+					if (numArgs == 3) {
 						length = (int) JRT.toLong(pop());
 						startPos = (int) JRT.toDouble(pop());
 						s = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
-					} else if (numargs == 2) {
+					} else if (numArgs == 2) {
 						startPos = (int) JRT.toDouble(pop());
 						s = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
 						length = s.length() - startPos + 1;
 					} else {
-						throw new Error("numargs for _SUBSTR_ must be 2 or 3. It is " + numargs);
+						throw new Error("numArgs for _SUBSTR_ must be 2 or 3. It is " + numArgs);
 					}
 					if (startPos <= 0) {
 						startPos = 1;
@@ -1291,15 +1289,15 @@ public class AVM implements AwkInterpreter, VariableManager {
 					break;
 				}
 				case AwkTuples._SLEEP_: {
-					// arg[0] = num_args
-					// if (num_args==1)
+					// arg[0] = numArgs
+					// if (numArgs==1)
 					// stack[0] = # of seconds
 					// else
 					// nothing on the stack
 					// int seconds = (int) JRT.toDouble(pop());
 					long seconds;
-					long numargs = position.intArg(0);
-					if (numargs == 0) {
+					long numArgs = position.intArg(0);
+					if (numArgs == 0) {
 						seconds = 1;
 					} else {
 						seconds = (long) JRT.toDouble(pop());
@@ -1315,23 +1313,23 @@ public class AVM implements AwkInterpreter, VariableManager {
 					break;
 				}
 				case AwkTuples._DUMP_: {
-					// arg[0] = num_args
-					// if (num_args==0)
+					// arg[0] = numArgs
+					// if (numArgs==0)
 					// all Jawk global variables
 					// else
 					// args are assoc arrays to display
 					// int seconds = (int) JRT.toDouble(pop());
-					long numargs = position.intArg(0);
-					AssocArray[] aa_array;
-					if (numargs == 0) {
-						aa_array = null;
+					long numArgs = position.intArg(0);
+					AssocArray[] aaArray;
+					if (numArgs == 0) {
+						aaArray = null;
 					} else {
-						aa_array = new AssocArray[(int) numargs];
-						for (int i = 0; i < numargs; ++i) {
-							aa_array[i] = (AssocArray) pop();
+						aaArray = new AssocArray[(int) numArgs];
+						for (int i = 0; i < numArgs; ++i) {
+							aaArray[i] = (AssocArray) pop();
 						}
 					}
-					avmDump(aa_array);
+					avmDump(aaArray);
 					position.next();
 					break;
 				}
@@ -1530,39 +1528,39 @@ public class AVM implements AwkInterpreter, VariableManager {
 				}
 				case AwkTuples._NF_OFFSET_: {
 					// stack[0] = offset
-					nf_offset = position.intArg(0);
-					assert nf_offset != NULL_OFFSET;
-					assign(nf_offset, 0, true, position);
+					nfOffset = position.intArg(0);
+					assert nfOffset != NULL_OFFSET;
+					assign(nfOffset, 0, true, position);
 					pop(); // clean up the stack after the assignment
 					position.next();
 					break;
 				}
 				case AwkTuples._NR_OFFSET_: {
 					// stack[0] = offset
-					nr_offset = position.intArg(0);
-					assert nr_offset != NULL_OFFSET;
-					assign(nr_offset, 0, true, position);
+					nrOffset = position.intArg(0);
+					assert nrOffset != NULL_OFFSET;
+					assign(nrOffset, 0, true, position);
 					pop(); // clean up the stack after the assignment
 					position.next();
 					break;
 				}
 				case AwkTuples._FNR_OFFSET_: {
 					// stack[0] = offset
-					fnr_offset = position.intArg(0);
-					assert fnr_offset != NULL_OFFSET;
-					assign(fnr_offset, 0, true, position);
+					fnrOffset = position.intArg(0);
+					assert fnrOffset != NULL_OFFSET;
+					assign(fnrOffset, 0, true, position);
 					pop(); // clean up the stack after the assignment
 					position.next();
 					break;
 				}
 				case AwkTuples._FS_OFFSET_: {
 					// stack[0] = offset
-					fs_offset = position.intArg(0);
-					assert fs_offset != NULL_OFFSET;
-					if (initial_fs_value == null) {
-						assign(fs_offset, " ", true, position);
+					fsOffset = position.intArg(0);
+					assert fsOffset != NULL_OFFSET;
+					if (initialFsValue == null) {
+						assign(fsOffset, " ", true, position);
 					} else {
-						assign(fs_offset, initial_fs_value, true, position);
+						assign(fsOffset, initialFsValue, true, position);
 					}
 					pop(); // clean up the stack after the assignment
 					position.next();
@@ -1570,94 +1568,94 @@ public class AVM implements AwkInterpreter, VariableManager {
 				}
 				case AwkTuples._RS_OFFSET_: {
 					// stack[0] = offset
-					rs_offset = position.intArg(0);
-					assert rs_offset != NULL_OFFSET;
-					assign(rs_offset, settings.getDefaultRS(), true, position);
+					rsOffset = position.intArg(0);
+					assert rsOffset != NULL_OFFSET;
+					assign(rsOffset, settings.getDefaultRS(), true, position);
 					pop(); // clean up the stack after the assignment
 					position.next();
 					break;
 				}
 				case AwkTuples._OFS_OFFSET_: {
 					// stack[0] = offset
-					ofs_offset = position.intArg(0);
-					assert ofs_offset != NULL_OFFSET;
-					assign(ofs_offset, " ", true, position);
+					ofsOffset = position.intArg(0);
+					assert ofsOffset != NULL_OFFSET;
+					assign(ofsOffset, " ", true, position);
 					pop(); // clean up the stack after the assignment
 					position.next();
 					break;
 				}
 				case AwkTuples._ORS_OFFSET_: {
 					// stack[0] = offset
-					ors_offset = position.intArg(0);
-					assert ors_offset != NULL_OFFSET;
-					assign(ors_offset, settings.getDefaultORS(), true, position);
+					orsOffset = position.intArg(0);
+					assert orsOffset != NULL_OFFSET;
+					assign(orsOffset, settings.getDefaultORS(), true, position);
 					pop(); // clean up the stack after the assignment
 					position.next();
 					break;
 				}
 				case AwkTuples._RSTART_OFFSET_: {
 					// stack[0] = offset
-					rstart_offset = position.intArg(0);
-					assert rstart_offset != NULL_OFFSET;
-					assign(rstart_offset, "", true, position);
+					rstartOffset = position.intArg(0);
+					assert rstartOffset != NULL_OFFSET;
+					assign(rstartOffset, "", true, position);
 					pop(); // clean up the stack after the assignment
 					position.next();
 					break;
 				}
 				case AwkTuples._RLENGTH_OFFSET_: {
 					// stack[0] = offset
-					rlength_offset = position.intArg(0);
-					assert rlength_offset != NULL_OFFSET;
-					assign(rlength_offset, "", true, position);
+					rlengthOffset = position.intArg(0);
+					assert rlengthOffset != NULL_OFFSET;
+					assign(rlengthOffset, "", true, position);
 					pop(); // clean up the stack after the assignment
 					position.next();
 					break;
 				}
 				case AwkTuples._FILENAME_OFFSET_: {
 					// stack[0] = offset
-					filename_offset = position.intArg(0);
-					assert filename_offset != NULL_OFFSET;
-					assign(filename_offset, "", true, position);
+					filenameOffset = position.intArg(0);
+					assert filenameOffset != NULL_OFFSET;
+					assign(filenameOffset, "", true, position);
 					pop(); // clean up the stack after the assignment
 					position.next();
 					break;
 				}
 				case AwkTuples._SUBSEP_OFFSET_: {
 					// stack[0] = offset
-					subsep_offset = position.intArg(0);
-					assert subsep_offset != NULL_OFFSET;
-					assign(subsep_offset, String.valueOf((char) 28), true, position);
+					subsepOffset = position.intArg(0);
+					assert subsepOffset != NULL_OFFSET;
+					assign(subsepOffset, String.valueOf((char) 28), true, position);
 					pop(); // clean up the stack after the assignment
 					position.next();
 					break;
 				}
 				case AwkTuples._CONVFMT_OFFSET_: {
 					// stack[0] = offset
-					convfmt_offset = position.intArg(0);
-					assert convfmt_offset != NULL_OFFSET;
-					assign(convfmt_offset, "%.6g", true, position);
+					convfmtOffset = position.intArg(0);
+					assert convfmtOffset != NULL_OFFSET;
+					assign(convfmtOffset, "%.6g", true, position);
 					pop(); // clean up the stack after the assignment
 					position.next();
 					break;
 				}
 				case AwkTuples._OFMT_OFFSET_: {
 					// stack[0] = offset
-					ofmt_offset = position.intArg(0);
-					assert ofmt_offset != NULL_OFFSET;
-					assign(ofmt_offset, "%.6g", true, position);
+					ofmtOffset = position.intArg(0);
+					assert ofmtOffset != NULL_OFFSET;
+					assign(ofmtOffset, "%.6g", true, position);
 					pop(); // clean up the stack after the assignment
 					position.next();
 					break;
 				}
 				case AwkTuples._ENVIRON_OFFSET_: {
 					// stack[0] = offset
-					//// assignArray(offset, arr_idx, newstring, is_global);
-					environ_offset = position.intArg(0);
-					assert environ_offset != NULL_OFFSET;
+					//// assignArray(offset, arrIdx, newstring, isGlobal);
+					environOffset = position.intArg(0);
+					assert environOffset != NULL_OFFSET;
 					// set the initial variables
 					Map<String, String> env = System.getenv();
 					for (Map.Entry<String, String> var : env.entrySet()) {
-						assignArray(environ_offset, var.getKey(), var.getValue(), true);
+						assignArray(environOffset, var.getKey(), var.getValue(), true);
 						pop(); // clean up the stack after the assignment
 					}
 					position.next();
@@ -1665,26 +1663,26 @@ public class AVM implements AwkInterpreter, VariableManager {
 				}
 				case AwkTuples._ARGC_OFFSET_: {
 					// stack[0] = offset
-					argc_offset = position.intArg(0);
-					assert argc_offset != NULL_OFFSET;
-					// assign(argc_offset, arguments.size(), true, position); // true = global
+					argcOffset = position.intArg(0);
+					assert argcOffset != NULL_OFFSET;
+					// assign(argcOffset, arguments.size(), true, position); // true = global
 					// +1 to include the "java Awk" (ARGV[0])
-					assign(argc_offset, arguments.size() + 1, true, position); // true = global
+					assign(argcOffset, arguments.size() + 1, true, position); // true = global
 					pop(); // clean up the stack after the assignment
 					position.next();
 					break;
 				}
 				case AwkTuples._ARGV_OFFSET_: {
 					// stack[0] = offset
-					argv_offset = position.intArg(0);
-					assert argv_offset != NULL_OFFSET;
+					argvOffset = position.intArg(0);
+					assert argvOffset != NULL_OFFSET;
 					// consume argv (looping from 1 to argc)
-					int argc = (int) JRT.toDouble(runtime_stack.getVariable(argc_offset, true)); // true = global
-					assignArray(argv_offset, 0, "java Awk", true);
+					int argc = (int) JRT.toDouble(runtimeStack.getVariable(argcOffset, true)); // true = global
+					assignArray(argvOffset, 0, "java Awk", true);
 					pop();
 					for (int i = 1; i < argc; i++) {
-						// assignArray(argv_offset, i+1, arguments.get(i), true);
-						assignArray(argv_offset, i, arguments.get(i - 1), true);
+						// assignArray(argvOffset, i+1, arguments.get(i), true);
+						assignArray(argvOffset, i, arguments.get(i - 1), true);
 						pop(); // clean up the stack after the assignment
 					}
 					position.next();
@@ -1698,10 +1696,10 @@ public class AVM implements AwkInterpreter, VariableManager {
 					break;
 				}
 				case AwkTuples._APPLY_RS_: {
-					assert rs_offset != NULL_OFFSET;
-					Object rs_obj = runtime_stack.getVariable(rs_offset, true); // true = global
+					assert rsOffset != NULL_OFFSET;
+					Object rsObj = runtimeStack.getVariable(rsOffset, true); // true = global
 					if (jrt.getPartitioningReader() != null) {
-						jrt.getPartitioningReader().setRecordSeparator(rs_obj.toString());
+						jrt.getPartitioningReader().setRecordSeparator(rsObj.toString());
 					}
 					position.next();
 					break;
@@ -1716,17 +1714,17 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// ...
 					// stack[n-1] = first actual parameter
 					// etc.
-					Address func_addr = position.addressArg();
+					Address funcAddr = position.addressArg();
 					// String func_name = position.arg(1).toString();
-					long num_formal_params = position.intArg(2);
-					long num_actual_params = position.intArg(3);
-					assert num_formal_params >= num_actual_params;
-					runtime_stack.pushFrame(num_formal_params, position.current());
+					long numFormalParams = position.intArg(2);
+					long numActualParams = position.intArg(3);
+					assert numFormalParams >= numActualParams;
+					runtimeStack.pushFrame(numFormalParams, position.current());
 					// Arguments are stacked, so first in the stack is the last for the function
-					for (long i = num_actual_params - 1; i >= 0; i--) {
-						runtime_stack.setVariable(i, pop(), false); // false = local
+					for (long i = numActualParams - 1; i >= 0; i--) {
+						runtimeStack.setVariable(i, pop(), false); // false = local
 					}
-					position.jump(func_addr);
+					position.jump(funcAddr);
 					// position.next();
 					break;
 				}
@@ -1740,39 +1738,39 @@ public class AVM implements AwkInterpreter, VariableManager {
 				}
 				case AwkTuples._SET_RETURN_RESULT_: {
 					// stack[0] = return result
-					runtime_stack.setReturnValue(pop());
+					runtimeStack.setReturnValue(pop());
 					position.next();
 					break;
 				}
 				case AwkTuples._RETURN_FROM_FUNCTION_: {
-					position.jump(runtime_stack.popFrame());
-					push(runtime_stack.getReturnValue());
+					position.jump(runtimeStack.popFrame());
+					push(runtimeStack.getReturnValue());
 					position.next();
 					break;
 				}
 				case AwkTuples._SET_NUM_GLOBALS_: {
 					// arg[0] = # of globals
-					assert position.intArg(0) == global_variable_offsets.size();
-					runtime_stack.setNumGlobals(position.intArg(0));
+					assert position.intArg(0) == globalVariableOffsets.size();
+					runtimeStack.setNumGlobals(position.intArg(0));
 
 					// now that we have the global variable size,
 					// we can allocate the initial variables
 
-					// assign -v variables (from initial_variables container)
-					for (Map.Entry<String, Object> entry : initial_variables.entrySet()) {
+					// assign -v variables (from initialVariables container)
+					for (Map.Entry<String, Object> entry : initialVariables.entrySet()) {
 						String key = entry.getKey();
-						if (function_names.contains(key)) {
+						if (functionNames.contains(key)) {
 							throw new IllegalArgumentException("Cannot assign a scalar to a function name (" + key + ").");
 						}
-						Integer offset_obj = global_variable_offsets.get(key);
-						Boolean array_obj = global_variable_arrays.get(key);
-						if (offset_obj != null) {
-							assert array_obj != null;
-							if (array_obj.booleanValue()) {
+						Integer offsetObj = globalVariableOffsets.get(key);
+						Boolean arrayObj = globalVariableArrays.get(key);
+						if (offsetObj != null) {
+							assert arrayObj != null;
+							if (arrayObj.booleanValue()) {
 								throw new IllegalArgumentException("Cannot assign a scalar to a non-scalar variable (" + key + ").");
 							} else {
 								Object obj = entry.getValue();
-								runtime_stack.setFilelistVariable(offset_obj.intValue(), obj);
+								runtimeStack.setFilelistVariable(offsetObj.intValue(), obj);
 							}
 						}
 					}
@@ -1801,7 +1799,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					} else {
 						StringBuilder sb = new StringBuilder();
 						sb.append(JRT.toAwkString(pop(), convfmt, locale));
-						String subsep = JRT.toAwkString(runtime_stack.getVariable(subsep_offset, true), convfmt, locale);
+						String subsep = JRT.toAwkString(runtimeStack.getVariable(subsepOffset, true), convfmt, locale);
 						for (int i = 1; i < count; i++) {
 							sb.insert(0, subsep);
 							sb.insert(0, JRT.toAwkString(pop(), convfmt, locale));
@@ -1813,11 +1811,11 @@ public class AVM implements AwkInterpreter, VariableManager {
 				}
 				case AwkTuples._DELETE_ARRAY_ELEMENT_: {
 					// arg[0] = offset
-					// arg[1] = is_global
+					// arg[1] = isGlobal
 					// stack[0] = array index
 					long offset = position.intArg(0);
-					boolean is_global = position.boolArg(1);
-					AssocArray aa = (AssocArray) runtime_stack.getVariable(offset, is_global);
+					boolean isGlobal = position.boolArg(1);
+					AssocArray aa = (AssocArray) runtimeStack.getVariable(offset, isGlobal);
 					Object key = pop();
 					if (aa != null) {
 						aa.remove(key);
@@ -1827,23 +1825,23 @@ public class AVM implements AwkInterpreter, VariableManager {
 				}
 				case AwkTuples._DELETE_ARRAY_: {
 					// arg[0] = offset
-					// arg[1] = is_global
+					// arg[1] = isGlobal
 					// (nothing on the stack)
 					long offset = position.intArg(0);
-					boolean is_global = position.boolArg(1);
-					runtime_stack.removeVariable(offset, is_global);
+					boolean isGlobal = position.boolArg(1);
+					runtimeStack.removeVariable(offset, isGlobal);
 					position.next();
 					break;
 				}
 				case AwkTuples._SET_EXIT_ADDRESS_: {
 					// arg[0] = exit address
-					exit_address = position.addressArg();
+					exitAddress = position.addressArg();
 					position.next();
 					break;
 				}
 				case AwkTuples._SET_WITHIN_END_BLOCKS_: {
 					// arg[0] = whether within the END blocks section
-					within_end_blocks = position.boolArg(0);
+					withinEndBlocks = position.boolArg(0);
 					position.next();
 					break;
 				}
@@ -1851,23 +1849,23 @@ public class AVM implements AwkInterpreter, VariableManager {
 				case AwkTuples._EXIT_WITH_CODE_: {
 					if (opcode == AwkTuples._EXIT_WITH_CODE_) {
 						// stack[0] = exit code
-						exit_code = (int) JRT.toDouble(pop());
+						exitCode = (int) JRT.toDouble(pop());
 					}
-					throw_exit_exception = true;
+					throwExitException = true;
 
 					// If in BEGIN or in a rule, jump to the END section
-					if (!within_end_blocks) {
+					if (!withinEndBlocks) {
 						// clear runtime stack
-						runtime_stack.popAllFrames();
+						runtimeStack.popAllFrames();
 						// clear operand stack
-						operand_stack.clear();
-						position.jump(exit_address);
+						operandStack.clear();
+						position.jump(exitAddress);
 					} else {
 						// Exit immediately with ExitException
 						jrt.jrtCloseAll();
 						// clear operand stack
-						operand_stack.clear();
-						throw new ExitException(exit_code, "The AWK script requested an exit");
+						operandStack.clear();
+						throw new ExitException(exitCode, "The AWK script requested an exit");
 						// position.next();
 					}
 					break;
@@ -1886,10 +1884,10 @@ public class AVM implements AwkInterpreter, VariableManager {
 				case AwkTuples._CONDITION_PAIR_: {
 					// stack[0] = End condition
 					// stack[1] = Start condition
-					ConditionPair cp = condition_pairs.get(position.current());
+					ConditionPair cp = conditionPairs.get(position.current());
 					if (cp == null) {
 						cp = new ConditionPair();
-						condition_pairs.put(position.current(), cp);
+						conditionPairs.put(position.current(), cp);
 					}
 					boolean end = jrt.toBoolean(pop());
 					boolean start = jrt.toBoolean(pop());
@@ -1929,12 +1927,11 @@ public class AVM implements AwkInterpreter, VariableManager {
 				case AwkTuples._EXEC_: {
 					// stack[0] = Jawk code
 
-					// TODO FIXME First attempt. It is not complete by a long-shot. Use at your own risk.
-
-					String awk_code = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
+					// Experimental feature. Use with caution.
+					String awkCode = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
 					List<ScriptSource> scriptSources = new ArrayList<ScriptSource>(1);
 					scriptSources
-							.add(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, new StringReader(awk_code), false));
+							.add(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, new StringReader(awkCode), false));
 
 					org.metricshub.jawk.frontend.AwkParser ap = new org.metricshub.jawk.frontend.AwkParser(
 							// true, true, true, extensions
@@ -1946,15 +1943,15 @@ public class AVM implements AwkInterpreter, VariableManager {
 						if (ast != null) {
 							ast.semanticAnalysis();
 							ast.semanticAnalysis();
-							AwkTuples new_tuples = new AwkTuples();
-							int result = ast.populateTuples(new_tuples);
+							AwkTuples newTuples = new AwkTuples();
+							int result = ast.populateTuples(newTuples);
 							assert result == 0;
-							new_tuples.postProcess();
-							ap.populateGlobalVariableNameToOffsetMappings(new_tuples);
-							AVM new_avm = new AVM(settings, extensions);
+							newTuples.postProcess();
+							ap.populateGlobalVariableNameToOffsetMappings(newTuples);
+							AVM newAvm = new AVM(settings, extensions);
 							int subScriptExitCode = 0;
 							try {
-								new_avm.interpret(new_tuples);
+								newAvm.interpret(newTuples);
 							} catch (ExitException ex) {
 								subScriptExitCode = ex.getCode();
 							}
@@ -1977,26 +1974,26 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// stack[0] = first actual parameter
 					// stack[1] = second actual parameter
 					// etc.
-					String extension_keyword = position.arg(0).toString();
-					long num_args = position.intArg(1);
-					boolean is_initial = position.boolArg(2);
+					String extensionKeyword = position.arg(0).toString();
+					long numArgs = position.intArg(1);
+					boolean isInitial = position.boolArg(2);
 
-					JawkExtension extension = extensions.get(extension_keyword);
+					JawkExtension extension = extensions.get(extensionKeyword);
 					if (extension == null) {
-						throw new AwkRuntimeException("Extension for '" + extension_keyword + "' not found.");
+						throw new AwkRuntimeException("Extension for '" + extensionKeyword + "' not found.");
 					}
 
-					Object[] args = new Object[(int) num_args];
-					for (int i = (int) num_args - 1; i >= 0; i--) {
+					Object[] args = new Object[(int) numArgs];
+					for (int i = (int) numArgs - 1; i >= 0; i--) {
 						args[i] = pop();
 					}
 
-					Object retval = extension.invoke(extension_keyword, args);
+					Object retval = extension.invoke(extensionKeyword, args);
 
 					// block if necessary
 					// (convert retval into the return value
 					// from the block operation ...)
-					if (is_initial && retval != null && retval instanceof BlockObject) {
+					if (isInitial && retval != null && retval instanceof BlockObject) {
 						retval = new BlockManager().block((BlockObject) retval);
 					}
 					// (... and proceed)
@@ -2033,19 +2030,19 @@ public class AVM implements AwkInterpreter, VariableManager {
 			jrt.jrtCloseAll();
 		} catch (RuntimeException re) {
 			LOG.error("", re);
-			LOG.error("operand_stack = {}", operand_stack);
+			LOG.error("operandStack = {}", operandStack);
 			LOG.error("position = {}", position);
 			LOG.error("line number = {}", position.lineNumber());
 
 			// clear runtime stack
-			runtime_stack.popAllFrames();
+			runtimeStack.popAllFrames();
 			// clear operand stack
-			operand_stack.clear();
+			operandStack.clear();
 
 			throw re;
 		} catch (AssertionError ae) {
 			LOG.error("", ae);
-			LOG.error("operand_stack = {}", operand_stack);
+			LOG.error("operandStack = {}", operandStack);
 			try {
 				LOG.error("position = {}", position);
 			} catch (Throwable t) {
@@ -2060,8 +2057,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 		}
 
 		// If <code>exit</code> was called, throw an ExitException
-		if (throw_exit_exception) {
-			throw new ExitException(exit_code, "The AWK script requested an exit");
+		if (throwExitException) {
+			throw new ExitException(exitCode, "The AWK script requested an exit");
 		}
 	}
 
@@ -2072,11 +2069,11 @@ public class AVM implements AwkInterpreter, VariableManager {
 		jrt.jrtCloseAll();
 	}
 
-	private void avmDump(AssocArray[] aa_array) {
-		if (aa_array == null) {
+	private void avmDump(AssocArray[] aaArray) {
+		if (aaArray == null) {
 			// dump the runtime stack
-			Object[] globals = runtime_stack.getNumGlobals();
-			for (Map.Entry<String, Integer> e : global_variable_offsets.entrySet()) {
+			Object[] globals = runtimeStack.getNumGlobals();
+			for (Map.Entry<String, Integer> e : globalVariableOffsets.entrySet()) {
 				String name = e.getKey();
 				int idx = e.getValue();
 				Object value = globals[idx];
@@ -2088,37 +2085,37 @@ public class AVM implements AwkInterpreter, VariableManager {
 			}
 		} else {
 			// dump associative arrays
-			for (AssocArray aa : aa_array) {
+			for (AssocArray aa : aaArray) {
 				LOG.info(aa.mapString());
 			}
 		}
 	}
 
-	private void printTo(PrintStream ps, long num_args) {
+	private void printTo(PrintStream ps, long numArgs) {
 		// print items from the top of the stack
 		// # of items
-		if (num_args == 0) {
+		if (numArgs == 0) {
 			// display $0
 			ps.print(jrt.jrtGetInputField(0));
 			ps.print(getORS().toString());
 		} else {
 			// cache $OFS to separate fields below
 			// (no need to execute getOFS for each field)
-			String ofs_string = getOFS().toString();
+			String ofsString = getOFS().toString();
 
 			// Arguments are stacked, so we need to reverse order
-			Object[] args = new Object[(int) num_args];
-			for (int i = (int) num_args - 1; i >= 0; i--) {
+			Object[] args = new Object[(int) numArgs];
+			for (int i = (int) numArgs - 1; i >= 0; i--) {
 				args[i] = pop();
 			}
 
 			// Now print
-			for (int i = 0; i < num_args; i++) {
+			for (int i = 0; i < numArgs; i++) {
 				ps.print(JRT.toAwkStringForOutput(args[i], getOFMT().toString(), locale));
 				// if more elements, display $FS
-				if (i < num_args - 1) {
+				if (i < numArgs - 1) {
 					// use $OFS to separate fields
-					ps.print(ofs_string);
+					ps.print(ofsString);
 				}
 			}
 			ps.print(getORS().toString());
@@ -2129,9 +2126,9 @@ public class AVM implements AwkInterpreter, VariableManager {
 		}
 	}
 
-	private void printfTo(PrintStream ps, long num_args) {
-		// assert num_args > 0;
-		ps.print(sprintfFunction(num_args));
+	private void printfTo(PrintStream ps, long numArgs) {
+		// assert numArgs > 0;
+		ps.print(sprintfFunction(numArgs));
 		// for now, since we are not using Process.waitFor()
 		if (IS_WINDOWS) {
 			ps.flush();
@@ -2141,70 +2138,70 @@ public class AVM implements AwkInterpreter, VariableManager {
 	/**
 	 * sprintf() functionality
 	 */
-	private String sprintfFunction(long num_args) {
+	private String sprintfFunction(long numArgs) {
 		// Silly case
-		if (num_args == 0)
+		if (numArgs == 0)
 			return "";
 
 		// all but the format argument
-		Object[] arg_array = new Object[(int) (num_args - 1)];
+		Object[] argArray = new Object[(int) (numArgs - 1)];
 
 		// for each sprintf argument, put it into an
 		// array used in the String.format method
 		// Arguments are stacked, so we need to reverse their order
-		for (int i = (int) num_args - 2; i >= 0; i--) {
-			arg_array[i] = pop();
+		for (int i = (int) numArgs - 2; i >= 0; i--) {
+			argArray[i] = pop();
 		}
 
 		// the format argument!
 		String fmt = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
 
-		if (trap_illegal_format_exceptions) {
-			return Printf4J.sprintf(locale, fmt, arg_array);
+		if (trapIllegalFormatExceptions) {
+			return Printf4J.sprintf(locale, fmt, argArray);
 		} else {
-			return JRT.sprintfNoCatch(locale, fmt, arg_array);
+			return JRT.sprintfNoCatch(locale, fmt, argArray);
 		}
 	}
 
-	private StringBuffer replace_first_sb = new StringBuffer();
+	private StringBuffer replaceFirstSb = new StringBuffer();
 
 	/**
 	 * sub() functionality
 	 */
 	private String replaceFirst(String orig, String ere, String repl) {
-		push(JRT.replaceFirst(orig, repl, ere, replace_first_sb));
-		return replace_first_sb.toString();
+		push(JRT.replaceFirst(orig, repl, ere, replaceFirstSb));
+		return replaceFirstSb.toString();
 	}
 
-	private StringBuffer replace_all_sb = new StringBuffer();
+	private StringBuffer replaceAllSb = new StringBuffer();
 
 	/**
 	 * gsub() functionality
 	 */
 	private String replaceAll(String orig, String ere, String repl) {
-		push(JRT.replaceAll(orig, repl, ere, replace_all_sb));
-		return replace_all_sb.toString();
+		push(JRT.replaceAll(orig, repl, ere, replaceAllSb));
+		return replaceAllSb.toString();
 	}
 
 	/**
 	 * Awk variable assignment functionality.
 	 */
-	private void assign(long l, Object value, boolean is_global, Position position) {
+	private void assign(long l, Object value, boolean isGlobal, Position position) {
 		// check if curr value already refers to an array
-		if (runtime_stack.getVariable(l, is_global) instanceof AssocArray) {
+		if (runtimeStack.getVariable(l, isGlobal) instanceof AssocArray) {
 			throw new AwkRuntimeException(position.lineNumber(), "cannot assign anything to an unindexed associative array");
 		}
 		push(value);
-		runtime_stack.setVariable(l, value, is_global);
+		runtimeStack.setVariable(l, value, isGlobal);
 	}
 
 	/**
 	 * Awk array element assignment functionality.
 	 */
-	private void assignArray(long offset, Object arr_idx, Object rhs, boolean is_global) {
-		Object o1 = runtime_stack.getVariable(offset, is_global);
+	private void assignArray(long offset, Object arrIdx, Object rhs, boolean isGlobal) {
+		Object o1 = runtimeStack.getVariable(offset, isGlobal);
 		if (o1 == null || o1.equals(BLANK)) {
-			runtime_stack.setVariable(offset, o1 = new AssocArray(sorted_array_keys), is_global);
+			runtimeStack.setVariable(offset, o1 = new AssocArray(sortedArrayKeys), isGlobal);
 		}
 		assert o1 != null;
 		// The only (conceivable) way to contradict
@@ -2218,9 +2215,9 @@ public class AVM implements AwkInterpreter, VariableManager {
 		assert o1 instanceof AssocArray;
 		AssocArray array = (AssocArray) o1;
 
-		// Convert arr_idx to a true integer if it is one
-		// String indexString = JRT.toAwkStringForOutput(arr_idx, getCONVFMT().toString());
-		array.put(arr_idx, rhs);
+		// Convert arrIdx to a true integer if it is one
+		// String indexString = JRT.toAwkStringForOutput(arrIdx, getCONVFMT().toString());
+		array.put(arrIdx, rhs);
 		push(rhs);
 	}
 
@@ -2228,12 +2225,12 @@ public class AVM implements AwkInterpreter, VariableManager {
 	 * Numerically increases an Awk variable by one; the result
 	 * is placed back into that variable.
 	 */
-	private Object inc(long l, boolean is_global) {
-		Object o = runtime_stack.getVariable(l, is_global);
+	private Object inc(long l, boolean isGlobal) {
+		Object o = runtimeStack.getVariable(l, isGlobal);
 		if (o == null || o instanceof UninitializedObject) {
-			runtime_stack.setVariable(l, o = ZERO, is_global);
+			runtimeStack.setVariable(l, o = ZERO, isGlobal);
 		}
-		runtime_stack.setVariable(l, JRT.inc(o), is_global);
+		runtimeStack.setVariable(l, JRT.inc(o), isGlobal);
 		return o;
 	}
 
@@ -2241,41 +2238,41 @@ public class AVM implements AwkInterpreter, VariableManager {
 	 * Numerically decreases an Awk variable by one; the result
 	 * is placed back into that variable.
 	 */
-	private Object dec(long l, boolean is_global) {
-		Object o = runtime_stack.getVariable(l, is_global);
+	private Object dec(long l, boolean isGlobal) {
+		Object o = runtimeStack.getVariable(l, isGlobal);
 		if (o == null) {
-			runtime_stack.setVariable(l, o = ZERO, is_global);
+			runtimeStack.setVariable(l, o = ZERO, isGlobal);
 		}
-		runtime_stack.setVariable(l, JRT.dec(o), is_global);
+		runtimeStack.setVariable(l, JRT.dec(o), isGlobal);
 		return o;
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public final Object getRS() {
-		assert rs_offset != NULL_OFFSET;
-		Object rs_obj = runtime_stack.getVariable(rs_offset, true); // true = global
-		return rs_obj;
+		assert rsOffset != NULL_OFFSET;
+		Object rsObj = runtimeStack.getVariable(rsOffset, true); // true = global
+		return rsObj;
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public final Object getOFS() {
-		assert ofs_offset != NULL_OFFSET;
-		Object ofs_obj = runtime_stack.getVariable(ofs_offset, true); // true = global
-		return ofs_obj;
+		assert ofsOffset != NULL_OFFSET;
+		Object ofsObj = runtimeStack.getVariable(ofsOffset, true); // true = global
+		return ofsObj;
 	}
 
 	public final Object getORS() {
-		return runtime_stack.getVariable(ors_offset, true); // true = global
+		return runtimeStack.getVariable(orsOffset, true); // true = global
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public final Object getSUBSEP() {
-		assert subsep_offset != NULL_OFFSET;
-		Object subsep_obj = runtime_stack.getVariable(subsep_offset, true); // true = global
-		return subsep_obj;
+		assert subsepOffset != NULL_OFFSET;
+		Object subsepObj = runtimeStack.getVariable(subsepOffset, true); // true = global
+		return subsepObj;
 	}
 
 	/**
@@ -2283,19 +2280,19 @@ public class AVM implements AwkInterpreter, VariableManager {
 	 * These assignments come from the ARGV list (bounded by ARGC), which, in
 	 * turn, come from the command-line arguments passed into Awk.
 	 *
-	 * @param name_value The variable assignment in <i>name=value</i> form.
+	 * @param nameValue The variable assignment in <i>name=value</i> form.
 	 */
 	@SuppressWarnings("unused")
-	private void setFilelistVariable(String name_value) {
-		int eq_idx = name_value.indexOf('=');
+	private void setFilelistVariable(String nameValue) {
+		int eqIdx = nameValue.indexOf('=');
 		// variable name should be non-blank
-		assert eq_idx >= 0;
-		if (eq_idx == 0) {
+		assert eqIdx >= 0;
+		if (eqIdx == 0) {
 			throw new IllegalArgumentException(
 					"Must have a non-blank variable name in a name=value variable assignment argument.");
 		}
-		String name = name_value.substring(0, eq_idx);
-		String value = name_value.substring(eq_idx + 1);
+		String name = nameValue.substring(0, eqIdx);
+		String value = nameValue.substring(eqIdx + 1);
 		Object obj;
 		try {
 			obj = Integer.parseInt(value);
@@ -2308,19 +2305,19 @@ public class AVM implements AwkInterpreter, VariableManager {
 		}
 
 		// make sure we're not receiving funcname=value assignments
-		if (function_names.contains(name)) {
+		if (functionNames.contains(name)) {
 			throw new IllegalArgumentException("Cannot assign a scalar to a function name (" + name + ").");
 		}
 
-		Integer offset_obj = global_variable_offsets.get(name);
-		Boolean array_obj = global_variable_arrays.get(name);
+		Integer offsetObj = globalVariableOffsets.get(name);
+		Boolean arrayObj = globalVariableArrays.get(name);
 
-		if (offset_obj != null) {
-			assert array_obj != null;
-			if (array_obj.booleanValue()) {
+		if (offsetObj != null) {
+			assert arrayObj != null;
+			if (arrayObj.booleanValue()) {
 				throw new IllegalArgumentException("Cannot assign a scalar to a non-scalar variable (" + name + ").");
 			} else {
-				runtime_stack.setFilelistVariable(offset_obj.intValue(), obj);
+				runtimeStack.setFilelistVariable(offsetObj.intValue(), obj);
 			}
 		}
 		// otherwise, do nothing
@@ -2330,19 +2327,19 @@ public class AVM implements AwkInterpreter, VariableManager {
 	@Override
 	public final void assignVariable(String name, Object obj) {
 		// make sure we're not receiving funcname=value assignments
-		if (function_names.contains(name)) {
+		if (functionNames.contains(name)) {
 			throw new IllegalArgumentException("Cannot assign a scalar to a function name (" + name + ").");
 		}
 
-		Integer offset_obj = global_variable_offsets.get(name);
-		Boolean array_obj = global_variable_arrays.get(name);
+		Integer offsetObj = globalVariableOffsets.get(name);
+		Boolean arrayObj = globalVariableArrays.get(name);
 
-		if (offset_obj != null) {
-			assert array_obj != null;
-			if (array_obj.booleanValue()) {
+		if (offsetObj != null) {
+			assert arrayObj != null;
+			if (arrayObj.booleanValue()) {
 				throw new IllegalArgumentException("Cannot assign a scalar to a non-scalar variable (" + name + ").");
 			} else {
-				runtime_stack.setFilelistVariable(offset_obj.intValue(), obj);
+				runtimeStack.setFilelistVariable(offsetObj.intValue(), obj);
 			}
 		}
 	}
@@ -2402,9 +2399,9 @@ public class AVM implements AwkInterpreter, VariableManager {
 		return retval;
 	}
 
-	private boolean avmConsumeInput(boolean for_getline) throws IOException {
-		boolean retval = jrt.jrtConsumeInput(settings.getInput(), for_getline, locale);
-		if (retval && for_getline) {
+	private boolean avmConsumeInput(boolean forGetline) throws IOException {
+		boolean retval = jrt.jrtConsumeInput(settings.getInput(), forGetline, locale);
+		if (retval && forGetline) {
 			push(jrt.getInputLine());
 		}
 		return retval;
@@ -2413,65 +2410,65 @@ public class AVM implements AwkInterpreter, VariableManager {
 	/** {@inheritDoc} */
 	@Override
 	public Object getFS() {
-		assert fs_offset != NULL_OFFSET;
-		Object fs_string = runtime_stack.getVariable(fs_offset, true); // true = global
-		return fs_string;
+		assert fsOffset != NULL_OFFSET;
+		Object fsString = runtimeStack.getVariable(fsOffset, true); // true = global
+		return fsString;
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public Object getCONVFMT() {
-		assert convfmt_offset != NULL_OFFSET : "convfmt_offset not defined";
-		Object convfmt_string = runtime_stack.getVariable(convfmt_offset, true); // true = global
-		return convfmt_string;
+		assert convfmtOffset != NULL_OFFSET : "convfmtOffset not defined";
+		Object convfmtString = runtimeStack.getVariable(convfmtOffset, true); // true = global
+		return convfmtString;
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public void resetFNR() {
-		runtime_stack.setVariable(fnr_offset, ZERO, true);
+		runtimeStack.setVariable(fnrOffset, ZERO, true);
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public void incFNR() {
-		inc(fnr_offset, true);
+		inc(fnrOffset, true);
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public void incNR() {
-		inc(nr_offset, true);
+		inc(nrOffset, true);
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public void setNF(Integer I) {
-		runtime_stack.setVariable(nf_offset, I, true);
+		runtimeStack.setVariable(nfOffset, I, true);
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public void setFILENAME(String filename) {
-		runtime_stack.setVariable(filename_offset, filename, true);
+		runtimeStack.setVariable(filenameOffset, filename, true);
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public Object getARGV() {
-		return runtime_stack.getVariable(argv_offset, true);
+		return runtimeStack.getVariable(argvOffset, true);
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public Object getARGC() {
-		return runtime_stack.getVariable(argc_offset, true);
+		return runtimeStack.getVariable(argcOffset, true);
 	}
 
 	private String getOFMT() {
-		assert ofmt_offset != NULL_OFFSET;
-		String ofmt_string = runtime_stack.getVariable(ofmt_offset, true).toString(); // true = global
-		return ofmt_string;
+		assert ofmtOffset != NULL_OFFSET;
+		String ofmtString = runtimeStack.getVariable(ofmtOffset, true).toString(); // true = global
+		return ofmtString;
 	}
 
 	private static final UninitializedObject BLANK = new UninitializedObject();
@@ -2481,128 +2478,4 @@ public class AVM implements AwkInterpreter, VariableManager {
 	 */
 	public static final int NULL_OFFSET = -1;
 
-	private static class RuntimeStack {
-
-		private Object[] globals = null;
-		private Object[] locals = null;
-		private MyStack<Object[]> locals_stack = new ArrayStackImpl<Object[]>();
-		private MyStack<Integer> return_indexes = new LinkedListStackImpl<Integer>();
-
-		@SuppressWarnings("unused")
-		public void dump() {
-			LOG.info("globals = " + Arrays.toString(globals));
-			LOG.info("locals = " + Arrays.toString(locals));
-			LOG.info("locals_stack = " + locals_stack);
-			LOG.info("return_indexes = " + return_indexes);
-		}
-
-		Object[] getNumGlobals() {
-			return globals;
-		}
-
-		/**
-		 * Must be one of the first methods executed.
-		 */
-		void setNumGlobals(long l) {
-			assert l >= 0;
-			assert globals == null;
-			globals = new Object[(int) l];
-			for (int i = 0; i < l; i++) {
-				globals[i] = null;
-			}
-			// must accept multiple executions
-			// expandFrameIfNecessary(num_globals);
-		}
-
-		/*
-		 * // this assumes globals = Object[0] upon initialization
-		 * private void expandFrameIfNecessary(int num_globals) {
-		 * if (num_globals == globals.length)
-		 * // no need for expansion;
-		 * // do nothing
-		 * return;
-		 * Object[] new_frame = new Object[num_globals];
-		 * for (int i=0;i<globals.length;++i)
-		 * new_frame[i] = globals[i];
-		 * globals = new_frame;
-		 * }
-		 */
-
-		Object getVariable(long offset, boolean is_global) {
-			assert globals != null;
-			assert offset != NULL_OFFSET;
-			if (is_global) {
-				return globals[(int) offset];
-			} else {
-				return locals[(int) offset];
-			}
-		}
-
-		Object setVariable(long offset, Object val, boolean is_global) {
-			assert globals != null;
-			assert offset != NULL_OFFSET;
-			if (is_global) {
-				return globals[(int) offset] = val;
-			} else {
-				return locals[(int) offset] = val;
-			}
-		}
-
-		// for _DELETE_ARRAY_
-		void removeVariable(long offset, boolean is_global) {
-			assert globals != null;
-			assert offset != NULL_OFFSET;
-			if (is_global) {
-				assert globals[(int) offset] == null || globals[(int) offset] instanceof AssocArray;
-				globals[(int) offset] = null;
-			} else {
-				assert locals[(int) offset] == null || locals[(int) offset] instanceof AssocArray;
-				locals[(int) offset] = null;
-			}
-		}
-
-		void setFilelistVariable(int offset, Object value) {
-			assert globals != null;
-			assert offset != NULL_OFFSET;
-			globals[offset] = value;
-		}
-
-		void pushFrame(long num_formal_params, int position_idx) {
-			locals_stack.push(locals);
-			locals = new Object[(int) num_formal_params];
-			return_indexes.push(position_idx);
-		}
-
-		/** returns the position index */
-		int popFrame() {
-			locals = locals_stack.pop();
-			return return_indexes.pop();
-		}
-
-		void popAllFrames() {
-			int sz = locals_stack.size();
-			while (--sz >= 0) {
-				locals = locals_stack.pop();
-				return_indexes.pop();
-			}
-		}
-
-		private Object return_value;
-
-		void setReturnValue(Object obj) {
-			assert return_value == null;
-			return_value = obj;
-		}
-
-		Object getReturnValue() {
-			Object retval;
-			if (return_value == null) {
-				retval = BLANK;
-			} else {
-				retval = return_value;
-			}
-			return_value = null;
-			return retval;
-		}
-	}
 }
