@@ -46,16 +46,17 @@ public final class Main {
 	private Main() {}
 
 	/**
-	 * Class constructor to support the JSR 223 scripting interface
-	 * already provided by Java SE 6.
+	 * Factory method to support the JSR&nbsp;223 scripting interface already
+	 * provided by Java SE&nbsp;6.
 	 *
 	 * @param args String arguments from the command-line.
 	 * @param is The input stream to use as stdin.
 	 * @param os The output stream to use as stdout.
 	 * @param es The output stream to use as stderr.
+	 * @return a new {@code Main} instance that executed the specified script
 	 * @throws java.lang.Exception enables exceptions to propagate to the callee.
 	 */
-	public Main(String[] args, InputStream is, PrintStream os, PrintStream es) throws Exception {
+	public static Main create(String[] args, InputStream is, PrintStream os, PrintStream es) throws Exception {
 		System.setIn(is);
 		System.setOut(os);
 		System.setErr(es);
@@ -63,6 +64,7 @@ public final class Main {
 		AwkSettings settings = AwkParameters.parseCommandLineArguments(args);
 		Awk awk = new Awk();
 		awk.invoke(settings);
+		return new Main();
 	}
 
 	/**
