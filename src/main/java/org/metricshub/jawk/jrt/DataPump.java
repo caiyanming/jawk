@@ -25,7 +25,7 @@ package org.metricshub.jawk.jrt;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.metricshub.jawk.util.AwkLogger;
 import org.slf4j.Logger;
 
@@ -53,15 +53,10 @@ public class DataPump implements Runnable {
 	 * @param in The input stream.
 	 * @param out The output stream.
 	 */
+	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Caller-supplied PrintStream must be used directly; no defensive copy possible.")
 	public DataPump(InputStream in, PrintStream out) {
-		PrintStream ps;
-		try {
-			ps = new PrintStream(out, false, StandardCharsets.UTF_8.name());
-		} catch (java.io.UnsupportedEncodingException e) {
-			throw new IllegalStateException(e);
-		}
 		this.is = in;
-		this.os = ps;
+		this.os = out;
 		// setDaemon(true);
 	}
 
