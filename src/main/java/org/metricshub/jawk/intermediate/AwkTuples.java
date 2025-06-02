@@ -56,7 +56,7 @@ public class AwkTuples implements Serializable {
 	private static final Logger LOG = AwkLogger.getLogger(AwkTuples.class);
 
 	/** Version Manager */
-	private VersionManager version_manager = new VersionManager();
+	private VersionManager versionManager = new VersionManager();
 
 	private static final class AddressImpl implements Address, Serializable {
 
@@ -82,8 +82,8 @@ public class AwkTuples implements Serializable {
 		}
 
 		@Override
-		public void assignIndex(int idx) {
-			this.idx = idx;
+		public void assignIndex(int index) {
+			this.idx = index;
 		}
 
 		@Override
@@ -120,7 +120,8 @@ public class AwkTuples implements Serializable {
 
 		@Override
 		public void jump(Address address) {
-			tuple = queue.get(idx = address.index());
+			idx = address.index();
+			tuple = queue.get(idx);
 		}
 
 		@Override
@@ -134,40 +135,40 @@ public class AwkTuples implements Serializable {
 		}
 
 		@Override
-		public long intArg(int arg_idx) {
-			Class<?> c = tuple.getTypes()[arg_idx];
+		public long intArg(int argIdx) {
+			Class<?> c = tuple.getTypes()[argIdx];
 			if (c == Long.class) {
-				return tuple.getInts()[arg_idx];
+				return tuple.getInts()[argIdx];
 			}
-			throw new Error("Invalid arg type: " + c + ", arg_idx = " + arg_idx + ", tuple = " + tuple);
+			throw new Error("Invalid arg type: " + c + ", arg_idx = " + argIdx + ", tuple = " + tuple);
 		}
 
 		@Override
-		public boolean boolArg(int arg_idx) {
-			Class<?> c = tuple.getTypes()[arg_idx];
+		public boolean boolArg(int argIdx) {
+			Class<?> c = tuple.getTypes()[argIdx];
 			if (c == Boolean.class) {
-				return tuple.getBools()[arg_idx];
+				return tuple.getBools()[argIdx];
 			}
-			throw new Error("Invalid arg type: " + c + ", arg_idx = " + arg_idx + ", tuple = " + tuple);
+			throw new Error("Invalid arg type: " + c + ", arg_idx = " + argIdx + ", tuple = " + tuple);
 		}
 
 		@Override
-		public Object arg(int arg_idx) {
-			Class<?> c = tuple.getTypes()[arg_idx];
+		public Object arg(int argIdx) {
+			Class<?> c = tuple.getTypes()[argIdx];
 			if (c == Long.class) {
-				return tuple.getInts()[arg_idx];
+				return tuple.getInts()[argIdx];
 			}
 			if (c == Double.class) {
-				return tuple.getDoubles()[arg_idx];
+				return tuple.getDoubles()[argIdx];
 			}
 			if (c == String.class) {
-				return tuple.getStrings()[arg_idx];
+				return tuple.getStrings()[argIdx];
 			}
 			if (c == Address.class) {
-				assert arg_idx == 0;
+				assert argIdx == 0;
 				return tuple.getAddress();
 			}
-			throw new Error("Invalid arg type: " + c + ", arg_idx = " + arg_idx + ", tuple = " + tuple);
+			throw new Error("Invalid arg type: " + c + ", arg_idx = " + argIdx + ", tuple = " + tuple);
 		}
 
 		@Override
@@ -204,8 +205,9 @@ public class AwkTuples implements Serializable {
 		}
 
 		@Override
-		public void jump(int idx) {
-			tuple = queue.get(this.idx = idx);
+		public void jump(int index) {
+			this.idx = index;
+			tuple = queue.get(this.idx);
 		}
 	}
 
@@ -296,9 +298,9 @@ public class AwkTuples implements Serializable {
 			types[2] = Boolean.class;
 		}
 
-		private Tuple(int opcode, HasFunctionAddress has_func_addr, String s2, long i3, long i4) {
+		private Tuple(int opcode, HasFunctionAddress hasFuncAddr, String s2, long i3, long i4) {
 			this(opcode);
-			this.hasFuncAddr = has_func_addr;
+			this.hasFuncAddr = hasFuncAddr;
 			strings[1] = s2;
 			types[1] = String.class;
 			ints[2] = i3;
@@ -331,10 +333,10 @@ public class AwkTuples implements Serializable {
 			this.next = next;
 		}
 
-		private void setLineNumber(int lineno) {
+		private void setLineNumber(int lineNumber) {
 			assert this.lineno == -1
-					: "The line number was already set to " + this.lineno + ". Later lineno = " + lineno + ".";
-			this.lineno = lineno;
+					: "The line number was already set to " + this.lineno + ". Later lineno = " + lineNumber + ".";
+			this.lineno = lineNumber;
 		}
 
 		@Override
@@ -449,6 +451,7 @@ public class AwkTuples implements Serializable {
 
 	// made public to be accessable via Java Reflection
 	// (see toOpcodeString() method below)
+	// CHECKSTYLE:OFF
 
 	/**
 	 * Pops an item off the operand stack.
@@ -1687,6 +1690,7 @@ public class AwkTuples implements Serializable {
 	 * Stack after: x ... or 0 if uninitialized
 	 */
 	public static final int _POSTDEC_ = 389; // 0 -> x
+	// CHECKSTYLE:ON
 
 	/**
 	 * Override add() to populate the line number for each tuple,
@@ -1697,18 +1701,18 @@ public class AwkTuples implements Serializable {
 
 		@Override
 		public boolean add(Tuple t) {
-			t.setLineNumber(lineno_stack.peek());
+			t.setLineNumber(linenoStack.peek());
 			return super.add(t);
 		}
 	};
 
 	/** Unresolved addresses */
-	private Set<Address> unresolved_addresses = new HashSet<Address>();
+	private Set<Address> unresolvedAddresses = new HashSet<Address>();
 
 	/** Needed only for dumping intermediate code to text such that address labels are provided. */
-	private Map<Integer, Address> address_indexes = new HashMap<Integer, Address>();
+	private Map<Integer, Address> addressIndexes = new HashMap<Integer, Address>();
 	/** Needed only for dumping intermediate code to text such that address labels are provided. */
-	private Map<String, Integer> address_label_counts = new HashMap<String, Integer>();
+	private Map<String, Integer> addressLabelCounts = new HashMap<String, Integer>();
 
 	/**
 	 * <p>
@@ -1820,16 +1824,16 @@ public class AwkTuples implements Serializable {
 	 * @return a {@link org.metricshub.jawk.intermediate.Address} object
 	 */
 	public Address createAddress(String label) {
-		Integer I = address_label_counts.get(label);
-		if (I == null) {
-			I = 0;
+		Integer count = addressLabelCounts.get(label);
+		if (count == null) {
+			count = 0;
 		} else {
 			// I = new Integer(I.intValue()+1);
-			I = I + 1;
+			count = count + 1;
 		}
-		address_label_counts.put(label, I);
-		Address address = new AddressImpl(label + "_" + I);
-		unresolved_addresses.add(address);
+		addressLabelCounts.put(label, count);
+		Address address = new AddressImpl(label + "_" + count);
+		unresolvedAddresses.add(address);
 		return address;
 	}
 
@@ -1842,10 +1846,10 @@ public class AwkTuples implements Serializable {
 	 * @return a {@link org.metricshub.jawk.intermediate.AwkTuples} object
 	 */
 	public AwkTuples address(Address address) {
-		if (unresolved_addresses.contains(address)) {
-			unresolved_addresses.remove(address);
+		if (unresolvedAddresses.contains(address)) {
+			unresolvedAddresses.remove(address);
 			address.assignIndex(queue.size());
-			address_indexes.put(queue.size(), address);
+			addressIndexes.put(queue.size(), address);
 			return this;
 		}
 		throw new Error(address.toString() + " is already resolved, or unresolved from another scope.");
@@ -1865,10 +1869,10 @@ public class AwkTuples implements Serializable {
 	 * print.
 	 * </p>
 	 *
-	 * @param num_exprs a int
+	 * @param numExprs a int
 	 */
-	public void print(int num_exprs) {
-		queue.add(new Tuple(_PRINT_, num_exprs));
+	public void print(int numExprs) {
+		queue.add(new Tuple(_PRINT_, numExprs));
 	}
 
 	/**
@@ -1876,11 +1880,11 @@ public class AwkTuples implements Serializable {
 	 * printToFile.
 	 * </p>
 	 *
-	 * @param num_exprs a int
+	 * @param numExprs a int
 	 * @param append a boolean
 	 */
-	public void printToFile(int num_exprs, boolean append) {
-		queue.add(new Tuple(_PRINT_TO_FILE_, num_exprs, append));
+	public void printToFile(int numExprs, boolean append) {
+		queue.add(new Tuple(_PRINT_TO_FILE_, numExprs, append));
 	}
 
 	/**
@@ -1888,10 +1892,10 @@ public class AwkTuples implements Serializable {
 	 * printToPipe.
 	 * </p>
 	 *
-	 * @param num_exprs a int
+	 * @param numExprs a int
 	 */
-	public void printToPipe(int num_exprs) {
-		queue.add(new Tuple(_PRINT_TO_PIPE_, num_exprs));
+	public void printToPipe(int numExprs) {
+		queue.add(new Tuple(_PRINT_TO_PIPE_, numExprs));
 	}
 
 	/**
@@ -1899,10 +1903,10 @@ public class AwkTuples implements Serializable {
 	 * printf.
 	 * </p>
 	 *
-	 * @param num_exprs a int
+	 * @param numExprs a int
 	 */
-	public void printf(int num_exprs) {
-		queue.add(new Tuple(_PRINTF_, num_exprs));
+	public void printf(int numExprs) {
+		queue.add(new Tuple(_PRINTF_, numExprs));
 	}
 
 	/**
@@ -1910,11 +1914,11 @@ public class AwkTuples implements Serializable {
 	 * printfToFile.
 	 * </p>
 	 *
-	 * @param num_exprs a int
+	 * @param numExprs a int
 	 * @param append a boolean
 	 */
-	public void printfToFile(int num_exprs, boolean append) {
-		queue.add(new Tuple(_PRINTF_TO_FILE_, num_exprs, append));
+	public void printfToFile(int numExprs, boolean append) {
+		queue.add(new Tuple(_PRINTF_TO_FILE_, numExprs, append));
 	}
 
 	/**
@@ -1922,10 +1926,10 @@ public class AwkTuples implements Serializable {
 	 * printfToPipe.
 	 * </p>
 	 *
-	 * @param num_exprs a int
+	 * @param numExprs a int
 	 */
-	public void printfToPipe(int num_exprs) {
-		queue.add(new Tuple(_PRINTF_TO_PIPE_, num_exprs));
+	public void printfToPipe(int numExprs) {
+		queue.add(new Tuple(_PRINTF_TO_PIPE_, numExprs));
 	}
 
 	/**
@@ -1933,10 +1937,10 @@ public class AwkTuples implements Serializable {
 	 * sprintf.
 	 * </p>
 	 *
-	 * @param num_exprs a int
+	 * @param numExprs a int
 	 */
-	public void sprintf(int num_exprs) {
-		queue.add(new Tuple(_SPRINTF_, num_exprs));
+	public void sprintf(int numExprs) {
+		queue.add(new Tuple(_SPRINTF_, numExprs));
 	}
 
 	/**
@@ -1944,10 +1948,10 @@ public class AwkTuples implements Serializable {
 	 * length.
 	 * </p>
 	 *
-	 * @param num_exprs a int
+	 * @param numExprs a int
 	 */
-	public void length(int num_exprs) {
-		queue.add(new Tuple(_LENGTH_, num_exprs));
+	public void length(int numExprs) {
+		queue.add(new Tuple(_LENGTH_, numExprs));
 	}
 
 	/**
@@ -1965,10 +1969,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void assign(int offset, boolean is_global) {
-		queue.add(new Tuple(_ASSIGN_, offset, is_global));
+	public void assign(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_ASSIGN_, offset, isGlobal));
 	}
 
 	/**
@@ -1977,10 +1981,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void assignArray(int offset, boolean is_global) {
-		queue.add(new Tuple(_ASSIGN_ARRAY_, offset, is_global));
+	public void assignArray(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_ASSIGN_ARRAY_, offset, isGlobal));
 	}
 
 	/**
@@ -2007,11 +2011,11 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_array a boolean
-	 * @param is_global a boolean
+	 * @param isArray a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void dereference(int offset, boolean is_array, boolean is_global) {
-		queue.add(new Tuple(_DEREFERENCE_, offset, is_array, is_global));
+	public void dereference(int offset, boolean isArray, boolean isGlobal) {
+		queue.add(new Tuple(_DEREFERENCE_, offset, isArray, isGlobal));
 	}
 
 	/**
@@ -2020,10 +2024,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void plusEq(int offset, boolean is_global) {
-		queue.add(new Tuple(_PLUS_EQ_, offset, is_global));
+	public void plusEq(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_PLUS_EQ_, offset, isGlobal));
 	}
 
 	/**
@@ -2032,10 +2036,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void minusEq(int offset, boolean is_global) {
-		queue.add(new Tuple(_MINUS_EQ_, offset, is_global));
+	public void minusEq(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_MINUS_EQ_, offset, isGlobal));
 	}
 
 	/**
@@ -2044,10 +2048,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void multEq(int offset, boolean is_global) {
-		queue.add(new Tuple(_MULT_EQ_, offset, is_global));
+	public void multEq(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_MULT_EQ_, offset, isGlobal));
 	}
 
 	/**
@@ -2056,10 +2060,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void divEq(int offset, boolean is_global) {
-		queue.add(new Tuple(_DIV_EQ_, offset, is_global));
+	public void divEq(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_DIV_EQ_, offset, isGlobal));
 	}
 
 	/**
@@ -2068,10 +2072,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void modEq(int offset, boolean is_global) {
-		queue.add(new Tuple(_MOD_EQ_, offset, is_global));
+	public void modEq(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_MOD_EQ_, offset, isGlobal));
 	}
 
 	/**
@@ -2080,10 +2084,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void powEq(int offset, boolean is_global) {
-		queue.add(new Tuple(_POW_EQ_, offset, is_global));
+	public void powEq(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_POW_EQ_, offset, isGlobal));
 	}
 
 	/**
@@ -2092,10 +2096,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void plusEqArray(int offset, boolean is_global) {
-		queue.add(new Tuple(_PLUS_EQ_ARRAY_, offset, is_global));
+	public void plusEqArray(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_PLUS_EQ_ARRAY_, offset, isGlobal));
 	}
 
 	/**
@@ -2104,10 +2108,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void minusEqArray(int offset, boolean is_global) {
-		queue.add(new Tuple(_MINUS_EQ_ARRAY_, offset, is_global));
+	public void minusEqArray(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_MINUS_EQ_ARRAY_, offset, isGlobal));
 	}
 
 	/**
@@ -2116,10 +2120,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void multEqArray(int offset, boolean is_global) {
-		queue.add(new Tuple(_MULT_EQ_ARRAY_, offset, is_global));
+	public void multEqArray(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_MULT_EQ_ARRAY_, offset, isGlobal));
 	}
 
 	/**
@@ -2128,10 +2132,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void divEqArray(int offset, boolean is_global) {
-		queue.add(new Tuple(_DIV_EQ_ARRAY_, offset, is_global));
+	public void divEqArray(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_DIV_EQ_ARRAY_, offset, isGlobal));
 	}
 
 	/**
@@ -2140,10 +2144,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void modEqArray(int offset, boolean is_global) {
-		queue.add(new Tuple(_MOD_EQ_ARRAY_, offset, is_global));
+	public void modEqArray(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_MOD_EQ_ARRAY_, offset, isGlobal));
 	}
 
 	/**
@@ -2152,10 +2156,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void powEqArray(int offset, boolean is_global) {
-		queue.add(new Tuple(_POW_EQ_ARRAY_, offset, is_global));
+	public void powEqArray(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_POW_EQ_ARRAY_, offset, isGlobal));
 	}
 
 	/**
@@ -2318,10 +2322,10 @@ public class AwkTuples implements Serializable {
 	 * subForDollar0.
 	 * </p>
 	 *
-	 * @param is_gsub a boolean
+	 * @param isGsub a boolean
 	 */
-	public void subForDollar0(boolean is_gsub) {
-		queue.add(new Tuple(_SUB_FOR_DOLLAR_0_, is_gsub));
+	public void subForDollar0(boolean isGsub) {
+		queue.add(new Tuple(_SUB_FOR_DOLLAR_0_, isGsub));
 	}
 
 	/**
@@ -2329,10 +2333,10 @@ public class AwkTuples implements Serializable {
 	 * subForDollarReference.
 	 * </p>
 	 *
-	 * @param is_gsub a boolean
+	 * @param isGsub a boolean
 	 */
-	public void subForDollarReference(boolean is_gsub) {
-		queue.add(new Tuple(_SUB_FOR_DOLLAR_REFERENCE_, is_gsub));
+	public void subForDollarReference(boolean isGsub) {
+		queue.add(new Tuple(_SUB_FOR_DOLLAR_REFERENCE_, isGsub));
 	}
 
 	/**
@@ -2341,11 +2345,11 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
-	 * @param is_gsub a boolean
+	 * @param isGlobal a boolean
+	 * @param isGsub a boolean
 	 */
-	public void subForVariable(int offset, boolean is_global, boolean is_gsub) {
-		queue.add(new Tuple(_SUB_FOR_VARIABLE_, offset, is_global, is_gsub));
+	public void subForVariable(int offset, boolean isGlobal, boolean isGsub) {
+		queue.add(new Tuple(_SUB_FOR_VARIABLE_, offset, isGlobal, isGsub));
 	}
 
 	/**
@@ -2354,11 +2358,11 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
-	 * @param is_gsub a boolean
+	 * @param isGlobal a boolean
+	 * @param isGsub a boolean
 	 */
-	public void subForArrayReference(int offset, boolean is_global, boolean is_gsub) {
-		queue.add(new Tuple(_SUB_FOR_ARRAY_REFERENCE_, offset, is_global, is_gsub));
+	public void subForArrayReference(int offset, boolean isGlobal, boolean isGsub) {
+		queue.add(new Tuple(_SUB_FOR_ARRAY_REFERENCE_, offset, isGlobal, isGsub));
 	}
 
 	/**
@@ -2488,10 +2492,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void inc(int offset, boolean is_global) {
-		queue.add(new Tuple(_INC_, offset, is_global));
+	public void inc(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_INC_, offset, isGlobal));
 	}
 
 	/**
@@ -2500,10 +2504,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void dec(int offset, boolean is_global) {
-		queue.add(new Tuple(_DEC_, offset, is_global));
+	public void dec(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_DEC_, offset, isGlobal));
 	}
 
 	/**
@@ -2512,10 +2516,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void postInc(int offset, boolean is_global) {
-		queue.add(new Tuple(_POSTINC_, offset, is_global));
+	public void postInc(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_POSTINC_, offset, isGlobal));
 	}
 
 	/**
@@ -2524,10 +2528,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void postDec(int offset, boolean is_global) {
-		queue.add(new Tuple(_POSTDEC_, offset, is_global));
+	public void postDec(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_POSTDEC_, offset, isGlobal));
 	}
 
 	/**
@@ -2536,10 +2540,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void incArrayRef(int offset, boolean is_global) {
-		queue.add(new Tuple(_INC_ARRAY_REF_, offset, is_global));
+	public void incArrayRef(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_INC_ARRAY_REF_, offset, isGlobal));
 	}
 
 	/**
@@ -2548,10 +2552,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void decArrayRef(int offset, boolean is_global) {
-		queue.add(new Tuple(_DEC_ARRAY_REF_, offset, is_global));
+	public void decArrayRef(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_DEC_ARRAY_REF_, offset, isGlobal));
 	}
 
 	/**
@@ -2649,10 +2653,10 @@ public class AwkTuples implements Serializable {
 	 * sleep.
 	 * </p>
 	 *
-	 * @param num_args a int
+	 * @param numArgs a int
 	 */
-	public void sleep(int num_args) {
-		queue.add(new Tuple(_SLEEP_, num_args));
+	public void sleep(int numArgs) {
+		queue.add(new Tuple(_SLEEP_, numArgs));
 	}
 
 	/**
@@ -2660,10 +2664,10 @@ public class AwkTuples implements Serializable {
 	 * dump.
 	 * </p>
 	 *
-	 * @param num_args a int
+	 * @param numArgs a int
 	 */
-	public void dump(int num_args) {
-		queue.add(new Tuple(_DUMP_, num_args));
+	public void dump(int numArgs) {
+		queue.add(new Tuple(_DUMP_, numArgs));
 	}
 
 	/**
@@ -2954,32 +2958,32 @@ public class AwkTuples implements Serializable {
 	 * function.
 	 * </p>
 	 *
-	 * @param func_name a {@link java.lang.String} object
-	 * @param num_formal_params a int
+	 * @param funcName a {@link java.lang.String} object
+	 * @param numFormalParams a int
 	 */
-	public void function(String func_name, int num_formal_params) {
-		queue.add(new Tuple(_FUNCTION_, func_name, num_formal_params));
+	public void function(String funcName, int numFormalParams) {
+		queue.add(new Tuple(_FUNCTION_, funcName, numFormalParams));
 	}
 
-	// public void callFunction(Address addr, String func_name, int num_formal_params, int num_actual_params) {
-	// queue.add(new Tuple(_CALL_FUNCTION_, addr, func_name, num_formal_params, num_actual_params)); }
+	// public void callFunction(Address addr, String funcName, int numFormalParams, int numActualParams) {
+	// queue.add(new Tuple(_CALL_FUNCTION_, addr, funcName, numFormalParams, numActualParams)); }
 
 	/**
 	 * <p>
 	 * callFunction.
 	 * </p>
 	 *
-	 * @param has_func_addr a {@link org.metricshub.jawk.intermediate.HasFunctionAddress} object
-	 * @param func_name a {@link java.lang.String} object
-	 * @param num_formal_params a int
-	 * @param num_actual_params a int
+	 * @param hasFuncAddr a {@link org.metricshub.jawk.intermediate.HasFunctionAddress} object
+	 * @param funcName a {@link java.lang.String} object
+	 * @param numFormalParams a int
+	 * @param numActualParams a int
 	 */
 	public void callFunction(
-			HasFunctionAddress has_func_addr,
-			String func_name,
-			int num_formal_params,
-			int num_actual_params) {
-		queue.add(new Tuple(_CALL_FUNCTION_, has_func_addr, func_name, num_formal_params, num_actual_params));
+			HasFunctionAddress hasFuncAddr,
+			String funcName,
+			int numFormalParams,
+			int numActualParams) {
+		queue.add(new Tuple(_CALL_FUNCTION_, hasFuncAddr, funcName, numFormalParams, numActualParams));
 	}
 
 	/**
@@ -3005,10 +3009,10 @@ public class AwkTuples implements Serializable {
 	 * setNumGlobals.
 	 * </p>
 	 *
-	 * @param num_globals a int
+	 * @param numGlobals a int
 	 */
-	public void setNumGlobals(int num_globals) {
-		queue.add(new Tuple(_SET_NUM_GLOBALS_, num_globals));
+	public void setNumGlobals(int numGlobals) {
+		queue.add(new Tuple(_SET_NUM_GLOBALS_, numGlobals));
 	}
 
 	/**
@@ -3037,10 +3041,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void deleteArrayElement(int offset, boolean is_global) {
-		queue.add(new Tuple(_DELETE_ARRAY_ELEMENT_, offset, is_global));
+	public void deleteArrayElement(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_DELETE_ARRAY_ELEMENT_, offset, isGlobal));
 	}
 
 	/**
@@ -3049,10 +3053,10 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 *
 	 * @param offset a int
-	 * @param is_global a boolean
+	 * @param isGlobal a boolean
 	 */
-	public void deleteArray(int offset, boolean is_global) {
-		queue.add(new Tuple(_DELETE_ARRAY_, offset, is_global));
+	public void deleteArray(int offset, boolean isGlobal) {
+		queue.add(new Tuple(_DELETE_ARRAY_, offset, isGlobal));
 	}
 
 	/**
@@ -3100,10 +3104,10 @@ public class AwkTuples implements Serializable {
 	 * regexp.
 	 * </p>
 	 *
-	 * @param regexp_str a {@link java.lang.String} object
+	 * @param regexpStr a {@link java.lang.String} object
 	 */
-	public void regexp(String regexp_str) {
-		queue.add(new Tuple(_REGEXP_, regexp_str));
+	public void regexp(String regexpStr) {
+		queue.add(new Tuple(_REGEXP_, regexpStr));
 	}
 
 	/**
@@ -3165,12 +3169,12 @@ public class AwkTuples implements Serializable {
 	 * extension.
 	 * </p>
 	 *
-	 * @param extension_keyword a {@link java.lang.String} object
-	 * @param param_count a int
-	 * @param is_initial a boolean
+	 * @param extensionKeyword a {@link java.lang.String} object
+	 * @param paramCount a int
+	 * @param isInitial a boolean
 	 */
-	public void extension(String extension_keyword, int param_count, boolean is_initial) {
-		queue.add(new Tuple(_EXTENSION_, extension_keyword, param_count, is_initial));
+	public void extension(String extensionKeyword, int paramCount, boolean isInitial) {
+		queue.add(new Tuple(_EXTENSION_, extensionKeyword, paramCount, isInitial));
 	}
 
 	/**
@@ -3181,10 +3185,10 @@ public class AwkTuples implements Serializable {
 	 * @param ps a {@link java.io.PrintStream} object
 	 */
 	public void dump(PrintStream ps) {
-		ps.println("(" + version_manager + ")");
+		ps.println("(" + versionManager + ")");
 		ps.println();
 		for (int i = 0; i < queue.size(); i++) {
-			Address address = address_indexes.get(i);
+			Address address = addressIndexes.get(i);
 			if (address == null) {
 				ps.println(i + " : " + queue.get(i));
 			} else {
@@ -3226,13 +3230,13 @@ public class AwkTuples implements Serializable {
 	}
 
 	/** Map of global variables offsets */
-	private Map<String, Integer> global_var_offset_map = new HashMap<String, Integer>();
+	private Map<String, Integer> globalVarOffsetMap = new HashMap<String, Integer>();
 
 	/** Map of global arrays */
-	private Map<String, Boolean> global_var_aarray_map = new HashMap<String, Boolean>();
+	private Map<String, Boolean> globalVarAarrayMap = new HashMap<String, Boolean>();
 
 	/** List of user function names */
-	private Set<String> function_names = null;
+	private Set<String> functionNames = null;
 
 	/**
 	 * Accept a {variable_name -&gt; offset} mapping such that global variables can be
@@ -3240,15 +3244,15 @@ public class AwkTuples implements Serializable {
 	 *
 	 * @param varname Name of the global variable
 	 * @param offset What offset to use for the variable
-	 * @param is_array Whether the variable is actually an array
+	 * @param isArray Whether the variable is actually an array
 	 */
-	public void addGlobalVariableNameToOffsetMapping(String varname, int offset, boolean is_array) {
-		if (global_var_offset_map.get(varname) != null) {
-			assert global_var_aarray_map.get(varname) != null;
+	public void addGlobalVariableNameToOffsetMapping(String varname, int offset, boolean isArray) {
+		if (globalVarOffsetMap.get(varname) != null) {
+			assert globalVarAarrayMap.get(varname) != null;
 			return;
 		}
-		global_var_offset_map.put(varname, offset);
-		global_var_aarray_map.put(varname, is_array);
+		globalVarOffsetMap.put(varname, offset);
+		globalVarAarrayMap.put(varname, isArray);
 	}
 
 	/**
@@ -3257,18 +3261,18 @@ public class AwkTuples implements Serializable {
 	 * command line parameters, either via -v arguments or
 	 * passed into ARGV.
 	 *
-	 * @param function_names A set of function name strings.
+	 * @param functionNames A set of function name strings.
 	 */
-	public void setFunctionNameSet(Set<String> function_names) {
+	public void setFunctionNameSet(Set<String> functionNames) {
 		// setFunctionNameSet is called with a keySet from
 		// a HashMap as a parameter, which is NOT
 		// Serializable. Creating a new HashSet around
 		// the parameter resolves the issue.
 		// Otherwise, attempting to serialize this
 		// object results in a NotSerializableEexception
-		// being thrown because of function_names field
+		// being thrown because of functionNames field
 		// being a keyset from a HashMap.
-		this.function_names = new HashSet<String>(function_names);
+		this.functionNames = new HashSet<String>(functionNames);
 	}
 
 	/**
@@ -3279,7 +3283,7 @@ public class AwkTuples implements Serializable {
 	 * @return a {@link java.util.Map} object
 	 */
 	public Map<String, Integer> getGlobalVariableOffsetMap() {
-		return Collections.unmodifiableMap(global_var_offset_map);
+		return Collections.unmodifiableMap(globalVarOffsetMap);
 	}
 
 	/**
@@ -3290,7 +3294,7 @@ public class AwkTuples implements Serializable {
 	 * @return a {@link java.util.Map} object
 	 */
 	public Map<String, Boolean> getGlobalVariableAarrayMap() {
-		return Collections.unmodifiableMap(global_var_aarray_map);
+		return Collections.unmodifiableMap(globalVarAarrayMap);
 	}
 
 	/**
@@ -3301,12 +3305,12 @@ public class AwkTuples implements Serializable {
 	 * @return a {@link java.util.Set} object
 	 */
 	public Set<String> getFunctionNameSet() {
-		assert function_names != null;
-		return Collections.unmodifiableSet(function_names);
+		assert functionNames != null;
+		return Collections.unmodifiableSet(functionNames);
 	}
 
 	/** linenumber stack ... */
-	private MyStack<Integer> lineno_stack = new LinkedListStackImpl<Integer>();
+	private MyStack<Integer> linenoStack = new LinkedListStackImpl<Integer>();
 
 	/**
 	 * Push the current line number onto the line number stack.
@@ -3319,7 +3323,7 @@ public class AwkTuples implements Serializable {
 	 * @param lineno The current source line number.
 	 */
 	public void pushSourceLineNumber(int lineno) {
-		lineno_stack.push(lineno);
+		linenoStack.push(lineno);
 	}
 
 	/**
@@ -3330,7 +3334,7 @@ public class AwkTuples implements Serializable {
 	 * @param lineno a int
 	 */
 	public void popSourceLineNumber(int lineno) {
-		int tos = lineno_stack.pop();
+		int tos = linenoStack.pop();
 		assert lineno == tos;
 	}
 
@@ -3361,7 +3365,7 @@ public class AwkTuples implements Serializable {
 		 * The only way it could be different from the
 		 * class version is only during deserialization.
 		 */
-		private int INSTANCE_VERSION = CLASS_VERSION;
+		private int instanceVersion = CLASS_VERSION;
 
 		/**
 		 * Upon deserialization, ensures the instance
@@ -3375,11 +3379,11 @@ public class AwkTuples implements Serializable {
 		 *         the class version
 		 */
 		private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
-			INSTANCE_VERSION = ois.readInt();
-			if (INSTANCE_VERSION != CLASS_VERSION) {
+			instanceVersion = ois.readInt();
+			if (instanceVersion != CLASS_VERSION) {
 				throw new InvalidClassException(
 						"Invalid intermeidate file format (instance version "
-								+ INSTANCE_VERSION
+								+ instanceVersion
 								+ " != class version "
 								+ CLASS_VERSION
 								+ ")");
@@ -3387,12 +3391,12 @@ public class AwkTuples implements Serializable {
 		}
 
 		private void writeObject(ObjectOutputStream oos) throws IOException {
-			oos.writeInt(INSTANCE_VERSION);
+			oos.writeInt(instanceVersion);
 		}
 
 		@Override
 		public String toString() {
-			return "intermediate file format version = " + INSTANCE_VERSION;
+			return "intermediate file format version = " + instanceVersion;
 		}
 	}
 }
