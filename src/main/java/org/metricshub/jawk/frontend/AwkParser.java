@@ -356,15 +356,15 @@ public class AwkParser {
 	 * Parse the script streamed by script_reader. Build and return the
 	 * root of the abstract syntax tree which represents the Jawk script.
 	 *
-	 * @param scriptSources List of script sources
+	 * @param localScriptSources List of script sources
 	 * @return The abstract syntax tree of this script.
 	 * @throws java.io.IOException upon an IO error.
 	 */
-	public AwkSyntaxTree parse(List<ScriptSource> scriptSources) throws IOException {
-		if (scriptSources == null || scriptSources.isEmpty()) {
+	public AwkSyntaxTree parse(List<ScriptSource> localScriptSources) throws IOException {
+		if (localScriptSources == null || localScriptSources.isEmpty()) {
 			throw new IOException("No script sources supplied");
 		}
-		this.scriptSources = Collections.unmodifiableList(new ArrayList<>(scriptSources));
+		this.scriptSources = Collections.unmodifiableList(new ArrayList<>(localScriptSources));
 		scriptSourcesCurrentIndex = 0;
 		reader = new LineNumberReader(this.scriptSources.get(scriptSourcesCurrentIndex).getReader());
 		read();
@@ -5204,8 +5204,8 @@ public class AwkParser {
 			return new String_AST(str);
 		}
 
-		AST addREGEXP(String regexp) {
-			return new Regexp_AST(regexp);
+		AST addREGEXP(String localRegexp) {
+			return new Regexp_AST(localRegexp);
 		}
 	}
 
