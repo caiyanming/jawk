@@ -910,14 +910,14 @@ public class AwkParser {
 
 	// SUPPORTING FUNCTIONS/METHODS
 	private void terminator() throws IOException {
-		// like opt_terminator, except error if no terminator was found
-		if (!opt_terminator()) {
+		// like optTerminator, except error if no terminator was found
+		if (!optTerminator()) {
 			throw new ParserException("Expecting statement terminator. Got " + toTokenString(token) + ": " + text);
 		}
 	}
 
-	private boolean opt_terminator() throws IOException {
-		if (opt_newline()) {
+	private boolean optTerminator() throws IOException {
+		if (optNewline()) {
 			return true;
 		} else if (token == _EOF_ || token == _CLOSE_BRACE_) {
 			return true; // do nothing
@@ -930,7 +930,7 @@ public class AwkParser {
 		}
 	}
 
-	private boolean opt_newline() throws IOException {
+	private boolean optNewline() throws IOException {
 		if (token == _NEWLINE_) {
 			lexer();
 			return true;
@@ -953,9 +953,9 @@ public class AwkParser {
 		return rl;
 	}
 
-	// RULE_LIST : \n [ ( RULE | FUNCTION terminator ) opt_terminator RULE_LIST ]
+	// RULE_LIST : \n [ ( RULE | FUNCTION terminator ) optTerminator RULE_LIST ]
 	AST RULE_LIST() throws IOException {
-		opt_newline();
+		optNewline();
 		AST rule_or_function = null;
 		if (token == KEYWORDS.get("function")) {
 			rule_or_function = FUNCTION();
@@ -964,7 +964,7 @@ public class AwkParser {
 		} else {
 			return null;
 		}
-		opt_terminator(); // newline or ; (maybe)
+		optTerminator(); // newline or ; (maybe)
 		return new RuleList_AST(rule_or_function, RULE_LIST());
 	}
 
@@ -986,7 +986,7 @@ public class AwkParser {
 			formal_param_list = FORMAL_PARAM_LIST(functionName);
 		}
 		lexer(_CLOSE_PAREN_);
-		opt_newline();
+		optNewline();
 
 		lexer(_OPEN_BRACE_);
 		AST function_block = STATEMENT_LIST();
@@ -1002,7 +1002,7 @@ public class AwkParser {
 			lexer();
 			if (token == _COMMA_) {
 				lexer();
-				opt_newline();
+				optNewline();
 				AST rest = FORMAL_PARAM_LIST(functionName);
 				if (rest == null) {
 					throw new ParserException("Cannot terminate a formal parameter list with a comma.");
@@ -1033,7 +1033,7 @@ public class AwkParser {
 			// for ranges, like conditionStart, conditionEnd
 			if (token == _COMMA_) {
 				lexer();
-				opt_newline();
+				optNewline();
 				// true = allow comparators, allow IN keyword, do NOT allow multidim indices expressions
 				opt_expr = new ConditionPair_AST(opt_expr, ASSIGNMENT_EXPRESSION(true, true, false));
 			}
@@ -1053,7 +1053,7 @@ public class AwkParser {
 	// STATEMENT_LIST : [ STATEMENT_BLOCK|STATEMENT STATEMENT_LIST ]
 	private AST STATEMENT_LIST() throws IOException {
 		// statement lists can only live within curly brackets (braces)
-		opt_newline();
+		optNewline();
 		if (token == _CLOSE_BRACE_ || token == _EOF_) {
 			return null;
 		}
@@ -1090,7 +1090,7 @@ public class AwkParser {
 																																									// expressions
 		if (token == _COMMA_) {
 			lexer();
-			opt_newline();
+			optNewline();
 			return new FunctionCallParamList_AST(expr, EXPRESSION_LIST(not_in_print_root, allow_in_keyword));
 		} else {
 			return new FunctionCallParamList_AST(expr, null);
@@ -1129,7 +1129,7 @@ public class AwkParser {
 		if (allow_multidim_indices && token == _COMMA_) {
 			// consume the comma
 			lexer();
-			opt_newline();
+			optNewline();
 			AST rest = COMMA_EXPRESSION(not_in_print_root, allow_in_keyword, allow_multidim_indices);
 			if (rest instanceof ArrayIndex_AST) {
 				return new ArrayIndex_AST(concat_expression, rest);
@@ -1657,7 +1657,7 @@ public class AwkParser {
 	AST ARRAY_INDEX(boolean not_in_print_root, boolean allow_in_keyword) throws IOException {
 		AST expr_ast = ASSIGNMENT_EXPRESSION(not_in_print_root, allow_in_keyword, false);
 		if (token == _COMMA_) {
-			opt_newline();
+			optNewline();
 			lexer();
 			return new ArrayIndex_AST(expr_ast, ARRAY_INDEX(not_in_print_root, allow_in_keyword));
 		} else {
@@ -1744,12 +1744,12 @@ public class AwkParser {
 		//// But it didn't handle
 		//// if ; else ...
 		//// properly
-		opt_newline();
+		optNewline();
 		AST b1;
 		if (token == _SEMICOLON_) {
 			lexer();
 			// consume the newline after the semicolon
-			opt_newline();
+			optNewline();
 			b1 = null;
 		} else {
 			b1 = BLOCK_OR_STMT();
@@ -1765,10 +1765,10 @@ public class AwkParser {
 		// statements, causing the original OPT_STATEMENT_LIST to relinquish
 		// processing statements to this OPT_STATEMENT_LIST.
 
-		opt_newline();
+		optNewline();
 		if (token == KEYWORDS.get("else")) {
 			lexer();
-			opt_newline();
+			optNewline();
 			AST b2 = BLOCK_OR_STMT();
 			return new IfStatement_AST(expr, b1, b2);
 		} else {
@@ -1788,7 +1788,7 @@ public class AwkParser {
 	}
 
 	AST BLOCK_OR_STMT(boolean require_terminator) throws IOException {
-		opt_newline();
+		optNewline();
 		AST block;
 		// HIJACK BRACES HERE SINCE WE MAY NOT HAVE A TERMINATOR AFTER THE CLOSING BRACE
 		if (token == _OPEN_BRACE_) {
@@ -2022,12 +2022,12 @@ public class AwkParser {
 
 	AST DO_STATEMENT() throws IOException {
 		expectKeyword("do");
-		opt_newline();
+		optNewline();
 		AST block = BLOCK_OR_STMT();
 		if (token == _SEMICOLON_) {
 			lexer();
 		}
-		opt_newline();
+		optNewline();
 		expectKeyword("while");
 		lexer(_OPEN_PAREN_);
 		AST expr = ASSIGNMENT_EXPRESSION(true, true, false); // true = allow comparators, allow IN keyword, do NOT allow
