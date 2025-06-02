@@ -97,9 +97,11 @@ class RuntimeStack {
 		assert globals != null;
 		assert offset != AVM.NULL_OFFSET;
 		if (isGlobal) {
-			return globals[(int) offset] = val;
+			globals[(int) offset] = val;
+			return val;
 		} else {
-			return locals[(int) offset] = val;
+			locals[(int) offset] = val;
+			return val;
 		}
 	}
 
