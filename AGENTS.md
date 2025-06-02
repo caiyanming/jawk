@@ -22,9 +22,7 @@ Compatibility tests are run with `mvn verify` to assess the compatibility with o
 
 ## Code quality reports
 
-Run `mvn site` to produce all the required code style reports (PMD, CPD, checkstyle, and spotbugs). Make sure the reports don't show new errors and problems because of your changes. To compare these reports with the initial build during environment setup, it is required to copy the content of these reports to a temporary location first, before they get overwritten when you execute `mvn site` or `mvn verify site`. Typically, you can copy target/*.xml to target/before/ (mkdir target/before).
-
-If the reports show new problems comparing to the initial report, fix these before submitting your changes.
+Code quality checks are performed during the build with `mvn verify` (checkstyle, pmd, and spotbugs). Currently, there are tons of checkstyle issues, which are to be ignored for now. But pmd and spotbugs issues will fail the build. Fix any problem reported here before committing and submitting your code!
 
 ## Documentation
 
