@@ -102,6 +102,12 @@ public class AwkParserTest {
 	}
 
 	@Test
+	public void testPowAssignment() throws Exception {
+		assertEquals("^= must be supported", "4\n", runAwk("BEGIN { n = 2; n ^= 2; print n }", null));
+		assertEquals("**= must be supported", "4\n", runAwk("BEGIN { n = 2; n **= 2; print n }", null));
+	}
+
+	@Test
 	public void testOperatorPrecedence() throws Exception {
 		assertEquals(
 				"$a precedes a++",

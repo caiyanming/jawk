@@ -695,6 +695,11 @@ public class AwkParser {
 				return token;
 			} else if (c == '*') {
 				read();
+				if (c == '=') {
+					read();
+					token = POW_EQ;
+					return token;
+				}
 				token = POW;
 				return token;
 			}
@@ -1857,6 +1862,7 @@ public class AwkParser {
 
 		if (token == SEMICOLON) {
 			lexer();
+			optNewline();
 		} else {
 			throw new ParserException("Expecting ;. Got " + toTokenString(token) + ": " + text);
 		}
@@ -1866,6 +1872,7 @@ public class AwkParser {
 		}
 		if (token == SEMICOLON) {
 			lexer();
+			optNewline();
 		} else {
 			throw new ParserException("Expecting ;. Got " + toTokenString(token) + ": " + text);
 		}
