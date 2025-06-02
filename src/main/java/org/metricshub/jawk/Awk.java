@@ -138,8 +138,9 @@ public class Awk {
 			for (ScriptSource scriptSource : settings.getScriptSources()) {
 				if (scriptSource.isIntermediate()) {
 					// read the intermediate file, bypassing frontend processing
-					tuples = (AwkTuples) readObjectFromInputStream(scriptSource.getInputStream()); // FIXME only the last
-																																													// intermediate file is used!
+					// if several intermediate files are supplied, the most recent one
+					// encountered in the list takes precedence
+					tuples = (AwkTuples) readObjectFromInputStream(scriptSource.getInputStream());
 				} else {
 					notIntermediateScriptSources.add(scriptSource);
 				}
