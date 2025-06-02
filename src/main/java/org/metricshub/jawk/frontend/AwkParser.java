@@ -240,7 +240,7 @@ public class AwkParser {
 		BUILTIN_FUNC_NAMES.put("exec", F_EXEC);
 	}
 
-	private static final int spIdx = 257;
+	private static final int SP_IDX = 257;
 	/**
 	 * Contains a mapping of Jawk special variables to their
 	 * variable token values.
@@ -253,22 +253,22 @@ public class AwkParser {
 	private static final Map<String, Integer> SPECIAL_VAR_NAMES = new HashMap<String, Integer>();
 
 	static {
-		SPECIAL_VAR_NAMES.put("NR", spIdx);
-		SPECIAL_VAR_NAMES.put("FNR", spIdx);
-		SPECIAL_VAR_NAMES.put("NF", spIdx);
-		SPECIAL_VAR_NAMES.put("FS", spIdx);
-		SPECIAL_VAR_NAMES.put("RS", spIdx);
-		SPECIAL_VAR_NAMES.put("OFS", spIdx);
-		SPECIAL_VAR_NAMES.put("ORS", spIdx);
-		SPECIAL_VAR_NAMES.put("RSTART", spIdx);
-		SPECIAL_VAR_NAMES.put("RLENGTH", spIdx);
-		SPECIAL_VAR_NAMES.put("FILENAME", spIdx);
-		SPECIAL_VAR_NAMES.put("SUBSEP", spIdx);
-		SPECIAL_VAR_NAMES.put("CONVFMT", spIdx);
-		SPECIAL_VAR_NAMES.put("OFMT", spIdx);
-		SPECIAL_VAR_NAMES.put("ENVIRON", spIdx);
-		SPECIAL_VAR_NAMES.put("ARGC", spIdx);
-		SPECIAL_VAR_NAMES.put("ARGV", spIdx);
+		SPECIAL_VAR_NAMES.put("NR", SP_IDX);
+		SPECIAL_VAR_NAMES.put("FNR", SP_IDX);
+		SPECIAL_VAR_NAMES.put("NF", SP_IDX);
+		SPECIAL_VAR_NAMES.put("FS", SP_IDX);
+		SPECIAL_VAR_NAMES.put("RS", SP_IDX);
+		SPECIAL_VAR_NAMES.put("OFS", SP_IDX);
+		SPECIAL_VAR_NAMES.put("ORS", SP_IDX);
+		SPECIAL_VAR_NAMES.put("RSTART", SP_IDX);
+		SPECIAL_VAR_NAMES.put("RLENGTH", SP_IDX);
+		SPECIAL_VAR_NAMES.put("FILENAME", SP_IDX);
+		SPECIAL_VAR_NAMES.put("SUBSEP", SP_IDX);
+		SPECIAL_VAR_NAMES.put("CONVFMT", SP_IDX);
+		SPECIAL_VAR_NAMES.put("OFMT", SP_IDX);
+		SPECIAL_VAR_NAMES.put("ENVIRON", SP_IDX);
+		SPECIAL_VAR_NAMES.put("ARGC", SP_IDX);
+		SPECIAL_VAR_NAMES.put("ARGV", SP_IDX);
 	}
 
 	/**
