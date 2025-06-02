@@ -1491,7 +1491,7 @@ public class JRT {
 	 * applyRS.
 	 * </p>
 	 *
-	 * @param rs_obj a {@link java.lang.Object} object
+	 * @param rsObj a {@link java.lang.Object} object
 	 */
 	public void applyRS(Object rsObj) {
 		// if (rsObj.toString().equals(BLANK))
