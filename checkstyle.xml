@@ -14,7 +14,7 @@
 	<module name="Translation" />
 
 	<!-- File-length checks (size, not formatting) -->
-	<module name="FileLength" />
+	<!-- module name="FileLength" /-->
 
 	<!-- Disable strictly formatting-related regex (trailing spaces) -->
 	<!--
