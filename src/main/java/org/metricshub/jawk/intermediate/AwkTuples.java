@@ -3261,9 +3261,9 @@ public class AwkTuples implements Serializable {
 	 * command line parameters, either via -v arguments or
 	 * passed into ARGV.
 	 *
-	 * @param functionNames A set of function name strings.
+	 * @param names A set of function name strings.
 	 */
-	public void setFunctionNameSet(Set<String> functionNames) {
+	public void setFunctionNameSet(Set<String> names) {
 		// setFunctionNameSet is called with a keySet from
 		// a HashMap as a parameter, which is NOT
 		// Serializable. Creating a new HashSet around
@@ -3272,7 +3272,7 @@ public class AwkTuples implements Serializable {
 		// object results in a NotSerializableEexception
 		// being thrown because of functionNames field
 		// being a keyset from a HashMap.
-		this.functionNames = new HashSet<String>(functionNames);
+		this.functionNames = new HashSet<String>(names);
 	}
 
 	/**
