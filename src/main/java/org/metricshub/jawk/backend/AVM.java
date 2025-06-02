@@ -338,15 +338,16 @@ public class AVM implements AwkInterpreter, VariableManager {
 					PrintStream ps = jrt.getOutputFiles().get(key);
 					if (ps == null) {
 						try {
-							jrt
-									.getOutputFiles()
-									.put(
-											key,
-											ps = new PrintStream(new FileOutputStream(key, append), true, StandardCharsets.UTF_8.name())); // true
-							// =
-							// autoflush
+							ps = new PrintStream(
+									new FileOutputStream(key, append),
+									true,
+									StandardCharsets.UTF_8.name());
+							// = autoflush
+							jrt.getOutputFiles().put(key, ps);
 						} catch (IOException ioe) {
-							throw new AwkRuntimeException(position.lineNumber(), "Cannot open " + key + " for writing: " + ioe);
+							throw new AwkRuntimeException(
+									position.lineNumber(),
+									"Cannot open " + key + " for writing: " + ioe);
 						}
 					}
 					printTo(ps, numArgs);
@@ -389,15 +390,16 @@ public class AVM implements AwkInterpreter, VariableManager {
 					PrintStream ps = jrt.getOutputFiles().get(key);
 					if (ps == null) {
 						try {
-							jrt
-									.getOutputFiles()
-									.put(
-											key,
-											ps = new PrintStream(new FileOutputStream(key, append), true, StandardCharsets.UTF_8.name())); // true
-							// =
-							// autoflush
+							ps = new PrintStream(
+									new FileOutputStream(key, append),
+									true,
+									StandardCharsets.UTF_8.name());
+							// = autoflush
+							jrt.getOutputFiles().put(key, ps);
 						} catch (IOException ioe) {
-							throw new AwkRuntimeException(position.lineNumber(), "Cannot open " + key + " for writing: " + ioe);
+							throw new AwkRuntimeException(
+									position.lineNumber(),
+									"Cannot open " + key + " for writing: " + ioe);
 						}
 					}
 					printfTo(ps, numArgs);
@@ -621,7 +623,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// stack[1] = array index
 					Object o1 = runtimeStack.getVariable(offset, isGlobal); // map
 					if (o1 == null || o1 instanceof UninitializedObject) {
-						runtimeStack.setVariable(offset, o1 = new AssocArray(sortedArrayKeys), isGlobal);
+						o1 = new AssocArray(sortedArrayKeys);
+						runtimeStack.setVariable(offset, o1, isGlobal);
 					} else {
 						assert o1 instanceof AssocArray;
 					}
@@ -831,7 +834,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					boolean isGlobal = position.boolArg(1);
 					Object o1 = runtimeStack.getVariable(position.intArg(0), isGlobal);
 					if (o1 == null || o1 instanceof UninitializedObject) {
-						runtimeStack.setVariable(position.intArg(0), o1 = new AssocArray(sortedArrayKeys), isGlobal);
+						o1 = new AssocArray(sortedArrayKeys);
+						runtimeStack.setVariable(position.intArg(0), o1, isGlobal);
 					}
 					AssocArray aa = (AssocArray) o1;
 					Object key = pop();
@@ -853,7 +857,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					boolean isGlobal = position.boolArg(1);
 					Object o1 = runtimeStack.getVariable(position.intArg(0), isGlobal);
 					if (o1 == null || o1 instanceof UninitializedObject) {
-						runtimeStack.setVariable(position.intArg(0), o1 = new AssocArray(sortedArrayKeys), isGlobal);
+						o1 = new AssocArray(sortedArrayKeys);
+						runtimeStack.setVariable(position.intArg(0), o1, isGlobal);
 					}
 					AssocArray aa = (AssocArray) o1;
 					Object key = pop();
@@ -1875,7 +1880,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 					String key = JRT.toAwkString(position.arg(0), getCONVFMT().toString(), locale);
 					Pattern pattern = regexps.get(key);
 					if (pattern == null) {
-						regexps.put(key, pattern = Pattern.compile(key));
+						pattern = Pattern.compile(key);
+						regexps.put(key, pattern);
 					}
 					push(pattern);
 					position.next();
@@ -2140,8 +2146,9 @@ public class AVM implements AwkInterpreter, VariableManager {
 	 */
 	private String sprintfFunction(long numArgs) {
 		// Silly case
-		if (numArgs == 0)
+		if (numArgs == 0) {
 			return "";
+		}
 
 		// all but the format argument
 		Object[] argArray = new Object[(int) (numArgs - 1)];
@@ -2201,7 +2208,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 	private void assignArray(long offset, Object arrIdx, Object rhs, boolean isGlobal) {
 		Object o1 = runtimeStack.getVariable(offset, isGlobal);
 		if (o1 == null || o1.equals(BLANK)) {
-			runtimeStack.setVariable(offset, o1 = new AssocArray(sortedArrayKeys), isGlobal);
+			o1 = new AssocArray(sortedArrayKeys);
+			runtimeStack.setVariable(offset, o1, isGlobal);
 		}
 		assert o1 != null;
 		// The only (conceivable) way to contradict
@@ -2228,7 +2236,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 	private Object inc(long l, boolean isGlobal) {
 		Object o = runtimeStack.getVariable(l, isGlobal);
 		if (o == null || o instanceof UninitializedObject) {
-			runtimeStack.setVariable(l, o = ZERO, isGlobal);
+			o = ZERO;
+			runtimeStack.setVariable(l, o, isGlobal);
 		}
 		runtimeStack.setVariable(l, JRT.inc(o), isGlobal);
 		return o;
@@ -2241,7 +2250,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 	private Object dec(long l, boolean isGlobal) {
 		Object o = runtimeStack.getVariable(l, isGlobal);
 		if (o == null) {
-			runtimeStack.setVariable(l, o = ZERO, isGlobal);
+			o = ZERO;
+			runtimeStack.setVariable(l, o, isGlobal);
 		}
 		runtimeStack.setVariable(l, JRT.dec(o), isGlobal);
 		return o;
@@ -2443,8 +2453,8 @@ public class AVM implements AwkInterpreter, VariableManager {
 
 	/** {@inheritDoc} */
 	@Override
-	public void setNF(Integer I) {
-		runtimeStack.setVariable(nfOffset, I, true);
+	public void setNF(Integer newNf) {
+		runtimeStack.setVariable(nfOffset, newNf, true);
 	}
 
 	/** {@inheritDoc} */

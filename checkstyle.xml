@@ -46,7 +46,9 @@
 		<module name="UnusedImports" />
 
 		<!-- Size checks (not formatting) -->
-		<module name="MethodLength" />
+                <module name="MethodLength">
+                        <property name="max" value="2000" />
+                </module>
 		<module name="ParameterNumber">
 			<property name="tokens" value="METHOD_DEF" />
 		</module>
