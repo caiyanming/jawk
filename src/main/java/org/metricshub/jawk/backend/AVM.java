@@ -261,7 +261,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 			numString = Double.toString(num);
 		}
 
-		// same code as _ASSIGN_AS_INPUT_FIELD_
+		// same code as ASSIGN_AS_INPUT_FIELD
 		if (fieldNum == 0) {
 			jrt.setInputLine(numString.toString());
 			jrt.jrtParseFields();
@@ -315,7 +315,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 				int opcode = position.opcode();
 				// switch on OPCODE
 				switch (opcode) {
-				case AwkTuples._PRINT_: {
+				case AwkTuples.PRINT: {
 					// arg[0] = # of items to print on the stack
 					// stack[0] = item 1
 					// stack[1] = item 2
@@ -325,7 +325,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._PRINT_TO_FILE_: {
+				case AwkTuples.PRINT_TO_FILE: {
 					// arg[0] = # of items to print on the stack
 					// arg[1] = true=append, false=overwrite
 					// stack[0] = output filename
@@ -354,7 +354,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._PRINT_TO_PIPE_: {
+				case AwkTuples.PRINT_TO_PIPE: {
 					// arg[0] = # of items to print on the stack
 					// stack[0] = command to execute
 					// stack[1] = item 1
@@ -367,7 +367,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._PRINTF_: {
+				case AwkTuples.PRINTF: {
 					// arg[0] = # of items to print on the stack (includes format string)
 					// stack[0] = format string
 					// stack[1] = item 1
@@ -377,7 +377,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._PRINTF_TO_FILE_: {
+				case AwkTuples.PRINTF_TO_FILE: {
 					// arg[0] = # of items to print on the stack (includes format string)
 					// arg[1] = true=append, false=overwrite
 					// stack[0] = output filename
@@ -406,7 +406,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._PRINTF_TO_PIPE_: {
+				case AwkTuples.PRINTF_TO_PIPE: {
 					// arg[0] = # of items to print on the stack (includes format string)
 					// stack[0] = command to execute
 					// stack[1] = format string
@@ -419,7 +419,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._SPRINTF_: {
+				case AwkTuples.SPRINTF: {
 					// arg[0] = # of sprintf arguments
 					// stack[0] = arg1 (format string)
 					// stack[1] = arg2
@@ -429,7 +429,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._LENGTH_: {
+				case AwkTuples.LENGTH: {
 					// arg[0] = 0==use $0, otherwise, use the stack element
 					// stack[0] = element to measure (only if arg[0] != 0)
 
@@ -445,19 +445,19 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._PUSH_: {
+				case AwkTuples.PUSH: {
 					// arg[0] = constant to push onto the stack
 					push(position.arg(0));
 					position.next();
 					break;
 				}
-				case AwkTuples._POP_: {
+				case AwkTuples.POP: {
 					// stack[0] = item to pop from the stack
 					pop();
 					position.next();
 					break;
 				}
-				case AwkTuples._IFFALSE_: {
+				case AwkTuples.IFFALSE: {
 					// arg[0] = address to jump to if top of stack is false
 					// stack[0] = item to check
 
@@ -472,7 +472,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					}
 					break;
 				}
-				case AwkTuples._TO_NUMBER_: {
+				case AwkTuples.TO_NUMBER: {
 					// stack[0] = item to convert to a number
 
 					// if int, then check for 0
@@ -483,7 +483,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._IFTRUE_: {
+				case AwkTuples.IFTRUE: {
 					// arg[0] = address to jump to if top of stack is true
 					// stack[0] = item to check
 
@@ -498,7 +498,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					}
 					break;
 				}
-				case AwkTuples._NOT_: {
+				case AwkTuples.NOT: {
 					// stack[0] = item to logically negate
 
 					// if int, then check for 0
@@ -527,7 +527,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._NEGATE_: {
+				case AwkTuples.NEGATE: {
 					// stack[0] = item to numerically negate
 
 					double d = JRT.toDouble(pop());
@@ -539,7 +539,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._UNARY_PLUS_: {
+				case AwkTuples.UNARY_PLUS: {
 					// stack[0] = item to convert to a number
 					double d = JRT.toDouble(pop());
 					if (JRT.isActuallyLong(d)) {
@@ -550,18 +550,18 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._GOTO_: {
+				case AwkTuples.GOTO: {
 					// arg[0] = address
 
 					position.jump(position.addressArg());
 					break;
 				}
-				case AwkTuples._NOP_: {
+				case AwkTuples.NOP: {
 					// do nothing, just advance the position
 					position.next();
 					break;
 				}
-				case AwkTuples._CONCAT_: {
+				case AwkTuples.CONCAT: {
 					// stack[0] = string1
 					// stack[1] = string2
 					String convfmt = getCONVFMT().toString();
@@ -572,7 +572,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._ASSIGN_: {
+				case AwkTuples.ASSIGN: {
 					// arg[0] = offset
 					// arg[1] = isGlobal
 					// stack[0] = value
@@ -582,7 +582,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._ASSIGN_ARRAY_: {
+				case AwkTuples.ASSIGN_ARRAY: {
 					// arg[0] = offset
 					// arg[1] = isGlobal
 					// stack[0] = array index
@@ -598,12 +598,12 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._PLUS_EQ_ARRAY_:
-				case AwkTuples._MINUS_EQ_ARRAY_:
-				case AwkTuples._MULT_EQ_ARRAY_:
-				case AwkTuples._DIV_EQ_ARRAY_:
-				case AwkTuples._MOD_EQ_ARRAY_:
-				case AwkTuples._POW_EQ_ARRAY_: {
+				case AwkTuples.PLUS_EQ_ARRAY:
+				case AwkTuples.MINUS_EQ_ARRAY:
+				case AwkTuples.MULT_EQ_ARRAY:
+				case AwkTuples.DIV_EQ_ARRAY:
+				case AwkTuples.MOD_EQ_ARRAY:
+				case AwkTuples.POW_EQ_ARRAY: {
 					// arg[0] = offset
 					// arg[1] = isGlobal
 					// stack[0] = array index
@@ -618,7 +618,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 
 					double val = JRT.toDouble(rhs);
 
-					// from _DEREF_ARRAY_
+					// from DEREF_ARRAY
 					// stack[0] = AssocArray
 					// stack[1] = array index
 					Object o1 = runtimeStack.getVariable(offset, isGlobal); // map
@@ -637,22 +637,22 @@ public class AVM implements AwkInterpreter, VariableManager {
 					double newVal;
 
 					switch (opcode) {
-					case AwkTuples._PLUS_EQ_ARRAY_:
+					case AwkTuples.PLUS_EQ_ARRAY:
 						newVal = origVal + val;
 						break;
-					case AwkTuples._MINUS_EQ_ARRAY_:
+					case AwkTuples.MINUS_EQ_ARRAY:
 						newVal = origVal - val;
 						break;
-					case AwkTuples._MULT_EQ_ARRAY_:
+					case AwkTuples.MULT_EQ_ARRAY:
 						newVal = origVal * val;
 						break;
-					case AwkTuples._DIV_EQ_ARRAY_:
+					case AwkTuples.DIV_EQ_ARRAY:
 						newVal = origVal / val;
 						break;
-					case AwkTuples._MOD_EQ_ARRAY_:
+					case AwkTuples.MOD_EQ_ARRAY:
 						newVal = origVal % val;
 						break;
-					case AwkTuples._POW_EQ_ARRAY_:
+					case AwkTuples.POW_EQ_ARRAY:
 						newVal = Math.pow(origVal, val);
 						break;
 					default:
@@ -667,7 +667,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._ASSIGN_AS_INPUT_: {
+				case AwkTuples.ASSIGN_AS_INPUT: {
 					// stack[0] = value
 					jrt.setInputLine(pop().toString());
 					jrt.jrtParseFields();
@@ -675,7 +675,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._ASSIGN_AS_INPUT_FIELD_: {
+				case AwkTuples.ASSIGN_AS_INPUT_FIELD: {
 					// stack[0] = field number
 					// stack[1] = value
 					Object fieldNumObj = pop();
@@ -700,12 +700,12 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._PLUS_EQ_:
-				case AwkTuples._MINUS_EQ_:
-				case AwkTuples._MULT_EQ_:
-				case AwkTuples._DIV_EQ_:
-				case AwkTuples._MOD_EQ_:
-				case AwkTuples._POW_EQ_: {
+				case AwkTuples.PLUS_EQ:
+				case AwkTuples.MINUS_EQ:
+				case AwkTuples.MULT_EQ:
+				case AwkTuples.DIV_EQ:
+				case AwkTuples.MOD_EQ:
+				case AwkTuples.POW_EQ: {
 					// arg[0] = offset
 					// arg[1] = isGlobal
 					// stack[0] = value
@@ -719,22 +719,22 @@ public class AVM implements AwkInterpreter, VariableManager {
 					double d2 = JRT.toDouble(o2);
 					double ans;
 					switch (opcode) {
-					case AwkTuples._PLUS_EQ_:
+					case AwkTuples.PLUS_EQ:
 						ans = d1 + d2;
 						break;
-					case AwkTuples._MINUS_EQ_:
+					case AwkTuples.MINUS_EQ:
 						ans = d1 - d2;
 						break;
-					case AwkTuples._MULT_EQ_:
+					case AwkTuples.MULT_EQ:
 						ans = d1 * d2;
 						break;
-					case AwkTuples._DIV_EQ_:
+					case AwkTuples.DIV_EQ:
 						ans = d1 / d2;
 						break;
-					case AwkTuples._MOD_EQ_:
+					case AwkTuples.MOD_EQ:
 						ans = d1 % d2;
 						break;
-					case AwkTuples._POW_EQ_:
+					case AwkTuples.POW_EQ:
 						ans = Math.pow(d1, d2);
 						break;
 					default:
@@ -751,16 +751,16 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._PLUS_EQ_INPUT_FIELD_:
-				case AwkTuples._MINUS_EQ_INPUT_FIELD_:
-				case AwkTuples._MULT_EQ_INPUT_FIELD_:
-				case AwkTuples._DIV_EQ_INPUT_FIELD_:
-				case AwkTuples._MOD_EQ_INPUT_FIELD_:
-				case AwkTuples._POW_EQ_INPUT_FIELD_: {
+				case AwkTuples.PLUS_EQ_INPUT_FIELD:
+				case AwkTuples.MINUS_EQ_INPUT_FIELD:
+				case AwkTuples.MULT_EQ_INPUT_FIELD:
+				case AwkTuples.DIV_EQ_INPUT_FIELD:
+				case AwkTuples.MOD_EQ_INPUT_FIELD:
+				case AwkTuples.POW_EQ_INPUT_FIELD: {
 					// stack[0] = dollar_fieldNumber
 					// stack[1] = inc value
 
-					// same code as _GET_INPUT_FIELD_:
+					// same code as GET_INPUT_FIELD:
 					int fieldnum = parseIntField(pop(), position);
 					double incval = JRT.toDouble(pop());
 
@@ -768,22 +768,22 @@ public class AVM implements AwkInterpreter, VariableManager {
 					Object numObj = jrt.jrtGetInputField(fieldnum);
 					double num;
 					switch (opcode) {
-					case AwkTuples._PLUS_EQ_INPUT_FIELD_:
+					case AwkTuples.PLUS_EQ_INPUT_FIELD:
 						num = JRT.toDouble(numObj) + incval;
 						break;
-					case AwkTuples._MINUS_EQ_INPUT_FIELD_:
+					case AwkTuples.MINUS_EQ_INPUT_FIELD:
 						num = JRT.toDouble(numObj) - incval;
 						break;
-					case AwkTuples._MULT_EQ_INPUT_FIELD_:
+					case AwkTuples.MULT_EQ_INPUT_FIELD:
 						num = JRT.toDouble(numObj) * incval;
 						break;
-					case AwkTuples._DIV_EQ_INPUT_FIELD_:
+					case AwkTuples.DIV_EQ_INPUT_FIELD:
 						num = JRT.toDouble(numObj) / incval;
 						break;
-					case AwkTuples._MOD_EQ_INPUT_FIELD_:
+					case AwkTuples.MOD_EQ_INPUT_FIELD:
 						num = JRT.toDouble(numObj) % incval;
 						break;
-					case AwkTuples._POW_EQ_INPUT_FIELD_:
+					case AwkTuples.POW_EQ_INPUT_FIELD:
 						num = Math.pow(JRT.toDouble(numObj), incval);
 						break;
 					default:
@@ -797,21 +797,21 @@ public class AVM implements AwkInterpreter, VariableManager {
 
 					break;
 				}
-				case AwkTuples._INC_: {
+				case AwkTuples.INC: {
 					// arg[0] = offset
 					// arg[1] = isGlobal
 					inc(position.intArg(0), position.boolArg(1));
 					position.next();
 					break;
 				}
-				case AwkTuples._DEC_: {
+				case AwkTuples.DEC: {
 					// arg[0] = offset
 					// arg[1] = isGlobal
 					dec(position.intArg(0), position.boolArg(1));
 					position.next();
 					break;
 				}
-				case AwkTuples._POSTINC_: {
+				case AwkTuples.POSTINC: {
 					// arg[0] = offset
 					// arg[1] = isGlobal
 					pop();
@@ -819,7 +819,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._POSTDEC_: {
+				case AwkTuples.POSTDEC: {
 					// arg[0] = offset
 					// arg[1] = isGlobal
 					pop();
@@ -827,7 +827,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._INC_ARRAY_REF_: {
+				case AwkTuples.INC_ARRAY_REF: {
 					// arg[0] = offset
 					// arg[1] = isGlobal
 					// stack[0] = array index
@@ -850,7 +850,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._DEC_ARRAY_REF_: {
+				case AwkTuples.DEC_ARRAY_REF: {
 					// arg[0] = offset
 					// arg[1] = isGlobal
 					// stack[0] = array index
@@ -873,9 +873,9 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._INC_DOLLAR_REF_: {
+				case AwkTuples.INC_DOLLAR_REF: {
 					// stack[0] = dollar index (field number)
-					// same code as _GET_INPUT_FIELD_:
+					// same code as GET_INPUT_FIELD:
 					int fieldnum = parseIntField(pop(), position);
 					// except here, get the number, and add one
 					// push(avmGetInputField(fieldnum));
@@ -886,9 +886,9 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._DEC_DOLLAR_REF_: {
+				case AwkTuples.DEC_DOLLAR_REF: {
 					// stack[0] = dollar index (field number)
-					// same code as _GET_INPUT_FIELD_:
+					// same code as GET_INPUT_FIELD:
 					int fieldnum = parseIntField(pop(), position);
 					// except here, get the number, and add one
 					// push(avmGetInputField(fieldnum));
@@ -899,7 +899,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._DEREFERENCE_: {
+				case AwkTuples.DEREFERENCE: {
 					// arg[0] = offset
 					// arg[1] = isGlobal
 					boolean isGlobal = position.boolArg(2);
@@ -917,7 +917,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._DEREF_ARRAY_: {
+				case AwkTuples.DEREF_ARRAY: {
 					// stack[0] = array index
 					// stack[1] = AssocArray
 					Object idx = pop(); // idx
@@ -931,7 +931,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._SRAND_: {
+				case AwkTuples.SRAND: {
 					// arg[0] = numArgs (where 0 = no args, anything else = one argument)
 					// stack[0] = seed (only if numArgs != 0)
 					long numArgs = position.intArg(0);
@@ -961,49 +961,49 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._RAND_: {
+				case AwkTuples.RAND: {
 					push(randomNumberGenerator.nextDouble());
 					position.next();
 					break;
 				}
-				case AwkTuples._INTFUNC_:
-				case AwkTuples._CAST_INT_: {
+				case AwkTuples.INTFUNC:
+				case AwkTuples.CAST_INT: {
 					// stack[0] = arg to int() function
 					push((long) JRT.toDouble(pop()));
 					position.next();
 					break;
 				}
-				case AwkTuples._SQRT_: {
+				case AwkTuples.SQRT: {
 					// stack[0] = arg to sqrt() function
 					push(Math.sqrt(JRT.toDouble(pop())));
 					position.next();
 					break;
 				}
-				case AwkTuples._LOG_: {
+				case AwkTuples.LOG: {
 					// stack[0] = arg to log() function
 					push(Math.log(JRT.toDouble(pop())));
 					position.next();
 					break;
 				}
-				case AwkTuples._EXP_: {
+				case AwkTuples.EXP: {
 					// stack[0] = arg to exp() function
 					push(Math.exp(JRT.toDouble(pop())));
 					position.next();
 					break;
 				}
-				case AwkTuples._SIN_: {
+				case AwkTuples.SIN: {
 					// stack[0] = arg to sin() function
 					push(Math.sin(JRT.toDouble(pop())));
 					position.next();
 					break;
 				}
-				case AwkTuples._COS_: {
+				case AwkTuples.COS: {
 					// stack[0] = arg to cos() function
 					push(Math.cos(JRT.toDouble(pop())));
 					position.next();
 					break;
 				}
-				case AwkTuples._ATAN2_: {
+				case AwkTuples.ATAN2: {
 					// stack[0] = 2nd arg to atan2() function
 					// stack[1] = 1st arg to atan2() function
 					double d2 = JRT.toDouble(pop());
@@ -1012,7 +1012,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._MATCH_: {
+				case AwkTuples.MATCH: {
 					// stack[0] = 2nd arg to match() function
 					// stack[1] = 1st arg to match() function
 					String convfmt = getCONVFMT().toString();
@@ -1048,7 +1048,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._INDEX_: {
+				case AwkTuples.INDEX: {
 					// stack[0] = 2nd arg to index() function
 					// stack[1] = 1st arg to index() function
 					String convfmt = getCONVFMT().toString();
@@ -1058,7 +1058,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._SUB_FOR_DOLLAR_0_: {
+				case AwkTuples.SUB_FOR_DOLLAR_0: {
 					// arg[0] = isGlobal
 					// stack[0] = replacement string
 					// stack[1] = ere
@@ -1079,7 +1079,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._SUB_FOR_DOLLAR_REFERENCE_: {
+				case AwkTuples.SUB_FOR_DOLLAR_REFERENCE: {
 					// arg[0] = isGlobal
 					// stack[0] = field num
 					// stack[1] = original field value
@@ -1107,7 +1107,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._SUB_FOR_VARIABLE_: {
+				case AwkTuples.SUB_FOR_VARIABLE: {
 					// arg[0] = offset
 					// arg[1] = isGlobal
 					// arg[2] = isGsub
@@ -1123,7 +1123,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._SUB_FOR_ARRAY_REFERENCE_: {
+				case AwkTuples.SUB_FOR_ARRAY_REFERENCE: {
 					// arg[0] = offset
 					// arg[1] = isGlobal
 					// arg[2] = isGsub
@@ -1142,7 +1142,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._SPLIT_: {
+				case AwkTuples.SPLIT: {
 					// arg[0] = num args
 					// stack[0] = field_sep (only if num args == 3)
 					// stack[1] = array
@@ -1183,7 +1183,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._SUBSTR_: {
+				case AwkTuples.SUBSTR: {
 					// arg[0] = num args
 					// stack[0] = length (only if num args == 3)
 					// stack[1] = start pos
@@ -1200,7 +1200,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 						s = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
 						length = s.length() - startPos + 1;
 					} else {
-						throw new Error("numArgs for _SUBSTR_ must be 2 or 3. It is " + numArgs);
+						throw new Error("numArgs for SUBSTR must be 2 or 3. It is " + numArgs);
 					}
 					if (startPos <= 0) {
 						startPos = 1;
@@ -1217,33 +1217,33 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._TOLOWER_: {
+				case AwkTuples.TOLOWER: {
 					// stack[0] = string
 					push(JRT.toAwkString(pop(), getCONVFMT().toString(), locale).toLowerCase());
 					position.next();
 					break;
 				}
-				case AwkTuples._TOUPPER_: {
+				case AwkTuples.TOUPPER: {
 					// stack[0] = string
 					push(JRT.toAwkString(pop(), getCONVFMT().toString(), locale).toUpperCase());
 					position.next();
 					break;
 				}
-				case AwkTuples._SYSTEM_: {
+				case AwkTuples.SYSTEM: {
 					// stack[0] = command string
 					String s = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
 					push(JRT.jrtSystem(s));
 					position.next();
 					break;
 				}
-				case AwkTuples._SWAP_: {
+				case AwkTuples.SWAP: {
 					// stack[0] = item1
 					// stack[1] = item2
 					swapOnStack();
 					position.next();
 					break;
 				}
-				case AwkTuples._CMP_EQ_: {
+				case AwkTuples.CMP_EQ: {
 					// stack[0] = item2
 					// stack[1] = item1
 					Object o2 = pop();
@@ -1252,7 +1252,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._CMP_LT_: {
+				case AwkTuples.CMP_LT: {
 					// stack[0] = item2
 					// stack[1] = item1
 					Object o2 = pop();
@@ -1261,7 +1261,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._CMP_GT_: {
+				case AwkTuples.CMP_GT: {
 					// stack[0] = item2
 					// stack[1] = item1
 					Object o2 = pop();
@@ -1270,7 +1270,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._MATCHES_: {
+				case AwkTuples.MATCHES: {
 					// stack[0] = item2
 					// stack[1] = item1
 					Object o2 = pop();
@@ -1293,7 +1293,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._SLEEP_: {
+				case AwkTuples.SLEEP: {
 					// arg[0] = numArgs
 					// if (numArgs==1)
 					// stack[0] = # of seconds
@@ -1317,7 +1317,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._DUMP_: {
+				case AwkTuples.DUMP: {
 					// arg[0] = numArgs
 					// if (numArgs==0)
 					// all Jawk global variables
@@ -1338,7 +1338,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._ADD_: {
+				case AwkTuples.ADD: {
 					// stack[0] = item2
 					// stack[1] = item1
 					Object o2 = pop();
@@ -1354,7 +1354,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._SUBTRACT_: {
+				case AwkTuples.SUBTRACT: {
 					// stack[0] = item2
 					// stack[1] = item1
 					Object o2 = pop();
@@ -1370,7 +1370,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._MULTIPLY_: {
+				case AwkTuples.MULTIPLY: {
 					// stack[0] = item2
 					// stack[1] = item1
 					Object o2 = pop();
@@ -1386,7 +1386,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._DIVIDE_: {
+				case AwkTuples.DIVIDE: {
 					// stack[0] = item2
 					// stack[1] = item1
 					Object o2 = pop();
@@ -1402,7 +1402,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._MOD_: {
+				case AwkTuples.MOD: {
 					// stack[0] = item2
 					// stack[1] = item1
 					Object o2 = pop();
@@ -1418,7 +1418,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._POW_: {
+				case AwkTuples.POW: {
 					// stack[0] = item2
 					// stack[1] = item1
 					Object o2 = pop();
@@ -1434,7 +1434,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._DUP_: {
+				case AwkTuples.DUP: {
 					// stack[0] = top of stack item
 					Object o = pop();
 					push(o);
@@ -1442,7 +1442,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._KEYLIST_: {
+				case AwkTuples.KEYLIST: {
 					// stack[0] = AssocArray
 					Object o = pop();
 					assert o != null;
@@ -1456,7 +1456,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._IS_EMPTY_KEYLIST_: {
+				case AwkTuples.IS_EMPTY_KEYLIST: {
 					// arg[0] = address
 					// stack[0] = KeyList
 					Object o = pop();
@@ -1473,7 +1473,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					}
 					break;
 				}
-				case AwkTuples._GET_FIRST_AND_REMOVE_FROM_KEYLIST_: {
+				case AwkTuples.GET_FIRST_AND_REMOVE_FROM_KEYLIST: {
 					// stack[0] = KeyList
 					Object o = pop();
 					if (o == null || !(o instanceof KeyList)) {
@@ -1488,7 +1488,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._CHECK_CLASS_: {
+				case AwkTuples.CHECK_CLASS: {
 					// arg[0] = class object
 					// stack[0] = item to check
 					Object o = pop();
@@ -1501,7 +1501,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._CONSUME_INPUT_: {
+				case AwkTuples.CONSUME_INPUT: {
 					// arg[0] = address
 					// false = do NOT put result on stack...
 					// instead, put it in field vars ($0, $1, ...)
@@ -1512,26 +1512,26 @@ public class AVM implements AwkInterpreter, VariableManager {
 					}
 					break;
 				}
-				case AwkTuples._GETLINE_INPUT_: {
+				case AwkTuples.GETLINE_INPUT: {
 					avmConsumeInputForGetline();
 					position.next();
 					break;
 				}
-				case AwkTuples._USE_AS_FILE_INPUT_: {
+				case AwkTuples.USE_AS_FILE_INPUT: {
 					// stack[0] = filename
 					String s = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
 					avmConsumeFileInputForGetline(s);
 					position.next();
 					break;
 				}
-				case AwkTuples._USE_AS_COMMAND_INPUT_: {
+				case AwkTuples.USE_AS_COMMAND_INPUT: {
 					// stack[0] = command line
 					String s = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
 					avmConsumeCommandInputForGetline(s);
 					position.next();
 					break;
 				}
-				case AwkTuples._NF_OFFSET_: {
+				case AwkTuples.NF_OFFSET: {
 					// stack[0] = offset
 					nfOffset = position.intArg(0);
 					assert nfOffset != NULL_OFFSET;
@@ -1540,7 +1540,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._NR_OFFSET_: {
+				case AwkTuples.NR_OFFSET: {
 					// stack[0] = offset
 					nrOffset = position.intArg(0);
 					assert nrOffset != NULL_OFFSET;
@@ -1549,7 +1549,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._FNR_OFFSET_: {
+				case AwkTuples.FNR_OFFSET: {
 					// stack[0] = offset
 					fnrOffset = position.intArg(0);
 					assert fnrOffset != NULL_OFFSET;
@@ -1558,7 +1558,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._FS_OFFSET_: {
+				case AwkTuples.FS_OFFSET: {
 					// stack[0] = offset
 					fsOffset = position.intArg(0);
 					assert fsOffset != NULL_OFFSET;
@@ -1571,7 +1571,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._RS_OFFSET_: {
+				case AwkTuples.RS_OFFSET: {
 					// stack[0] = offset
 					rsOffset = position.intArg(0);
 					assert rsOffset != NULL_OFFSET;
@@ -1580,7 +1580,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._OFS_OFFSET_: {
+				case AwkTuples.OFS_OFFSET: {
 					// stack[0] = offset
 					ofsOffset = position.intArg(0);
 					assert ofsOffset != NULL_OFFSET;
@@ -1589,7 +1589,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._ORS_OFFSET_: {
+				case AwkTuples.ORS_OFFSET: {
 					// stack[0] = offset
 					orsOffset = position.intArg(0);
 					assert orsOffset != NULL_OFFSET;
@@ -1598,7 +1598,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._RSTART_OFFSET_: {
+				case AwkTuples.RSTART_OFFSET: {
 					// stack[0] = offset
 					rstartOffset = position.intArg(0);
 					assert rstartOffset != NULL_OFFSET;
@@ -1607,7 +1607,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._RLENGTH_OFFSET_: {
+				case AwkTuples.RLENGTH_OFFSET: {
 					// stack[0] = offset
 					rlengthOffset = position.intArg(0);
 					assert rlengthOffset != NULL_OFFSET;
@@ -1616,7 +1616,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._FILENAME_OFFSET_: {
+				case AwkTuples.FILENAME_OFFSET: {
 					// stack[0] = offset
 					filenameOffset = position.intArg(0);
 					assert filenameOffset != NULL_OFFSET;
@@ -1625,7 +1625,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._SUBSEP_OFFSET_: {
+				case AwkTuples.SUBSEP_OFFSET: {
 					// stack[0] = offset
 					subsepOffset = position.intArg(0);
 					assert subsepOffset != NULL_OFFSET;
@@ -1634,7 +1634,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._CONVFMT_OFFSET_: {
+				case AwkTuples.CONVFMT_OFFSET: {
 					// stack[0] = offset
 					convfmtOffset = position.intArg(0);
 					assert convfmtOffset != NULL_OFFSET;
@@ -1643,7 +1643,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._OFMT_OFFSET_: {
+				case AwkTuples.OFMT_OFFSET: {
 					// stack[0] = offset
 					ofmtOffset = position.intArg(0);
 					assert ofmtOffset != NULL_OFFSET;
@@ -1652,7 +1652,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._ENVIRON_OFFSET_: {
+				case AwkTuples.ENVIRON_OFFSET: {
 					// stack[0] = offset
 					//// assignArray(offset, arrIdx, newstring, isGlobal);
 					environOffset = position.intArg(0);
@@ -1666,7 +1666,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._ARGC_OFFSET_: {
+				case AwkTuples.ARGC_OFFSET: {
 					// stack[0] = offset
 					argcOffset = position.intArg(0);
 					assert argcOffset != NULL_OFFSET;
@@ -1677,7 +1677,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._ARGV_OFFSET_: {
+				case AwkTuples.ARGV_OFFSET: {
 					// stack[0] = offset
 					argvOffset = position.intArg(0);
 					assert argvOffset != NULL_OFFSET;
@@ -1693,14 +1693,14 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._GET_INPUT_FIELD_: {
+				case AwkTuples.GET_INPUT_FIELD: {
 					// stack[0] = field number
 					int fieldnum = parseIntField(pop(), position);
 					push(jrt.jrtGetInputField(fieldnum));
 					position.next();
 					break;
 				}
-				case AwkTuples._APPLY_RS_: {
+				case AwkTuples.APPLY_RS: {
 					assert rsOffset != NULL_OFFSET;
 					Object rsObj = runtimeStack.getVariable(rsOffset, true); // true = global
 					if (jrt.getPartitioningReader() != null) {
@@ -1709,7 +1709,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._CALL_FUNCTION_: {
+				case AwkTuples.CALL_FUNCTION: {
 					// arg[0] = function address
 					// arg[1] = function name
 					// arg[2] = # of formal parameters
@@ -1733,7 +1733,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// position.next();
 					break;
 				}
-				case AwkTuples._FUNCTION_: {
+				case AwkTuples.FUNCTION: {
 					// important for compilation,
 					// not needed for interpretation
 					// arg[0] = function name
@@ -1741,19 +1741,19 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._SET_RETURN_RESULT_: {
+				case AwkTuples.SET_RETURN_RESULT: {
 					// stack[0] = return result
 					runtimeStack.setReturnValue(pop());
 					position.next();
 					break;
 				}
-				case AwkTuples._RETURN_FROM_FUNCTION_: {
+				case AwkTuples.RETURN_FROM_FUNCTION: {
 					position.jump(runtimeStack.popFrame());
 					push(runtimeStack.getReturnValue());
 					position.next();
 					break;
 				}
-				case AwkTuples._SET_NUM_GLOBALS_: {
+				case AwkTuples.SET_NUM_GLOBALS: {
 					// arg[0] = # of globals
 					assert position.intArg(0) == globalVariableOffsets.size();
 					runtimeStack.setNumGlobals(position.intArg(0));
@@ -1783,14 +1783,14 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._CLOSE_: {
+				case AwkTuples.CLOSE: {
 					// stack[0] = file or command line to close
 					String s = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
 					push(jrt.jrtClose(s));
 					position.next();
 					break;
 				}
-				case AwkTuples._APPLY_SUBSEP_: {
+				case AwkTuples.APPLY_SUBSEP: {
 					// arg[0] = # of elements for SUBSEP application
 					// stack[0] = first element
 					// stack[1] = second element
@@ -1814,7 +1814,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._DELETE_ARRAY_ELEMENT_: {
+				case AwkTuples.DELETE_ARRAY_ELEMENT: {
 					// arg[0] = offset
 					// arg[1] = isGlobal
 					// stack[0] = array index
@@ -1828,7 +1828,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._DELETE_ARRAY_: {
+				case AwkTuples.DELETE_ARRAY: {
 					// arg[0] = offset
 					// arg[1] = isGlobal
 					// (nothing on the stack)
@@ -1838,21 +1838,21 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._SET_EXIT_ADDRESS_: {
+				case AwkTuples.SET_EXIT_ADDRESS: {
 					// arg[0] = exit address
 					exitAddress = position.addressArg();
 					position.next();
 					break;
 				}
-				case AwkTuples._SET_WITHIN_END_BLOCKS_: {
+				case AwkTuples.SET_WITHIN_END_BLOCKS: {
 					// arg[0] = whether within the END blocks section
 					withinEndBlocks = position.boolArg(0);
 					position.next();
 					break;
 				}
-				case AwkTuples._EXIT_WITHOUT_CODE_:
-				case AwkTuples._EXIT_WITH_CODE_: {
-					if (opcode == AwkTuples._EXIT_WITH_CODE_) {
+				case AwkTuples.EXIT_WITHOUT_CODE:
+				case AwkTuples.EXIT_WITH_CODE: {
+					if (opcode == AwkTuples.EXIT_WITH_CODE) {
 						// stack[0] = exit code
 						exitCode = (int) JRT.toDouble(pop());
 					}
@@ -1875,7 +1875,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					}
 					break;
 				}
-				case AwkTuples._REGEXP_: {
+				case AwkTuples.REGEXP: {
 					// arg[0] = string representation of regexp
 					String key = JRT.toAwkString(position.arg(0), getCONVFMT().toString(), locale);
 					Pattern pattern = regexps.get(key);
@@ -1887,7 +1887,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._CONDITION_PAIR_: {
+				case AwkTuples.CONDITION_PAIR: {
 					// stack[0] = End condition
 					// stack[1] = Start condition
 					ConditionPair cp = conditionPairs.get(position.current());
@@ -1901,7 +1901,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._IS_IN_: {
+				case AwkTuples.IS_IN: {
 					// stack[0] = AssocArray
 					// stack[1] = key to check
 					Object arr = pop();
@@ -1912,17 +1912,17 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._CAST_DOUBLE_: {
+				case AwkTuples.CAST_DOUBLE: {
 					push(JRT.toDouble(pop()));
 					position.next();
 					break;
 				}
-				case AwkTuples._CAST_STRING_: {
+				case AwkTuples.CAST_STRING: {
 					push(pop().toString());
 					position.next();
 					break;
 				}
-				case AwkTuples._THIS_: {
+				case AwkTuples.THIS: {
 					// this is in preparation for a function
 					// call for the JVM-COMPILED script, only
 					// therefore, do NOTHING for the interpreted
@@ -1930,7 +1930,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._EXEC_: {
+				case AwkTuples.EXEC: {
 					// stack[0] = Jawk code
 
 					// Experimental feature. Use with caution.
@@ -1972,7 +1972,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
-				case AwkTuples._EXTENSION_: {
+				case AwkTuples.EXTENSION: {
 					// arg[0] = extension keyword
 					// arg[1] = # of args on the stack
 					// arg[2] = true if parent is NOT an extension function call

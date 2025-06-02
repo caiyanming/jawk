@@ -53,7 +53,7 @@ public class AwkTuples implements Serializable {
 	private static final long serialVersionUID = 2L;
 
 	/** Our logger */
-	private static final Logger LOG = AwkLogger.getLogger(AwkTuples.class);
+	private static final Logger LOGGER = AwkLogger.getLogger(AwkTuples.class);
 
 	/** Version Manager */
 	private VersionManager versionManager = new VersionManager();
@@ -459,14 +459,14 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x ...<br/>
 	 * Stack after: ...
 	 */
-	public static final int _POP_ = 257; // x -> 0
+	public static final int POP = 257; // x -> 0
 	/**
 	 * Pushes an item onto the operand stack.
 	 * <p>
 	 * Stack before: ...<br/>
 	 * Stack after: x ...
 	 */
-	public static final int _PUSH_ = 258; // 0 -> x
+	public static final int PUSH = 258; // 0 -> x
 	/**
 	 * Pops and evaluates the top-of-stack; if
 	 * false, it jumps to a specified address.
@@ -476,14 +476,14 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x ...<br/>
 	 * Stack after: ...
 	 */
-	public static final int _IFFALSE_ = 259; // x -> 0
+	public static final int IFFALSE = 259; // x -> 0
 	/**
 	 * Converts the top-of-stack to a number.
 	 * <p>
 	 * Stack before: x ...<br/>
 	 * Stack after: x (as a number)
 	 */
-	public static final int _TO_NUMBER_ = 260; // x1 -> x2
+	public static final int TO_NUMBER = 260; // x1 -> x2
 	/**
 	 * Pops and evaluates the top-of-stack; if
 	 * true, it jumps to a specified address.
@@ -493,17 +493,17 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x ...<br/>
 	 * Stack after: ...
 	 */
-	public static final int _IFTRUE_ = 261; // x -> 0
+	public static final int IFTRUE = 261; // x -> 0
 	/**
 	 * Jumps to a specified address. The operand stack contents
 	 * are unaffected.
 	 */
-	public static final int _GOTO_ = 262; // 0 -> 0
+	public static final int GOTO = 262; // 0 -> 0
 	/**
 	 * A no-operation. The operand stack contents are
 	 * unaffected.
 	 */
-	public static final int _NOP_ = 263; // 0 -> 0
+	public static final int NOP = 263; // 0 -> 0
 	/**
 	 * Prints N number of items that are on the operand stack.
 	 * The number of items are passed in as a tuple argument.
@@ -513,7 +513,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x1 x2 x3 .. xN ...<br/>
 	 * Stack after: ...
 	 */
-	public static final int _PRINT_ = 264; // x1, x2, ... xn -> 0
+	public static final int PRINT = 264; // x1, x2, ... xn -> 0
 	/**
 	 * Prints N number of items that are on the operand stack to
 	 * a specified file. The file is passed in on the stack.
@@ -526,7 +526,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x1 x2 x3 .. xN filename ...<br/>
 	 * Stack after: ...
 	 */
-	public static final int _PRINT_TO_FILE_ = 265; // x1, x2, ... xn -> 0
+	public static final int PRINT_TO_FILE = 265; // x1, x2, ... xn -> 0
 	/**
 	 * Prints N number of items that are on the operand stack to
 	 * a process executing a specified command (via a pipe).
@@ -538,7 +538,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x1 x2 x3 .. xN command-string ...<br/>
 	 * Stack after: ...
 	 */
-	public static final int _PRINT_TO_PIPE_ = 266; // x1, x2, ... xn -> 0
+	public static final int PRINT_TO_PIPE = 266; // x1, x2, ... xn -> 0
 	/**
 	 * Performs a formatted print of N items that are on the operand stack.
 	 * The number of items are passed in as a tuple argument.
@@ -548,7 +548,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x1 x2 x3 .. xN ...<br/>
 	 * Stack after: ...
 	 */
-	public static final int _PRINTF_ = 267; // x1, x2, ... xn -> 0
+	public static final int PRINTF = 267; // x1, x2, ... xn -> 0
 	/**
 	 * Performs a formatted print of N items that are on the operand stack to
 	 * a specified file. The file is passed in on the stack.
@@ -561,7 +561,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x1 x2 x3 .. xN filename ...<br/>
 	 * Stack after: ...
 	 */
-	public static final int _PRINTF_TO_FILE_ = 268; // x1, x2, ... xn -> 0
+	public static final int PRINTF_TO_FILE = 268; // x1, x2, ... xn -> 0
 	/**
 	 * Performs a formatted print of N items that are on the operand stack to
 	 * a process executing a specified command (via a pipe).
@@ -573,9 +573,9 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x1 x2 x3 .. xN command-string ...<br/>
 	 * Stack after: ...
 	 */
-	public static final int _PRINTF_TO_PIPE_ = 269; // x1, x2, ... xn -> 0
-	/** Constant <code>_SPRINTF_=270</code> */
-	public static final int _SPRINTF_ = 270; // x1, x2, ... xn -> 0
+	public static final int PRINTF_TO_PIPE = 269; // x1, x2, ... xn -> 0
+	/** Constant <code>SPRINTF=270</code> */
+	public static final int SPRINTF = 270; // x1, x2, ... xn -> 0
 	/**
 	 * Depending on the argument, pop and evaluate the string length of the top-of-stack
 	 * or evaluate the string length of $0; in either case, push the result onto
@@ -597,7 +597,7 @@ public class AwkTuples implements Serializable {
 	 * Stack after: length-of-x ...
 	 * </blockquote>
 	 */
-	public static final int _LENGTH_ = 271; // 0 -> x or x1 -> x2
+	public static final int LENGTH = 271; // 0 -> x or x1 -> x2
 	/**
 	 * Pop and concatenate two strings from the top-of-stack; push the result onto
 	 * the stack.
@@ -605,7 +605,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x y ...<br/>
 	 * Stack after: x-concatenated-with-y ...
 	 */
-	public static final int _CONCAT_ = 272; // x2, x1 -> x1x2
+	public static final int CONCAT = 272; // x2, x1 -> x1x2
 	/**
 	 * Assigns the top-of-stack to a variable. The contents of the stack
 	 * are unaffected.
@@ -616,7 +616,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x ...<br/>
 	 * Stack after: x ...
 	 */
-	public static final int _ASSIGN_ = 273; // x -> 0
+	public static final int ASSIGN = 273; // x -> 0
 	/**
 	 * Assigns an item to an array element. The item remains on the stack.
 	 * <p>
@@ -626,7 +626,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: index-into-array item ...<br/>
 	 * Stack after: item ...
 	 */
-	public static final int _ASSIGN_ARRAY_ = 274; // x2, x1 -> 0
+	public static final int ASSIGN_ARRAY = 274; // x2, x1 -> 0
 	/**
 	 * Assigns the top-of-stack to $0. The contents of the stack are unaffected.
 	 * Upon assignment, individual field variables are recalculated.
@@ -634,7 +634,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x ...<br/>
 	 * Stack after: x ...
 	 */
-	public static final int _ASSIGN_AS_INPUT_ = 275; // x -> 0
+	public static final int ASSIGN_AS_INPUT = 275; // x -> 0
 	/**
 	 * Assigns an item as a particular input field; the field number can be 0.
 	 * Upon assignment, associating input fields are affected. For example, if
@@ -659,7 +659,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: field-num x ...<br/>
 	 * Stack after: x ...
 	 */
-	public static final int _ASSIGN_AS_INPUT_FIELD_ = 276; // x, y -> x
+	public static final int ASSIGN_AS_INPUT_FIELD = 276; // x, y -> x
 	/**
 	 * Obtains an item from the variable manager and push it onto the stack.
 	 * <p>
@@ -669,7 +669,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: ...<br/>
 	 * Stack after: x ...
 	 */
-	public static final int _DEREFERENCE_ = 277; // 0 -> x
+	public static final int DEREFERENCE = 277; // 0 -> x
 	/**
 	 * Increase the contents of the variable by an adjustment value;
 	 * assigns the result to the variable and pushes the result onto the stack.
@@ -680,7 +680,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: n ...<br/>
 	 * Stack after: x+n ...
 	 */
-	public static final int _PLUS_EQ_ = 278; // x -> x
+	public static final int PLUS_EQ = 278; // x -> x
 	/**
 	 * Decreases the contents of the variable by an adjustment value;
 	 * assigns the result to the variable and pushes the result onto the stack.
@@ -691,7 +691,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: n ...<br/>
 	 * Stack after: x-n ...
 	 */
-	public static final int _MINUS_EQ_ = 279; // x -> x
+	public static final int MINUS_EQ = 279; // x -> x
 	/**
 	 * Multiplies the contents of the variable by an adjustment value;
 	 * assigns the result to the variable and pushes the result onto the stack.
@@ -702,7 +702,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: n ...<br/>
 	 * Stack after: x*n ...
 	 */
-	public static final int _MULT_EQ_ = 280; // x -> x
+	public static final int MULT_EQ = 280; // x -> x
 	/**
 	 * Divides the contents of the variable by an adjustment value;
 	 * assigns the result to the variable and pushes the result onto the stack.
@@ -713,7 +713,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: n ...<br/>
 	 * Stack after: x/n ...
 	 */
-	public static final int _DIV_EQ_ = 281; // x -> x
+	public static final int DIV_EQ = 281; // x -> x
 	/**
 	 * Takes the modules of the contents of the variable by an adjustment value;
 	 * assigns the result to the variable and pushes the result onto the stack.
@@ -724,7 +724,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: n ...<br/>
 	 * Stack after: x%n ...
 	 */
-	public static final int _MOD_EQ_ = 282; // x -> x
+	public static final int MOD_EQ = 282; // x -> x
 	/**
 	 * Raises the contents of the variable to the power of the adjustment value;
 	 * assigns the result to the variable and pushes the result onto the stack.
@@ -735,7 +735,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: n ...<br/>
 	 * Stack after: x^n ...
 	 */
-	public static final int _POW_EQ_ = 283; // x -> x
+	public static final int POW_EQ = 283; // x -> x
 	/**
 	 * Increase the contents of an indexed array by an adjustment value;
 	 * assigns the result to the array and pushes the result onto the stack.
@@ -746,7 +746,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: array-idx n ...<br/>
 	 * Stack after: x+n ...
 	 */
-	public static final int _PLUS_EQ_ARRAY_ = 284; // x -> x
+	public static final int PLUS_EQ_ARRAY = 284; // x -> x
 	/**
 	 * Decreases the contents of an indexed array by an adjustment value;
 	 * assigns the result to the array and pushes the result onto the stack.
@@ -757,7 +757,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: array-idx n ...<br/>
 	 * Stack after: x-n ...
 	 */
-	public static final int _MINUS_EQ_ARRAY_ = 285; // x -> x
+	public static final int MINUS_EQ_ARRAY = 285; // x -> x
 	/**
 	 * Multiplies the contents of an indexed array by an adjustment value;
 	 * assigns the result to the array and pushes the result onto the stack.
@@ -768,7 +768,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: array-idx n ...<br/>
 	 * Stack after: x*n ...
 	 */
-	public static final int _MULT_EQ_ARRAY_ = 286; // x -> x
+	public static final int MULT_EQ_ARRAY = 286; // x -> x
 	/**
 	 * Divides the contents of an indexed array by an adjustment value;
 	 * assigns the result to the array and pushes the result onto the stack.
@@ -779,7 +779,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: array-idx n ...<br/>
 	 * Stack after: x/n ...
 	 */
-	public static final int _DIV_EQ_ARRAY_ = 287; // x -> x
+	public static final int DIV_EQ_ARRAY = 287; // x -> x
 	/**
 	 * Takes the modulus of the contents of an indexed array by an adjustment value;
 	 * assigns the result to the array and pushes the result onto the stack.
@@ -790,7 +790,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: array-idx n ...<br/>
 	 * Stack after: x%n ...
 	 */
-	public static final int _MOD_EQ_ARRAY_ = 288; // x -> x
+	public static final int MOD_EQ_ARRAY = 288; // x -> x
 	/**
 	 * Raises the contents of an indexed array to the power of an adjustment value;
 	 * assigns the result to the array and pushes the result onto the stack.
@@ -801,7 +801,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: array-idx n ...<br/>
 	 * Stack after: x^n ...
 	 */
-	public static final int _POW_EQ_ARRAY_ = 289; // x -> x
+	public static final int POW_EQ_ARRAY = 289; // x -> x
 	/**
 	 * Increases the contents of an input field by an adjustment value;
 	 * assigns the result to the input field and pushes the result onto the stack.
@@ -809,7 +809,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: input-field_number n ...<br/>
 	 * Stack after: x+n ...
 	 */
-	public static final int _PLUS_EQ_INPUT_FIELD_ = 290; // x1,x2 -> x
+	public static final int PLUS_EQ_INPUT_FIELD = 290; // x1,x2 -> x
 	/**
 	 * Decreases the contents of an input field by an adjustment value;
 	 * assigns the result to the input field and pushes the result onto the stack.
@@ -817,7 +817,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: input-field_number n ...<br/>
 	 * Stack after: x-n ...
 	 */
-	public static final int _MINUS_EQ_INPUT_FIELD_ = 291; // x1,x2 -> x
+	public static final int MINUS_EQ_INPUT_FIELD = 291; // x1,x2 -> x
 	/**
 	 * Multiplies the contents of an input field by an adjustment value;
 	 * assigns the result to the input field and pushes the result onto the stack.
@@ -825,7 +825,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: input-field_number n ...<br/>
 	 * Stack after: x*n ...
 	 */
-	public static final int _MULT_EQ_INPUT_FIELD_ = 292; // x1,x2 -> x
+	public static final int MULT_EQ_INPUT_FIELD = 292; // x1,x2 -> x
 	/**
 	 * Divides the contents of an input field by an adjustment value;
 	 * assigns the result to the input field and pushes the result onto the stack.
@@ -833,7 +833,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: input-field_number n ...<br/>
 	 * Stack after: x/n ...
 	 */
-	public static final int _DIV_EQ_INPUT_FIELD_ = 293; // x1,x2 -> x
+	public static final int DIV_EQ_INPUT_FIELD = 293; // x1,x2 -> x
 	/**
 	 * Takes the modulus of the contents of an input field by an adjustment value;
 	 * assigns the result to the input field and pushes the result onto the stack.
@@ -841,7 +841,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: input-field_number n ...<br/>
 	 * Stack after: x%n ...
 	 */
-	public static final int _MOD_EQ_INPUT_FIELD_ = 294; // x1,x2 -> x
+	public static final int MOD_EQ_INPUT_FIELD = 294; // x1,x2 -> x
 	/**
 	 * Raises the contents of an input field to the power of an adjustment value;
 	 * assigns the result to the input field and pushes the result onto the stack.
@@ -849,7 +849,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: input-field_number n ...<br/>
 	 * Stack after: x^n ...
 	 */
-	public static final int _POW_EQ_INPUT_FIELD_ = 295; // x1,x2 -> x
+	public static final int POW_EQ_INPUT_FIELD = 295; // x1,x2 -> x
 
 	/**
 	 * Seeds the random number generator. If there are no arguments, the current
@@ -869,7 +869,7 @@ public class AwkTuples implements Serializable {
 	 * Stack after: old-seed ...
 	 * </blockquote>
 	 */
-	public static final int _SRAND_ = 296; // x2, x1 -> x1, x2
+	public static final int SRAND = 296; // x2, x1 -> x1, x2
 	/**
 	 * Obtains the next random number from the random number generator
 	 * and push it onto the stack.
@@ -877,7 +877,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: ...<br/>
 	 * Stack after: random-number ...
 	 */
-	public static final int _RAND_ = 297; // x2, x1 -> x1, x2
+	public static final int RAND = 297; // x2, x1 -> x1, x2
 	/**
 	 * Built-in function that pops the top-of-stack, removes its fractional part,
 	 * if any, and places the result onto the stack.
@@ -885,7 +885,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x ...<br/>
 	 * Stack after: (int)x ...
 	 */
-	public static final int _INTFUNC_ = 298; // x2, x1 -> x1, x2
+	public static final int INTFUNC = 298; // x2, x1 -> x1, x2
 	/**
 	 * Built-in function that pops the top-of-stack, takes its square root,
 	 * and places the result onto the stack.
@@ -893,7 +893,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x ...<br/>
 	 * Stack after: sqrt(x) ...
 	 */
-	public static final int _SQRT_ = 299; // x2, x1 -> x1, x2
+	public static final int SQRT = 299; // x2, x1 -> x1, x2
 	/**
 	 * Built-in function that pops the top-of-stack, calls the java.lang.Math.log method
 	 * with the top-of-stack as the argument, and places the result onto the stack.
@@ -901,7 +901,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x ...<br/>
 	 * Stack after: log(x) ...
 	 */
-	public static final int _LOG_ = 300; // x2, x1 -> x1, x2
+	public static final int LOG = 300; // x2, x1 -> x1, x2
 	/**
 	 * Built-in function that pops the top-of-stack, calls the java.lang.Math.exp method
 	 * with the top-of-stack as the argument, and places the result onto the stack.
@@ -909,7 +909,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x ...<br/>
 	 * Stack after: exp(x) ...
 	 */
-	public static final int _EXP_ = 301; // x2, x1 -> x1, x2
+	public static final int EXP = 301; // x2, x1 -> x1, x2
 	/**
 	 * Built-in function that pops the top-of-stack, calls the java.lang.Math.sin method
 	 * with the top-of-stack as the argument, and places the result onto the stack.
@@ -917,7 +917,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x ...<br/>
 	 * Stack after: sin(x) ...
 	 */
-	public static final int _SIN_ = 302; // x2, x1 -> x1, x2
+	public static final int SIN = 302; // x2, x1 -> x1, x2
 	/**
 	 * Built-in function that pops the top-of-stack, calls the java.lang.Math.cos method
 	 * with the top-of-stack as the argument, and places the result onto the stack.
@@ -925,7 +925,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x ...<br/>
 	 * Stack after: cos(x) ...
 	 */
-	public static final int _COS_ = 303; // x2, x1 -> x1, x2
+	public static final int COS = 303; // x2, x1 -> x1, x2
 	/**
 	 * Built-in function that pops the first two items off the stack,
 	 * calls the java.lang.Math.atan2 method
@@ -934,7 +934,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x1 x2 ...<br/>
 	 * Stack after: atan2(x1,x2) ...
 	 */
-	public static final int _ATAN2_ = 304; // x2, x1 -> x1, x2
+	public static final int ATAN2 = 304; // x2, x1 -> x1, x2
 	/**
 	 * Built-in function that searches a string as input to a regular expression,
 	 * the location of the match is pushed onto the stack.
@@ -948,7 +948,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: string regexp ...<br/>
 	 * Stack after: RSTART ...
 	 */
-	public static final int _MATCH_ = 305; // x1, x2 -> x
+	public static final int MATCH = 305; // x1, x2 -> x
 	/**
 	 * Built-in function that locates a substring within a source string
 	 * and pushes the location onto the stack. If the substring is
@@ -957,7 +957,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: string substring ...<br/>
 	 * Stack after: location-index ...
 	 */
-	public static final int _INDEX_ = 306; // x1, x2 -> x
+	public static final int INDEX = 306; // x1, x2 -> x
 	/**
 	 * Built-in function that substitutes an occurrence (or all occurrences)
 	 * of a string in $0 and replaces it with another.
@@ -967,7 +967,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: regexp replacement-string ...<br/>
 	 * Stack after: ...
 	 */
-	public static final int _SUB_FOR_DOLLAR_0_ = 307; // x -> 0
+	public static final int SUB_FOR_DOLLAR_0 = 307; // x -> 0
 	/**
 	 * Built-in function that substitutes an occurrence (or all occurrences)
 	 * of a string in a field reference and replaces it with another.
@@ -977,7 +977,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: field-num regexp replacement-string ...<br/>
 	 * Stack after: ...
 	 */
-	public static final int _SUB_FOR_DOLLAR_REFERENCE_ = 308; // x -> 0
+	public static final int SUB_FOR_DOLLAR_REFERENCE = 308; // x -> 0
 	/**
 	 * Built-in function that substitutes an occurrence (or all occurrences)
 	 * of a string in a particular variable and replaces it with another.
@@ -989,7 +989,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: regexp replacement-string orig-string ...<br/>
 	 * Stack after: ...
 	 */
-	public static final int _SUB_FOR_VARIABLE_ = 309; // x -> 0
+	public static final int SUB_FOR_VARIABLE = 309; // x -> 0
 	/**
 	 * Built-in function that substitutes an occurrence (or all occurrences)
 	 * of a string in a particular array cell and replaces it with another.
@@ -1001,7 +1001,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: array-index regexp replacement-string orig-string ...<br/>
 	 * Stack after: ...
 	 */
-	public static final int _SUB_FOR_ARRAY_REFERENCE_ = 310; // x -> 0
+	public static final int SUB_FOR_ARRAY_REFERENCE = 310; // x -> 0
 	/**
 	 * Built-in function to split a string by a regexp and put the
 	 * components into an array.
@@ -1019,7 +1019,7 @@ public class AwkTuples implements Serializable {
 	 * Stack after: n ...
 	 * </blockquote>
 	 */
-	public static final int _SPLIT_ = 311; // x1 -> x2
+	public static final int SPLIT = 311; // x1 -> x2
 	/**
 	 * Built-in function that pushes a substring of the top-of-stack
 	 * onto the stack.
@@ -1040,7 +1040,7 @@ public class AwkTuples implements Serializable {
 	 * Stack after: substring ...
 	 * </blockquote>
 	 */
-	public static final int _SUBSTR_ = 312; // x1 -> x2
+	public static final int SUBSTR = 312; // x1 -> x2
 	/**
 	 * Built-in function that converts all the letters in the top-of-stack
 	 * to lower case and pushes the result onto the stack.
@@ -1048,7 +1048,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: STRING-ARGUMENT ...<br/>
 	 * Stack after: string-argument ...
 	 */
-	public static final int _TOLOWER_ = 313; // x1 -> x2
+	public static final int TOLOWER = 313; // x1 -> x2
 	/**
 	 * Built-in function that converts all the letters in the top-of-stack
 	 * to upper case and pushes the result onto the stack.
@@ -1056,7 +1056,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: string-argument ...<br/>
 	 * Stack after: STRING-ARGUMENT ...
 	 */
-	public static final int _TOUPPER_ = 314; // x1 -> x2
+	public static final int TOUPPER = 314; // x1 -> x2
 	/**
 	 * Built-in function that executes the top-of-stack as a system command
 	 * and pushes the return code onto the stack.
@@ -1064,7 +1064,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: cmd ...<br/>
 	 * Stack after: return-code ...
 	 */
-	public static final int _SYSTEM_ = 315; // x1 -> x2
+	public static final int SYSTEM = 315; // x1 -> x2
 
 	/**
 	 * Swaps the top two elements of the stack.
@@ -1072,7 +1072,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x1 x2 ...<br/>
 	 * Stack after: x2 x1 ...
 	 */
-	public static final int _SWAP_ = 316; // x2, x1 -> x1, x2
+	public static final int SWAP = 316; // x2, x1 -> x1, x2
 
 	/**
 	 * Numerically adds the top two elements of the stack with the result
@@ -1081,7 +1081,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x1 x2 ...<br/>
 	 * Stack after: x1+x2 ...
 	 */
-	public static final int _ADD_ = 317; // x2, x1 -> x1+x2
+	public static final int ADD = 317; // x2, x1 -> x1+x2
 	/**
 	 * Numerically subtracts the top two elements of the stack with the result
 	 * pushed onto the stack.
@@ -1089,7 +1089,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x1 x2 ...<br/>
 	 * Stack after: x1-x2 ...
 	 */
-	public static final int _SUBTRACT_ = 318; // x2, x1 -> x1-x2
+	public static final int SUBTRACT = 318; // x2, x1 -> x1-x2
 	/**
 	 * Numerically multiplies the top two elements of the stack with the result
 	 * pushed onto the stack.
@@ -1097,7 +1097,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x1 x2 ...<br/>
 	 * Stack after: x1*x2 ...
 	 */
-	public static final int _MULTIPLY_ = 319; // x2, x1 -> x1*x2
+	public static final int MULTIPLY = 319; // x2, x1 -> x1*x2
 	/**
 	 * Numerically divides the top two elements of the stack with the result
 	 * pushed onto the stack.
@@ -1105,7 +1105,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x1 x2 ...<br/>
 	 * Stack after: x1/x2 ...
 	 */
-	public static final int _DIVIDE_ = 320; // x2, x1 -> x1/x2
+	public static final int DIVIDE = 320; // x2, x1 -> x1/x2
 	/**
 	 * Numerically takes the modulus of the top two elements of the stack with the result
 	 * pushed onto the stack.
@@ -1113,7 +1113,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x1 x2 ...<br/>
 	 * Stack after: x1%x2 ...
 	 */
-	public static final int _MOD_ = 321; // x2, x1 -> x1/x2
+	public static final int MOD = 321; // x2, x1 -> x1/x2
 	/**
 	 * Numerically raises the top element to the power of the next element with the result
 	 * pushed onto the stack.
@@ -1121,7 +1121,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x1 x2 ...<br/>
 	 * Stack after: x1^x2 ...
 	 */
-	public static final int _POW_ = 322; // x2, x1 -> x1/x2
+	public static final int POW = 322; // x2, x1 -> x1/x2
 
 	/**
 	 * Increases the variable reference by one; pushes the result
@@ -1133,7 +1133,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: ...<br/>
 	 * Stack after: x+1 ...
 	 */
-	public static final int _INC_ = 323; // 0 -> x
+	public static final int INC = 323; // 0 -> x
 	/**
 	 * Decreases the variable reference by one; pushes the result
 	 * onto the stack.
@@ -1144,7 +1144,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: ...<br/>
 	 * Stack after: x-1 ...
 	 */
-	public static final int _DEC_ = 324; // 0 -> x
+	public static final int DEC = 324; // 0 -> x
 	/**
 	 * Increases the array element reference by one; pushes the result
 	 * onto the stack.
@@ -1155,7 +1155,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: array-idx ...<br/>
 	 * Stack after: x+1 ...
 	 */
-	public static final int _INC_ARRAY_REF_ = 325; // x -> x
+	public static final int INC_ARRAY_REF = 325; // x -> x
 	/**
 	 * Decreases the array element reference by one; pushes the result
 	 * onto the stack.
@@ -1166,7 +1166,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: array-idx ...<br/>
 	 * Stack after: x-1 ...
 	 */
-	public static final int _DEC_ARRAY_REF_ = 326; // x -> x
+	public static final int DEC_ARRAY_REF = 326; // x -> x
 	/**
 	 * Increases the input field variable by one; pushes the result
 	 * onto the stack.
@@ -1174,7 +1174,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: field-idx ...<br/>
 	 * Stack after: x+1
 	 */
-	public static final int _INC_DOLLAR_REF_ = 327; // x -> x
+	public static final int INC_DOLLAR_REF = 327; // x -> x
 	/**
 	 * Decreases the input field variable by one; pushes the result
 	 * onto the stack.
@@ -1182,7 +1182,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: field-idx ...<br/>
 	 * Stack after: x-1
 	 */
-	public static final int _DEC_DOLLAR_REF_ = 328; // x -> x
+	public static final int DEC_DOLLAR_REF = 328; // x -> x
 
 	/**
 	 * Duplicates the top-of-stack on the stack.
@@ -1190,7 +1190,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x ...<br/>
 	 * Stack after: x x ...
 	 */
-	public static final int _DUP_ = 329; // x -> x, x
+	public static final int DUP = 329; // x -> x, x
 	/**
 	 * Evaluates the logical NOT of the top stack element;
 	 * pushes the result onto the stack.
@@ -1198,7 +1198,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x ...<br/>
 	 * Stack after: !x ...
 	 */
-	public static final int _NOT_ = 330; // x -> !x
+	public static final int NOT = 330; // x -> !x
 	/**
 	 * Evaluates the numerical NEGATION of the top stack element;
 	 * pushes the result onto the stack.
@@ -1206,7 +1206,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x ...<br/>
 	 * Stack after: -x ...
 	 */
-	public static final int _NEGATE_ = 331; // x -> -x
+	public static final int NEGATE = 331; // x -> -x
 
 	/**
 	 * Compares the top two stack elements; pushes 1 onto the stack if equal, 0 if not equal.
@@ -1214,21 +1214,21 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x1 x2 ...<br/>
 	 * Stack after: x1==x2
 	 */
-	public static final int _CMP_EQ_ = 332; // x2, x1 -> x1 == x2
+	public static final int CMP_EQ = 332; // x2, x1 -> x1 == x2
 	/**
 	 * Compares the top two stack elements; pushes 1 onto the stack if x1 &lt; x2, 0 if not equal.
 	 * <p>
 	 * Stack before: x1 x2 ...<br/>
 	 * Stack after: x1&lt;x2
 	 */
-	public static final int _CMP_LT_ = 333; // x2, x1 -> x1 < x2
+	public static final int CMP_LT = 333; // x2, x1 -> x1 < x2
 	/**
 	 * Compares the top two stack elements; pushes 1 onto the stack if x1 &gt; x2, 0 if not equal.
 	 * <p>
 	 * Stack before: x1 x2 ...<br/>
 	 * Stack after: x1&gt;x2
 	 */
-	public static final int _CMP_GT_ = 334; // x2, x1 -> x1 < x2
+	public static final int CMP_GT = 334; // x2, x1 -> x1 < x2
 	/**
 	 * Applies a regular expression to the top stack element; pushes 1 if it matches,
 	 * 0 if it does not match.
@@ -1236,7 +1236,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x1 x2 ...<br/>
 	 * Stack after: (x1 ~ /x2/) ...
 	 */
-	public static final int _MATCHES_ = 335; // x2, x1 -> x1 ~ x2
+	public static final int MATCHES = 335; // x2, x1 -> x1 ~ x2
 
 	/**
 	 * <strong>Extension:</strong> Pauses the execution thread by N number of seconds.
@@ -1244,12 +1244,12 @@ public class AwkTuples implements Serializable {
 	 * Stack before: N ...<br/>
 	 * Stack after: ...
 	 */
-	public static final int _SLEEP_ = 336; // x -> 0
-	/** Constant <code>_DUMP_=337</code> */
-	public static final int _DUMP_ = 337; // x -> 0
+	public static final int SLEEP = 336; // x -> 0
+	/** Constant <code>DUMP=337</code> */
+	public static final int DUMP = 337; // x -> 0
 
-	/** Constant <code>_DEREF_ARRAY_=338</code> */
-	public static final int _DEREF_ARRAY_ = 338; // x -> x
+	/** Constant <code>DEREF_ARRAY=338</code> */
+	public static final int DEREF_ARRAY = 338; // x -> x
 
 	// for (x in y) {keyset} support
 	/**
@@ -1259,7 +1259,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: associative-array ...<br/>
 	 * Stack after: key-list-set ...
 	 */
-	public static final int _KEYLIST_ = 339; // 0 -> {keylist}
+	public static final int KEYLIST = 339; // 0 -> {keylist}
 	/**
 	 * Tests whether the KeyList (set) is empty; jumps to the argument
 	 * address if empty, steps to the next instruction if not.
@@ -1269,14 +1269,14 @@ public class AwkTuples implements Serializable {
 	 * Stack before: key-list ...<br/>
 	 * Stack after: ...
 	 */
-	public static final int _IS_EMPTY_KEYLIST_ = 340; // {keylist} -> 0
+	public static final int IS_EMPTY_KEYLIST = 340; // {keylist} -> 0
 	/**
 	 * Removes an item from the KeyList (set) and pushes it onto the operand stack.
 	 * <p>
 	 * Stack before: key-list ...<br/>
 	 * Stack after: 1st-item ...
 	 */
-	public static final int _GET_FIRST_AND_REMOVE_FROM_KEYLIST_ = 341; // {keylist} -> x
+	public static final int GET_FIRST_AND_REMOVE_FROM_KEYLIST = 341; // {keylist} -> x
 
 	// assertions
 	/**
@@ -1289,7 +1289,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: obj ...<br/>
 	 * Stack after: obj ...
 	 */
-	public static final int _CHECK_CLASS_ = 342; // {class} -> 0
+	public static final int CHECK_CLASS = 342; // {class} -> 0
 
 	// input
 	// * Obtain an input string from stdin; push the result onto the stack.
@@ -1299,7 +1299,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: field-id ...<br/>
 	 * Stack after: x ...
 	 */
-	public static final int _GET_INPUT_FIELD_ = 343; // 0 -> x
+	public static final int GET_INPUT_FIELD = 343; // 0 -> x
 	/**
 	 * Consume next line of input; assigning $0 and recalculating $1, $2, etc.
 	 * The input can come from the following sources:
@@ -1309,7 +1309,7 @@ public class AwkTuples implements Serializable {
 	 * </ul>
 	 * The operand stack is unaffected.
 	 */
-	public static final int _CONSUME_INPUT_ = 344; // 0 -> 0
+	public static final int CONSUME_INPUT = 344; // 0 -> 0
 	/**
 	 * Obtains input from stdin/filename-args and pushes
 	 * input line and status code onto the stack.
@@ -1324,7 +1324,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: ...<br/>
 	 * Stack after: input-string return-code ...
 	 */
-	public static final int _GETLINE_INPUT_ = 345; // 0 -> x
+	public static final int GETLINE_INPUT = 345; // 0 -> x
 	/**
 	 * Obtains input from a file and pushes
 	 * input line and status code onto the stack.
@@ -1344,7 +1344,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: filename ...<br/>
 	 * Stack after: input-string return-code ...
 	 */
-	public static final int _USE_AS_FILE_INPUT_ = 346; // x1 -> x2
+	public static final int USE_AS_FILE_INPUT = 346; // x1 -> x2
 	/**
 	 * Obtains input from a command (process) and pushes
 	 * input line and status code onto the stack.
@@ -1365,7 +1365,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: command-line ...<br/>
 	 * Stack after: input-string return-code ...
 	 */
-	public static final int _USE_AS_COMMAND_INPUT_ = 347; // x1 -> x2
+	public static final int USE_AS_COMMAND_INPUT = 347; // x1 -> x2
 
 	// variable housekeeping
 	/**
@@ -1374,105 +1374,105 @@ public class AwkTuples implements Serializable {
 	 * <p>
 	 * The operand stack is unaffected.
 	 */
-	public static final int _NF_OFFSET_ = 348; // 0 -> 0
+	public static final int NF_OFFSET = 348; // 0 -> 0
 	/**
 	 * Assign the NR variable offset. This is important for the
 	 * AVM to increase the record number as new input lines received.
 	 * <p>
 	 * The operand stack is unaffected.
 	 */
-	public static final int _NR_OFFSET_ = 349; // 0 -> 0
+	public static final int NR_OFFSET = 349; // 0 -> 0
 	/**
 	 * Assign the FNR variable offset. This is important for the
 	 * AVM to increase the "file" record number as new input lines are received.
 	 * <p>
 	 * The operand stack is unaffected.
 	 */
-	public static final int _FNR_OFFSET_ = 350; // 0 -> 0
+	public static final int FNR_OFFSET = 350; // 0 -> 0
 	/**
 	 * Assign the FS variable offset. This is important for the
 	 * AVM to know how to split fields upon incoming records of input.
 	 * <p>
 	 * The operand stack is unaffected.
 	 */
-	public static final int _FS_OFFSET_ = 351; // 0 -> 0
+	public static final int FS_OFFSET = 351; // 0 -> 0
 	/**
 	 * Assign the RS variable offset. This is important for the
 	 * AVM to know how to create records from the stream(s) of input.
 	 * <p>
 	 * The operand stack is unaffected.
 	 */
-	public static final int _RS_OFFSET_ = 352; // 0 -> 0
+	public static final int RS_OFFSET = 352; // 0 -> 0
 	/**
 	 * Assign the OFS variable offset. This is important for the
 	 * AVM to use when outputting expressions via PRINT.
 	 * <p>
 	 * The operand stack is unaffected.
 	 */
-	public static final int _OFS_OFFSET_ = 353; // 0 -> 0
+	public static final int OFS_OFFSET = 353; // 0 -> 0
 	/**
 	 * Assign the RSTART variable offset. The AVM sets this variable while
 	 * executing the match() builtin function.
 	 * <p>
 	 * The operand stack is unaffected.
 	 */
-	public static final int _RSTART_OFFSET_ = 354; // 0 -> 0
+	public static final int RSTART_OFFSET = 354; // 0 -> 0
 	/**
 	 * Assign the RLENGTH variable offset. The AVM sets this variable while
 	 * executing the match() builtin function.
 	 * <p>
 	 * The operand stack is unaffected.
 	 */
-	public static final int _RLENGTH_OFFSET_ = 355; // 0 -> 0
+	public static final int RLENGTH_OFFSET = 355; // 0 -> 0
 	/**
 	 * Assign the FILENAME variable offset. The AVM sets this variable while
 	 * processing files from the command-line for input.
 	 * <p>
 	 * The operand stack is unaffected.
 	 */
-	public static final int _FILENAME_OFFSET_ = 356; // 0 -> 0
+	public static final int FILENAME_OFFSET = 356; // 0 -> 0
 	/**
 	 * Assign the SUBSEP variable offset. The AVM uses this variable while
 	 * building an index of a multi-dimensional array.
 	 * <p>
 	 * The operand stack is unaffected.
 	 */
-	public static final int _SUBSEP_OFFSET_ = 357; // 0 -> 0
+	public static final int SUBSEP_OFFSET = 357; // 0 -> 0
 	/**
 	 * Assign the CONVFMT variable offset. The AVM uses this variable while
 	 * converting numbers to strings.
 	 * <p>
 	 * The operand stack is unaffected.
 	 */
-	public static final int _CONVFMT_OFFSET_ = 358; // 0 -> 0
+	public static final int CONVFMT_OFFSET = 358; // 0 -> 0
 	/**
 	 * Assign the OFMT variable offset. The AVM uses this variable while
 	 * converting numbers to strings for printing.
 	 * <p>
 	 * The operand stack is unaffected.
 	 */
-	public static final int _OFMT_OFFSET_ = 359; // 0 -> 0
+	public static final int OFMT_OFFSET = 359; // 0 -> 0
 	/**
 	 * Assign the ENVIRON variable offset. The AVM provides environment
 	 * variables through this array.
 	 * <p>
 	 * The operand stack is unaffected.
 	 */
-	public static final int _ENVIRON_OFFSET_ = 360; // 0 -> 0
+	public static final int ENVIRON_OFFSET = 360; // 0 -> 0
 	/**
 	 * Assign the ARGC variable offset. The AVM provides the number of
 	 * arguments via this variable.
 	 * <p>
 	 * The operand stack is unaffected.
 	 */
-	public static final int _ARGC_OFFSET_ = 361; // 0 -> 0
+	public static final int ARGC_OFFSET = 361; // 0 -> 0
 	/**
 	 * Assign the ARGV variable offset. The AVM provides command-line
 	 * arguments via this variable.
 	 * <p>
 	 * The operand stack is unaffected.
 	 */
-	public static final int _ARGV_OFFSET_ = 362; // 0 -> 0
+	public static final int ARGV_OFFSET = 362; // 0 -> 0
 
 	/**
 	 * Apply the RS variable by notifying the partitioning reader that
@@ -1481,7 +1481,7 @@ public class AwkTuples implements Serializable {
 	 * <p>
 	 * The stack remains unaffected.
 	 */
-	public static final int _APPLY_RS_ = 363; // 0 -> 0
+	public static final int APPLY_RS = 363; // 0 -> 0
 
 	/**
 	 * Call a user function.
@@ -1489,14 +1489,14 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x1, x2, ..., xn <br>
 	 * Stack after: f(x1, x2, ..., xn)
 	 */
-	public static final int _CALL_FUNCTION_ = 364; // x1,x2,...,xn -> x
+	public static final int CALL_FUNCTION = 364; // x1,x2,...,xn -> x
 
 	/**
 	 * Define a user function.
 	 * <p>
 	 * Stack remains unchanged
 	 */
-	public static final int _FUNCTION_ = 365; // 0 -> 0
+	public static final int FUNCTION = 365; // 0 -> 0
 
 	/**
 	 * Sets the return value of a user function.
@@ -1504,7 +1504,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x <br>
 	 * Stack after: ...
 	 */
-	public static final int _SET_RETURN_RESULT_ = 366; // x -> 0
+	public static final int SET_RETURN_RESULT = 366; // x -> 0
 
 	/**
 	 * Get the return value of the user function that was called
@@ -1512,12 +1512,12 @@ public class AwkTuples implements Serializable {
 	 * Stack before: ... <br>
 	 * Stack after: x
 	 */
-	public static final int _RETURN_FROM_FUNCTION_ = 367; // 0 -> x
+	public static final int RETURN_FROM_FUNCTION = 367; // 0 -> x
 
 	/**
 	 * Internal: sets the number of global variables
 	 */
-	public static final int _SET_NUM_GLOBALS_ = 368; // 0 -> 0
+	public static final int SET_NUM_GLOBALS = 368; // 0 -> 0
 
 	/**
 	 * Close the specified file.
@@ -1525,7 +1525,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: file name <br>
 	 * Stack after: result of the close operation
 	 */
-	public static final int _CLOSE_ = 369; // x -> x
+	public static final int CLOSE = 369; // x -> x
 
 	/**
 	 * Convert a list of array indices to a concatenated string with SUBSEP.
@@ -1534,7 +1534,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: i1, i2, ..., in <br>
 	 * Stack after: "i1SUBSEPi2SUBSEP...in"
 	 */
-	public static final int _APPLY_SUBSEP_ = 370; // x -> 0
+	public static final int APPLY_SUBSEP = 370; // x -> 0
 
 	/**
 	 * Deletes an entry in an array.
@@ -1542,21 +1542,21 @@ public class AwkTuples implements Serializable {
 	 * Stack before: i <br>
 	 * Stack after: ...
 	 */
-	public static final int _DELETE_ARRAY_ELEMENT_ = 371; // 0 -> 0
+	public static final int DELETE_ARRAY_ELEMENT = 371; // 0 -> 0
 
 	/**
 	 * Internal.
 	 * <p>
 	 * Stack remains unchanged.
 	 */
-	public static final int _SET_EXIT_ADDRESS_ = 372; // 0 -> 0
+	public static final int SET_EXIT_ADDRESS = 372; // 0 -> 0
 
 	/**
 	 * Internal.
 	 * <p>
 	 * Stack remains unchanged.
 	 */
-	public static final int _SET_WITHIN_END_BLOCKS_ = 373; // 0 -> 0
+	public static final int SET_WITHIN_END_BLOCKS = 373; // 0 -> 0
 
 	/**
 	 * Terminates execution and returns specified exit code.
@@ -1564,7 +1564,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: integer <br>
 	 * Stack after: N/A
 	 */
-	public static final int _EXIT_WITH_CODE_ = 374; // 0 -> 0
+	public static final int EXIT_WITH_CODE = 374; // 0 -> 0
 
 	/**
 	 * Returns a regex pattern.
@@ -1572,7 +1572,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: ... <br>
 	 * Stack after: the regex pattern object
 	 */
-	public static final int _REGEXP_ = 375; // 0 -> x
+	public static final int REGEXP = 375; // 0 -> x
 
 	/**
 	 * Returns a pair of regex patterns.
@@ -1580,7 +1580,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: pattern1, pattern2 <br>
 	 * Stack after: regex pair object
 	 */
-	public static final int _CONDITION_PAIR_ = 376; // x, y -> x
+	public static final int CONDITION_PAIR = 376; // x, y -> x
 
 	/**
 	 * Returns whether the specified key is in the array.
@@ -1588,7 +1588,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: key, array <br>
 	 * Stack after: true|false
 	 */
-	public static final int _IS_IN_ = 377; // x,y -> x
+	public static final int IS_IN = 377; // x,y -> x
 
 	/**
 	 * Cast to integer
@@ -1596,7 +1596,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: object <br>
 	 * Stack after: integer
 	 */
-	public static final int _CAST_INT_ = 378; // x -> (int)x
+	public static final int CAST_INT = 378; // x -> (int)x
 
 	/**
 	 * Cast to double
@@ -1604,7 +1604,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: object <br>
 	 * Stack after: double
 	 */
-	public static final int _CAST_DOUBLE_ = 379; // x -> (double)x
+	public static final int CAST_DOUBLE = 379; // x -> (double)x
 
 	/**
 	 * Cast to string
@@ -1612,12 +1612,12 @@ public class AwkTuples implements Serializable {
 	 * Stack before: object <br>
 	 * Stack after: string
 	 */
-	public static final int _CAST_STRING_ = 380; // x -> (string)x
+	public static final int CAST_STRING = 380; // x -> (string)x
 
 	/**
 	 * Deprecated.
 	 */
-	public static final int _THIS_ = 381; // 0 -> (this)
+	public static final int THIS = 381; // 0 -> (this)
 
 	/**
 	 * Call a function from an extension
@@ -1625,7 +1625,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x1, x2, ..., xn <br>
 	 * Stack after: f(x1, x2, ..., xn)
 	 */
-	public static final int _EXTENSION_ = 382; // x1,x2,...,xn -> x
+	public static final int EXTENSION = 382; // x1,x2,...,xn -> x
 
 	/**
 	 * Execute the specified AWK code
@@ -1633,14 +1633,14 @@ public class AwkTuples implements Serializable {
 	 * Stack before: script <br>
 	 * Stack after: exit code of the script, or zero when successful, -1 when failed
 	 */
-	public static final int _EXEC_ = 383; // x1,x2,...,xn -> x
+	public static final int EXEC = 383; // x1,x2,...,xn -> x
 
 	/**
 	 * Delete the specified array.
 	 * <p>
 	 * Stack remains unchanged.
 	 */
-	public static final int _DELETE_ARRAY_ = 384; // 0 -> 0
+	public static final int DELETE_ARRAY = 384; // 0 -> 0
 
 	/**
 	 * Converts the top stack element to a number;
@@ -1649,7 +1649,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: x ...<br/>
 	 * Stack after: x ... (as a number)
 	 */
-	public static final int _UNARY_PLUS_ = 385; // x -> -x
+	public static final int UNARY_PLUS = 385; // x -> -x
 
 	/**
 	 * Terminates execution without specifying an exit code.
@@ -1657,7 +1657,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: N/A <br>
 	 * Stack after: N/A
 	 */
-	public static final int _EXIT_WITHOUT_CODE_ = 386; // 0 -> 0
+	public static final int EXIT_WITHOUT_CODE = 386; // 0 -> 0
 
 	/**
 	 * Assign the ORS variable offset. This is important for the
@@ -1665,7 +1665,7 @@ public class AwkTuples implements Serializable {
 	 * <p>
 	 * The operand stack is unaffected.
 	 */
-	public static final int _ORS_OFFSET_ = 387; // 0 -> 0
+	public static final int ORS_OFFSET = 387; // 0 -> 0
 
 	/**
 	 * Increases the variable reference by one; pushes the original value
@@ -1677,7 +1677,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: ...<br/>
 	 * Stack after: x ... or 0 if uninitialized
 	 */
-	public static final int _POSTINC_ = 388; // 0 -> x
+	public static final int POSTINC = 388; // 0 -> x
 
 	/**
 	 * Decreases the variable reference by one; pushes the original value
@@ -1689,7 +1689,7 @@ public class AwkTuples implements Serializable {
 	 * Stack before: ...<br/>
 	 * Stack after: x ... or 0 if uninitialized
 	 */
-	public static final int _POSTDEC_ = 389; // 0 -> x
+	public static final int POSTDEC = 389; // 0 -> x
 	// CHECKSTYLE:ON
 
 	/**
@@ -1734,7 +1734,7 @@ public class AwkTuples implements Serializable {
 				}
 			}
 		} catch (IllegalAccessException iac) {
-			LOG.error("Failed to create OP-Code string", iac);
+			LOGGER.error("Failed to create OP-Code string", iac);
 			return "[" + opcode + ": " + iac + "]";
 		}
 		return "{" + opcode + "}";
@@ -1746,7 +1746,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void pop() {
-		queue.add(new Tuple(_POP_));
+		queue.add(new Tuple(POP));
 	}
 
 	/**
@@ -1761,13 +1761,13 @@ public class AwkTuples implements Serializable {
 																																																						// instanceof
 																																																						// Pattern);
 		if (o instanceof String) {
-			queue.add(new Tuple(_PUSH_, o.toString()));
+			queue.add(new Tuple(PUSH, o.toString()));
 		} else if (o instanceof Integer) {
-			queue.add(new Tuple(_PUSH_, (Integer) o));
+			queue.add(new Tuple(PUSH, (Integer) o));
 		} else if (o instanceof Long) {
-			queue.add(new Tuple(_PUSH_, (Long) o));
+			queue.add(new Tuple(PUSH, (Long) o));
 		} else if (o instanceof Double) {
-			queue.add(new Tuple(_PUSH_, (Double) o));
+			queue.add(new Tuple(PUSH, (Double) o));
 		} else {
 			assert false : "Invalid type for " + o + ", " + o.getClass();
 		}
@@ -1781,7 +1781,7 @@ public class AwkTuples implements Serializable {
 	 * @param address a {@link org.metricshub.jawk.intermediate.Address} object
 	 */
 	public void ifFalse(Address address) {
-		queue.add(new Tuple(_IFFALSE_, address));
+		queue.add(new Tuple(IFFALSE, address));
 	}
 
 	/**
@@ -1790,7 +1790,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void toNumber() {
-		queue.add(new Tuple(_TO_NUMBER_));
+		queue.add(new Tuple(TO_NUMBER));
 	}
 
 	/**
@@ -1801,7 +1801,7 @@ public class AwkTuples implements Serializable {
 	 * @param address a {@link org.metricshub.jawk.intermediate.Address} object
 	 */
 	public void ifTrue(Address address) {
-		queue.add(new Tuple(_IFTRUE_, address));
+		queue.add(new Tuple(IFTRUE, address));
 	}
 
 	/**
@@ -1812,7 +1812,7 @@ public class AwkTuples implements Serializable {
 	 * @param address a {@link org.metricshub.jawk.intermediate.Address} object
 	 */
 	public void gotoAddress(Address address) {
-		queue.add(new Tuple(_GOTO_, address));
+		queue.add(new Tuple(GOTO, address));
 	}
 
 	/**
@@ -1861,7 +1861,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void nop() {
-		queue.add(new Tuple(_NOP_));
+		queue.add(new Tuple(NOP));
 	}
 
 	/**
@@ -1872,7 +1872,7 @@ public class AwkTuples implements Serializable {
 	 * @param numExprs a int
 	 */
 	public void print(int numExprs) {
-		queue.add(new Tuple(_PRINT_, numExprs));
+		queue.add(new Tuple(PRINT, numExprs));
 	}
 
 	/**
@@ -1884,7 +1884,7 @@ public class AwkTuples implements Serializable {
 	 * @param append a boolean
 	 */
 	public void printToFile(int numExprs, boolean append) {
-		queue.add(new Tuple(_PRINT_TO_FILE_, numExprs, append));
+		queue.add(new Tuple(PRINT_TO_FILE, numExprs, append));
 	}
 
 	/**
@@ -1895,7 +1895,7 @@ public class AwkTuples implements Serializable {
 	 * @param numExprs a int
 	 */
 	public void printToPipe(int numExprs) {
-		queue.add(new Tuple(_PRINT_TO_PIPE_, numExprs));
+		queue.add(new Tuple(PRINT_TO_PIPE, numExprs));
 	}
 
 	/**
@@ -1906,7 +1906,7 @@ public class AwkTuples implements Serializable {
 	 * @param numExprs a int
 	 */
 	public void printf(int numExprs) {
-		queue.add(new Tuple(_PRINTF_, numExprs));
+		queue.add(new Tuple(PRINTF, numExprs));
 	}
 
 	/**
@@ -1918,7 +1918,7 @@ public class AwkTuples implements Serializable {
 	 * @param append a boolean
 	 */
 	public void printfToFile(int numExprs, boolean append) {
-		queue.add(new Tuple(_PRINTF_TO_FILE_, numExprs, append));
+		queue.add(new Tuple(PRINTF_TO_FILE, numExprs, append));
 	}
 
 	/**
@@ -1929,7 +1929,7 @@ public class AwkTuples implements Serializable {
 	 * @param numExprs a int
 	 */
 	public void printfToPipe(int numExprs) {
-		queue.add(new Tuple(_PRINTF_TO_PIPE_, numExprs));
+		queue.add(new Tuple(PRINTF_TO_PIPE, numExprs));
 	}
 
 	/**
@@ -1940,7 +1940,7 @@ public class AwkTuples implements Serializable {
 	 * @param numExprs a int
 	 */
 	public void sprintf(int numExprs) {
-		queue.add(new Tuple(_SPRINTF_, numExprs));
+		queue.add(new Tuple(SPRINTF, numExprs));
 	}
 
 	/**
@@ -1951,7 +1951,7 @@ public class AwkTuples implements Serializable {
 	 * @param numExprs a int
 	 */
 	public void length(int numExprs) {
-		queue.add(new Tuple(_LENGTH_, numExprs));
+		queue.add(new Tuple(LENGTH, numExprs));
 	}
 
 	/**
@@ -1960,7 +1960,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void concat() {
-		queue.add(new Tuple(_CONCAT_));
+		queue.add(new Tuple(CONCAT));
 	}
 
 	/**
@@ -1972,7 +1972,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void assign(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_ASSIGN_, offset, isGlobal));
+		queue.add(new Tuple(ASSIGN, offset, isGlobal));
 	}
 
 	/**
@@ -1984,7 +1984,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void assignArray(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_ASSIGN_ARRAY_, offset, isGlobal));
+		queue.add(new Tuple(ASSIGN_ARRAY, offset, isGlobal));
 	}
 
 	/**
@@ -1993,7 +1993,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void assignAsInput() {
-		queue.add(new Tuple(_ASSIGN_AS_INPUT_));
+		queue.add(new Tuple(ASSIGN_AS_INPUT));
 	}
 
 	/**
@@ -2002,7 +2002,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void assignAsInputField() {
-		queue.add(new Tuple(_ASSIGN_AS_INPUT_FIELD_));
+		queue.add(new Tuple(ASSIGN_AS_INPUT_FIELD));
 	}
 
 	/**
@@ -2015,7 +2015,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void dereference(int offset, boolean isArray, boolean isGlobal) {
-		queue.add(new Tuple(_DEREFERENCE_, offset, isArray, isGlobal));
+		queue.add(new Tuple(DEREFERENCE, offset, isArray, isGlobal));
 	}
 
 	/**
@@ -2027,7 +2027,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void plusEq(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_PLUS_EQ_, offset, isGlobal));
+		queue.add(new Tuple(PLUS_EQ, offset, isGlobal));
 	}
 
 	/**
@@ -2039,7 +2039,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void minusEq(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_MINUS_EQ_, offset, isGlobal));
+		queue.add(new Tuple(MINUS_EQ, offset, isGlobal));
 	}
 
 	/**
@@ -2051,7 +2051,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void multEq(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_MULT_EQ_, offset, isGlobal));
+		queue.add(new Tuple(MULT_EQ, offset, isGlobal));
 	}
 
 	/**
@@ -2063,7 +2063,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void divEq(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_DIV_EQ_, offset, isGlobal));
+		queue.add(new Tuple(DIV_EQ, offset, isGlobal));
 	}
 
 	/**
@@ -2075,7 +2075,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void modEq(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_MOD_EQ_, offset, isGlobal));
+		queue.add(new Tuple(MOD_EQ, offset, isGlobal));
 	}
 
 	/**
@@ -2087,7 +2087,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void powEq(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_POW_EQ_, offset, isGlobal));
+		queue.add(new Tuple(POW_EQ, offset, isGlobal));
 	}
 
 	/**
@@ -2099,7 +2099,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void plusEqArray(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_PLUS_EQ_ARRAY_, offset, isGlobal));
+		queue.add(new Tuple(PLUS_EQ_ARRAY, offset, isGlobal));
 	}
 
 	/**
@@ -2111,7 +2111,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void minusEqArray(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_MINUS_EQ_ARRAY_, offset, isGlobal));
+		queue.add(new Tuple(MINUS_EQ_ARRAY, offset, isGlobal));
 	}
 
 	/**
@@ -2123,7 +2123,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void multEqArray(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_MULT_EQ_ARRAY_, offset, isGlobal));
+		queue.add(new Tuple(MULT_EQ_ARRAY, offset, isGlobal));
 	}
 
 	/**
@@ -2135,7 +2135,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void divEqArray(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_DIV_EQ_ARRAY_, offset, isGlobal));
+		queue.add(new Tuple(DIV_EQ_ARRAY, offset, isGlobal));
 	}
 
 	/**
@@ -2147,7 +2147,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void modEqArray(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_MOD_EQ_ARRAY_, offset, isGlobal));
+		queue.add(new Tuple(MOD_EQ_ARRAY, offset, isGlobal));
 	}
 
 	/**
@@ -2159,7 +2159,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void powEqArray(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_POW_EQ_ARRAY_, offset, isGlobal));
+		queue.add(new Tuple(POW_EQ_ARRAY, offset, isGlobal));
 	}
 
 	/**
@@ -2168,7 +2168,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void plusEqInputField() {
-		queue.add(new Tuple(_PLUS_EQ_INPUT_FIELD_));
+		queue.add(new Tuple(PLUS_EQ_INPUT_FIELD));
 	}
 
 	/**
@@ -2177,7 +2177,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void minusEqInputField() {
-		queue.add(new Tuple(_MINUS_EQ_INPUT_FIELD_));
+		queue.add(new Tuple(MINUS_EQ_INPUT_FIELD));
 	}
 
 	/**
@@ -2186,7 +2186,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void multEqInputField() {
-		queue.add(new Tuple(_MULT_EQ_INPUT_FIELD_));
+		queue.add(new Tuple(MULT_EQ_INPUT_FIELD));
 	}
 
 	/**
@@ -2195,7 +2195,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void divEqInputField() {
-		queue.add(new Tuple(_DIV_EQ_INPUT_FIELD_));
+		queue.add(new Tuple(DIV_EQ_INPUT_FIELD));
 	}
 
 	/**
@@ -2204,7 +2204,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void modEqInputField() {
-		queue.add(new Tuple(_MOD_EQ_INPUT_FIELD_));
+		queue.add(new Tuple(MOD_EQ_INPUT_FIELD));
 	}
 
 	/**
@@ -2213,7 +2213,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void powEqInputField() {
-		queue.add(new Tuple(_POW_EQ_INPUT_FIELD_));
+		queue.add(new Tuple(POW_EQ_INPUT_FIELD));
 	}
 
 	/**
@@ -2224,7 +2224,7 @@ public class AwkTuples implements Serializable {
 	 * @param num a int
 	 */
 	public void srand(int num) {
-		queue.add(new Tuple(_SRAND_, num));
+		queue.add(new Tuple(SRAND, num));
 	}
 
 	/**
@@ -2233,7 +2233,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void rand() {
-		queue.add(new Tuple(_RAND_));
+		queue.add(new Tuple(RAND));
 	}
 
 	/**
@@ -2242,7 +2242,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void intFunc() {
-		queue.add(new Tuple(_INTFUNC_));
+		queue.add(new Tuple(INTFUNC));
 	}
 
 	/**
@@ -2251,7 +2251,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void sqrt() {
-		queue.add(new Tuple(_SQRT_));
+		queue.add(new Tuple(SQRT));
 	}
 
 	/**
@@ -2260,7 +2260,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void log() {
-		queue.add(new Tuple(_LOG_));
+		queue.add(new Tuple(LOG));
 	}
 
 	/**
@@ -2269,7 +2269,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void exp() {
-		queue.add(new Tuple(_EXP_));
+		queue.add(new Tuple(EXP));
 	}
 
 	/**
@@ -2278,7 +2278,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void sin() {
-		queue.add(new Tuple(_SIN_));
+		queue.add(new Tuple(SIN));
 	}
 
 	/**
@@ -2287,7 +2287,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void cos() {
-		queue.add(new Tuple(_COS_));
+		queue.add(new Tuple(COS));
 	}
 
 	/**
@@ -2296,7 +2296,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void atan2() {
-		queue.add(new Tuple(_ATAN2_));
+		queue.add(new Tuple(ATAN2));
 	}
 
 	/**
@@ -2305,7 +2305,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void match() {
-		queue.add(new Tuple(_MATCH_));
+		queue.add(new Tuple(MATCH));
 	}
 
 	/**
@@ -2314,7 +2314,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void index() {
-		queue.add(new Tuple(_INDEX_));
+		queue.add(new Tuple(INDEX));
 	}
 
 	/**
@@ -2325,7 +2325,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGsub a boolean
 	 */
 	public void subForDollar0(boolean isGsub) {
-		queue.add(new Tuple(_SUB_FOR_DOLLAR_0_, isGsub));
+		queue.add(new Tuple(SUB_FOR_DOLLAR_0, isGsub));
 	}
 
 	/**
@@ -2336,7 +2336,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGsub a boolean
 	 */
 	public void subForDollarReference(boolean isGsub) {
-		queue.add(new Tuple(_SUB_FOR_DOLLAR_REFERENCE_, isGsub));
+		queue.add(new Tuple(SUB_FOR_DOLLAR_REFERENCE, isGsub));
 	}
 
 	/**
@@ -2349,7 +2349,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGsub a boolean
 	 */
 	public void subForVariable(int offset, boolean isGlobal, boolean isGsub) {
-		queue.add(new Tuple(_SUB_FOR_VARIABLE_, offset, isGlobal, isGsub));
+		queue.add(new Tuple(SUB_FOR_VARIABLE, offset, isGlobal, isGsub));
 	}
 
 	/**
@@ -2362,7 +2362,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGsub a boolean
 	 */
 	public void subForArrayReference(int offset, boolean isGlobal, boolean isGsub) {
-		queue.add(new Tuple(_SUB_FOR_ARRAY_REFERENCE_, offset, isGlobal, isGsub));
+		queue.add(new Tuple(SUB_FOR_ARRAY_REFERENCE, offset, isGlobal, isGsub));
 	}
 
 	/**
@@ -2373,7 +2373,7 @@ public class AwkTuples implements Serializable {
 	 * @param numargs a int
 	 */
 	public void split(int numargs) {
-		queue.add(new Tuple(_SPLIT_, numargs));
+		queue.add(new Tuple(SPLIT, numargs));
 	}
 
 	/**
@@ -2384,7 +2384,7 @@ public class AwkTuples implements Serializable {
 	 * @param numargs a int
 	 */
 	public void substr(int numargs) {
-		queue.add(new Tuple(_SUBSTR_, numargs));
+		queue.add(new Tuple(SUBSTR, numargs));
 	}
 
 	/**
@@ -2393,7 +2393,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void tolower() {
-		queue.add(new Tuple(_TOLOWER_));
+		queue.add(new Tuple(TOLOWER));
 	}
 
 	/**
@@ -2402,7 +2402,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void toupper() {
-		queue.add(new Tuple(_TOUPPER_));
+		queue.add(new Tuple(TOUPPER));
 	}
 
 	/**
@@ -2411,7 +2411,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void system() {
-		queue.add(new Tuple(_SYSTEM_));
+		queue.add(new Tuple(SYSTEM));
 	}
 
 	/**
@@ -2420,7 +2420,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void exec() {
-		queue.add(new Tuple(_EXEC_));
+		queue.add(new Tuple(EXEC));
 	}
 
 	/**
@@ -2429,7 +2429,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void swap() {
-		queue.add(new Tuple(_SWAP_));
+		queue.add(new Tuple(SWAP));
 	}
 
 	/**
@@ -2438,7 +2438,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void add() {
-		queue.add(new Tuple(_ADD_));
+		queue.add(new Tuple(ADD));
 	}
 
 	/**
@@ -2447,7 +2447,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void subtract() {
-		queue.add(new Tuple(_SUBTRACT_));
+		queue.add(new Tuple(SUBTRACT));
 	}
 
 	/**
@@ -2456,7 +2456,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void multiply() {
-		queue.add(new Tuple(_MULTIPLY_));
+		queue.add(new Tuple(MULTIPLY));
 	}
 
 	/**
@@ -2465,7 +2465,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void divide() {
-		queue.add(new Tuple(_DIVIDE_));
+		queue.add(new Tuple(DIVIDE));
 	}
 
 	/**
@@ -2474,7 +2474,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void mod() {
-		queue.add(new Tuple(_MOD_));
+		queue.add(new Tuple(MOD));
 	}
 
 	/**
@@ -2483,7 +2483,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void pow() {
-		queue.add(new Tuple(_POW_));
+		queue.add(new Tuple(POW));
 	}
 
 	/**
@@ -2495,7 +2495,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void inc(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_INC_, offset, isGlobal));
+		queue.add(new Tuple(INC, offset, isGlobal));
 	}
 
 	/**
@@ -2507,7 +2507,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void dec(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_DEC_, offset, isGlobal));
+		queue.add(new Tuple(DEC, offset, isGlobal));
 	}
 
 	/**
@@ -2519,7 +2519,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void postInc(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_POSTINC_, offset, isGlobal));
+		queue.add(new Tuple(POSTINC, offset, isGlobal));
 	}
 
 	/**
@@ -2531,7 +2531,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void postDec(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_POSTDEC_, offset, isGlobal));
+		queue.add(new Tuple(POSTDEC, offset, isGlobal));
 	}
 
 	/**
@@ -2543,7 +2543,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void incArrayRef(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_INC_ARRAY_REF_, offset, isGlobal));
+		queue.add(new Tuple(INC_ARRAY_REF, offset, isGlobal));
 	}
 
 	/**
@@ -2555,7 +2555,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void decArrayRef(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_DEC_ARRAY_REF_, offset, isGlobal));
+		queue.add(new Tuple(DEC_ARRAY_REF, offset, isGlobal));
 	}
 
 	/**
@@ -2564,7 +2564,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void incDollarRef() {
-		queue.add(new Tuple(_INC_DOLLAR_REF_));
+		queue.add(new Tuple(INC_DOLLAR_REF));
 	}
 
 	/**
@@ -2573,7 +2573,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void decDollarRef() {
-		queue.add(new Tuple(_DEC_DOLLAR_REF_));
+		queue.add(new Tuple(DEC_DOLLAR_REF));
 	}
 
 	/**
@@ -2582,7 +2582,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void dup() {
-		queue.add(new Tuple(_DUP_));
+		queue.add(new Tuple(DUP));
 	}
 
 	/**
@@ -2591,7 +2591,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void not() {
-		queue.add(new Tuple(_NOT_));
+		queue.add(new Tuple(NOT));
 	}
 
 	/**
@@ -2600,7 +2600,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void negate() {
-		queue.add(new Tuple(_NEGATE_));
+		queue.add(new Tuple(NEGATE));
 	}
 
 	/**
@@ -2609,7 +2609,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void unaryPlus() {
-		queue.add(new Tuple(_UNARY_PLUS_));
+		queue.add(new Tuple(UNARY_PLUS));
 	}
 
 	/**
@@ -2618,7 +2618,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void cmpEq() {
-		queue.add(new Tuple(_CMP_EQ_));
+		queue.add(new Tuple(CMP_EQ));
 	}
 
 	/**
@@ -2627,7 +2627,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void cmpLt() {
-		queue.add(new Tuple(_CMP_LT_));
+		queue.add(new Tuple(CMP_LT));
 	}
 
 	/**
@@ -2636,7 +2636,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void cmpGt() {
-		queue.add(new Tuple(_CMP_GT_));
+		queue.add(new Tuple(CMP_GT));
 	}
 
 	/**
@@ -2645,7 +2645,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void matches() {
-		queue.add(new Tuple(_MATCHES_));
+		queue.add(new Tuple(MATCHES));
 	}
 
 	/**
@@ -2656,7 +2656,7 @@ public class AwkTuples implements Serializable {
 	 * @param numArgs a int
 	 */
 	public void sleep(int numArgs) {
-		queue.add(new Tuple(_SLEEP_, numArgs));
+		queue.add(new Tuple(SLEEP, numArgs));
 	}
 
 	/**
@@ -2667,7 +2667,7 @@ public class AwkTuples implements Serializable {
 	 * @param numArgs a int
 	 */
 	public void dump(int numArgs) {
-		queue.add(new Tuple(_DUMP_, numArgs));
+		queue.add(new Tuple(DUMP, numArgs));
 	}
 
 	/**
@@ -2676,7 +2676,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void dereferenceArray() {
-		queue.add(new Tuple(_DEREF_ARRAY_));
+		queue.add(new Tuple(DEREF_ARRAY));
 	}
 
 	/**
@@ -2685,7 +2685,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void keylist() {
-		queue.add(new Tuple(_KEYLIST_));
+		queue.add(new Tuple(KEYLIST));
 	}
 
 	/**
@@ -2696,7 +2696,7 @@ public class AwkTuples implements Serializable {
 	 * @param address a {@link org.metricshub.jawk.intermediate.Address} object
 	 */
 	public void isEmptyList(Address address) {
-		queue.add(new Tuple(_IS_EMPTY_KEYLIST_, address));
+		queue.add(new Tuple(IS_EMPTY_KEYLIST, address));
 	}
 
 	/**
@@ -2705,7 +2705,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void getFirstAndRemoveFromList() {
-		queue.add(new Tuple(_GET_FIRST_AND_REMOVE_FROM_KEYLIST_));
+		queue.add(new Tuple(GET_FIRST_AND_REMOVE_FROM_KEYLIST));
 	}
 
 	/**
@@ -2717,7 +2717,7 @@ public class AwkTuples implements Serializable {
 	 * @return a boolean
 	 */
 	public boolean checkClass(Class<?> cls) {
-		queue.add(new Tuple(_CHECK_CLASS_, cls));
+		queue.add(new Tuple(CHECK_CLASS, cls));
 		return true;
 	}
 
@@ -2727,7 +2727,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void getInputField() {
-		queue.add(new Tuple(_GET_INPUT_FIELD_));
+		queue.add(new Tuple(GET_INPUT_FIELD));
 	}
 
 	/**
@@ -2738,7 +2738,7 @@ public class AwkTuples implements Serializable {
 	 * @param address a {@link org.metricshub.jawk.intermediate.Address} object
 	 */
 	public void consumeInput(Address address) {
-		queue.add(new Tuple(_CONSUME_INPUT_, address));
+		queue.add(new Tuple(CONSUME_INPUT, address));
 	}
 
 	/**
@@ -2747,7 +2747,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void getlineInput() {
-		queue.add(new Tuple(_GETLINE_INPUT_));
+		queue.add(new Tuple(GETLINE_INPUT));
 	}
 
 	/**
@@ -2756,7 +2756,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void useAsFileInput() {
-		queue.add(new Tuple(_USE_AS_FILE_INPUT_));
+		queue.add(new Tuple(USE_AS_FILE_INPUT));
 	}
 
 	/**
@@ -2765,7 +2765,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void useAsCommandInput() {
-		queue.add(new Tuple(_USE_AS_COMMAND_INPUT_));
+		queue.add(new Tuple(USE_AS_COMMAND_INPUT));
 	}
 
 	/**
@@ -2776,7 +2776,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void nfOffset(int offset) {
-		queue.add(new Tuple(_NF_OFFSET_, offset));
+		queue.add(new Tuple(NF_OFFSET, offset));
 	}
 
 	/**
@@ -2787,7 +2787,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void nrOffset(int offset) {
-		queue.add(new Tuple(_NR_OFFSET_, offset));
+		queue.add(new Tuple(NR_OFFSET, offset));
 	}
 
 	/**
@@ -2798,7 +2798,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void fnrOffset(int offset) {
-		queue.add(new Tuple(_FNR_OFFSET_, offset));
+		queue.add(new Tuple(FNR_OFFSET, offset));
 	}
 
 	/**
@@ -2809,7 +2809,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void fsOffset(int offset) {
-		queue.add(new Tuple(_FS_OFFSET_, offset));
+		queue.add(new Tuple(FS_OFFSET, offset));
 	}
 
 	/**
@@ -2820,7 +2820,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void rsOffset(int offset) {
-		queue.add(new Tuple(_RS_OFFSET_, offset));
+		queue.add(new Tuple(RS_OFFSET, offset));
 	}
 
 	/**
@@ -2831,7 +2831,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void ofsOffset(int offset) {
-		queue.add(new Tuple(_OFS_OFFSET_, offset));
+		queue.add(new Tuple(OFS_OFFSET, offset));
 	}
 
 	/**
@@ -2842,7 +2842,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void orsOffset(int offset) {
-		queue.add(new Tuple(_ORS_OFFSET_, offset));
+		queue.add(new Tuple(ORS_OFFSET, offset));
 	}
 
 	/**
@@ -2853,7 +2853,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void rstartOffset(int offset) {
-		queue.add(new Tuple(_RSTART_OFFSET_, offset));
+		queue.add(new Tuple(RSTART_OFFSET, offset));
 	}
 
 	/**
@@ -2864,7 +2864,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void rlengthOffset(int offset) {
-		queue.add(new Tuple(_RLENGTH_OFFSET_, offset));
+		queue.add(new Tuple(RLENGTH_OFFSET, offset));
 	}
 
 	/**
@@ -2875,7 +2875,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void filenameOffset(int offset) {
-		queue.add(new Tuple(_FILENAME_OFFSET_, offset));
+		queue.add(new Tuple(FILENAME_OFFSET, offset));
 	}
 
 	/**
@@ -2886,7 +2886,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void subsepOffset(int offset) {
-		queue.add(new Tuple(_SUBSEP_OFFSET_, offset));
+		queue.add(new Tuple(SUBSEP_OFFSET, offset));
 	}
 
 	/**
@@ -2897,7 +2897,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void convfmtOffset(int offset) {
-		queue.add(new Tuple(_CONVFMT_OFFSET_, offset));
+		queue.add(new Tuple(CONVFMT_OFFSET, offset));
 	}
 
 	/**
@@ -2908,7 +2908,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void ofmtOffset(int offset) {
-		queue.add(new Tuple(_OFMT_OFFSET_, offset));
+		queue.add(new Tuple(OFMT_OFFSET, offset));
 	}
 
 	/**
@@ -2919,7 +2919,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void environOffset(int offset) {
-		queue.add(new Tuple(_ENVIRON_OFFSET_, offset));
+		queue.add(new Tuple(ENVIRON_OFFSET, offset));
 	}
 
 	/**
@@ -2930,7 +2930,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void argcOffset(int offset) {
-		queue.add(new Tuple(_ARGC_OFFSET_, offset));
+		queue.add(new Tuple(ARGC_OFFSET, offset));
 	}
 
 	/**
@@ -2941,7 +2941,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void argvOffset(int offset) {
-		queue.add(new Tuple(_ARGV_OFFSET_, offset));
+		queue.add(new Tuple(ARGV_OFFSET, offset));
 	}
 
 	/**
@@ -2950,7 +2950,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void applyRS() {
-		queue.add(new Tuple(_APPLY_RS_));
+		queue.add(new Tuple(APPLY_RS));
 	}
 
 	/**
@@ -2962,11 +2962,11 @@ public class AwkTuples implements Serializable {
 	 * @param numFormalParams a int
 	 */
 	public void function(String funcName, int numFormalParams) {
-		queue.add(new Tuple(_FUNCTION_, funcName, numFormalParams));
+		queue.add(new Tuple(FUNCTION, funcName, numFormalParams));
 	}
 
 	// public void callFunction(Address addr, String funcName, int numFormalParams, int numActualParams) {
-	// queue.add(new Tuple(_CALL_FUNCTION_, addr, funcName, numFormalParams, numActualParams)); }
+	// queue.add(new Tuple(CALL_FUNCTION, addr, funcName, numFormalParams, numActualParams)); }
 
 	/**
 	 * <p>
@@ -2983,7 +2983,7 @@ public class AwkTuples implements Serializable {
 			String funcName,
 			int numFormalParams,
 			int numActualParams) {
-		queue.add(new Tuple(_CALL_FUNCTION_, hasFuncAddr, funcName, numFormalParams, numActualParams));
+		queue.add(new Tuple(CALL_FUNCTION, hasFuncAddr, funcName, numFormalParams, numActualParams));
 	}
 
 	/**
@@ -2992,7 +2992,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void setReturnResult() {
-		queue.add(new Tuple(_SET_RETURN_RESULT_));
+		queue.add(new Tuple(SET_RETURN_RESULT));
 	}
 
 	/**
@@ -3001,7 +3001,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void returnFromFunction() {
-		queue.add(new Tuple(_RETURN_FROM_FUNCTION_));
+		queue.add(new Tuple(RETURN_FROM_FUNCTION));
 	}
 
 	/**
@@ -3012,7 +3012,7 @@ public class AwkTuples implements Serializable {
 	 * @param numGlobals a int
 	 */
 	public void setNumGlobals(int numGlobals) {
-		queue.add(new Tuple(_SET_NUM_GLOBALS_, numGlobals));
+		queue.add(new Tuple(SET_NUM_GLOBALS, numGlobals));
 	}
 
 	/**
@@ -3021,7 +3021,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void close() {
-		queue.add(new Tuple(_CLOSE_));
+		queue.add(new Tuple(CLOSE));
 	}
 
 	/**
@@ -3032,7 +3032,7 @@ public class AwkTuples implements Serializable {
 	 * @param count a int
 	 */
 	public void applySubsep(int count) {
-		queue.add(new Tuple(_APPLY_SUBSEP_, count));
+		queue.add(new Tuple(APPLY_SUBSEP, count));
 	}
 
 	/**
@@ -3044,7 +3044,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void deleteArrayElement(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_DELETE_ARRAY_ELEMENT_, offset, isGlobal));
+		queue.add(new Tuple(DELETE_ARRAY_ELEMENT, offset, isGlobal));
 	}
 
 	/**
@@ -3056,7 +3056,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void deleteArray(int offset, boolean isGlobal) {
-		queue.add(new Tuple(_DELETE_ARRAY_, offset, isGlobal));
+		queue.add(new Tuple(DELETE_ARRAY, offset, isGlobal));
 	}
 
 	/**
@@ -3067,7 +3067,7 @@ public class AwkTuples implements Serializable {
 	 * @param addr a {@link org.metricshub.jawk.intermediate.Address} object
 	 */
 	public void setExitAddress(Address addr) {
-		queue.add(new Tuple(_SET_EXIT_ADDRESS_, addr));
+		queue.add(new Tuple(SET_EXIT_ADDRESS, addr));
 	}
 
 	/**
@@ -3078,7 +3078,7 @@ public class AwkTuples implements Serializable {
 	 * @param b a boolean
 	 */
 	public void setWithinEndBlocks(boolean b) {
-		queue.add(new Tuple(_SET_WITHIN_END_BLOCKS_, b));
+		queue.add(new Tuple(SET_WITHIN_END_BLOCKS, b));
 	}
 
 	/**
@@ -3087,7 +3087,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void exitWithCode() {
-		queue.add(new Tuple(_EXIT_WITH_CODE_));
+		queue.add(new Tuple(EXIT_WITH_CODE));
 	}
 
 	/**
@@ -3096,7 +3096,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void exitWithoutCode() {
-		queue.add(new Tuple(_EXIT_WITHOUT_CODE_));
+		queue.add(new Tuple(EXIT_WITHOUT_CODE));
 	}
 
 	/**
@@ -3107,7 +3107,7 @@ public class AwkTuples implements Serializable {
 	 * @param regexpStr a {@link java.lang.String} object
 	 */
 	public void regexp(String regexpStr) {
-		queue.add(new Tuple(_REGEXP_, regexpStr));
+		queue.add(new Tuple(REGEXP, regexpStr));
 	}
 
 	/**
@@ -3116,7 +3116,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void conditionPair() {
-		queue.add(new Tuple(_CONDITION_PAIR_));
+		queue.add(new Tuple(CONDITION_PAIR));
 	}
 
 	/**
@@ -3125,7 +3125,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void isIn() {
-		queue.add(new Tuple(_IS_IN_));
+		queue.add(new Tuple(IS_IN));
 	}
 
 	/**
@@ -3134,7 +3134,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void castInt() {
-		queue.add(new Tuple(_CAST_INT_));
+		queue.add(new Tuple(CAST_INT));
 	}
 
 	/**
@@ -3143,7 +3143,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void castDouble() {
-		queue.add(new Tuple(_CAST_DOUBLE_));
+		queue.add(new Tuple(CAST_DOUBLE));
 	}
 
 	/**
@@ -3152,7 +3152,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void castString() {
-		queue.add(new Tuple(_CAST_STRING_));
+		queue.add(new Tuple(CAST_STRING));
 	}
 
 	/**
@@ -3161,7 +3161,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void scriptThis() {
-		queue.add(new Tuple(_THIS_));
+		queue.add(new Tuple(THIS));
 	}
 
 	/**
@@ -3174,7 +3174,7 @@ public class AwkTuples implements Serializable {
 	 * @param isInitial a boolean
 	 */
 	public void extension(String extensionKeyword, int paramCount, boolean isInitial) {
-		queue.add(new Tuple(_EXTENSION_, extensionKeyword, paramCount, isInitial));
+		queue.add(new Tuple(EXTENSION, extensionKeyword, paramCount, isInitial));
 	}
 
 	/**
