@@ -28,6 +28,15 @@
 
 	<module name="TreeWalker">
 
+		<!-- Suppression of specific rules -->
+		<!-- CHECKSTYLE.OFF: <ruleName> -->
+		<!-- CHECKSTYLE.ON: <ruleName> -->
+		<module name="SuppressionCommentFilter">
+			<property name="offCommentFormat" value="CHECKSTYLE.OFF\: ([\w\|]+)" />
+			<property name="onCommentFormat" value="CHECKSTYLE.ON\: ([\w\|]+)" />
+			<property name="checkFormat" value="$1" />
+		</module>
+
 		<!-- Naming conventions (unaffected by formatter) -->
 		<module name="ConstantName" />
 		<module name="LocalFinalVariableName" />
@@ -46,9 +55,9 @@
 		<module name="UnusedImports" />
 
 		<!-- Size checks (not formatting) -->
-                <module name="MethodLength">
-                        <property name="max" value="2000" />
-                </module>
+		<module name="MethodLength">
+			<property name="max" value="2000" />
+		</module>
 		<module name="ParameterNumber">
 			<property name="tokens" value="METHOD_DEF" />
 		</module>
@@ -79,7 +88,7 @@
 		<module name="RedundantModifier" />
 
 		<!-- Block-level checks (only disabling Opening‐brace style) -->
-		<module name="AvoidNestedBlocks" >
+		<module name="AvoidNestedBlocks">
 			<property name="allowInSwitchCase " value="true" />
 		</module>
 		<module name="NeedBraces" />

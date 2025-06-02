@@ -940,7 +940,7 @@ public class AwkParser {
 	}
 
 	// RECURSIVE DECENT PARSER:
-	// CHECKSTYLE:OFF MethodName
+	// CHECKSTYLE.OFF: MethodName
 	// SCRIPT : \n [RULE_LIST] EOF
 	AST SCRIPT() throws IOException {
 		AST rl;
@@ -2116,7 +2116,7 @@ public class AwkParser {
 		return new ContinueStatement_AST();
 	}
 
-	// CHECKSTYLE:ON MethodName
+	// CHECKSTYLE.ON MethodName
 
 	private void expectKeyword(String keyword) throws IOException {
 		if (token == KEYWORDS.get(keyword)) {
