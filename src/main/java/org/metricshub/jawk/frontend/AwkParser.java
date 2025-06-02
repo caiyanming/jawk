@@ -566,62 +566,75 @@ public class AwkParser {
 		}
 		text.setLength(0);
 		if (c < 0) {
-			return token = _EOF_;
+			token = _EOF_;
+			return token;
 		}
 		if (c == ',') {
 			read();
 			skipWhitespaces();
-			return token = _COMMA_;
+			token = _COMMA_;
+			return token;
 		}
 		if (c == '(') {
 			read();
-			return token = _OPEN_PAREN_;
+			token = _OPEN_PAREN_;
+			return token;
 		}
 		if (c == ')') {
 			read();
-			return token = _CLOSE_PAREN_;
+			token = _CLOSE_PAREN_;
+			return token;
 		}
 		if (c == '{') {
 			read();
 			skipWhitespaces();
-			return token = _OPEN_BRACE_;
+			token = _OPEN_BRACE_;
+			return token;
 		}
 		if (c == '}') {
 			read();
-			return token = _CLOSE_BRACE_;
+			token = _CLOSE_BRACE_;
+			return token;
 		}
 		if (c == '[') {
 			read();
-			return token = _OPEN_BRACKET_;
+			token = _OPEN_BRACKET_;
+			return token;
 		}
 		if (c == ']') {
 			read();
-			return token = _CLOSE_BRACKET_;
+			token = _CLOSE_BRACKET_;
+			return token;
 		}
 		if (c == '$') {
 			read();
-			return token = _DOLLAR_;
+			token = _DOLLAR_;
+			return token;
 		}
 		if (c == '~') {
 			read();
-			return token = _MATCHES_;
+			token = _MATCHES_;
+			return token;
 		}
 		if (c == '?') {
 			read();
 			skipWhitespaces();
-			return token = _QUESTION_MARK_;
+			token = _QUESTION_MARK_;
+			return token;
 		}
 		if (c == ':') {
 			read();
 			skipWhitespaces();
-			return token = _COLON_;
+			token = _COLON_;
+			return token;
 		}
 		if (c == '&') {
 			read();
 			if (c == '&') {
 				read();
 				skipWhitespaces();
-				return token = _AND_;
+				token = _AND_;
+				return token;
 			}
 			throw new LexerException("use && for logical and");
 		}
@@ -630,104 +643,131 @@ public class AwkParser {
 			if (c == '|') {
 				read();
 				skipWhitespaces();
-				return token = _OR_;
+				token = _OR_;
+				return token;
 			}
-			return token = _PIPE_;
+			token = _PIPE_;
+			return token;
 		}
 		if (c == '=') {
 			read();
 			if (c == '=') {
 				read();
-				return token = _EQ_;
+				token = _EQ_;
+				return token;
 			}
-			return token = _EQUALS_;
+			token = _EQUALS_;
+			return token;
 		}
 		if (c == '+') {
 			read();
 			if (c == '=') {
 				read();
-				return token = _PLUS_EQ_;
+				token = _PLUS_EQ_;
+				return token;
 			} else if (c == '+') {
 				read();
-				return token = _INC_;
+				token = _INC_;
+				return token;
 			}
-			return token = _PLUS_;
+			token = _PLUS_;
+			return token;
 		}
 		if (c == '-') {
 			read();
 			if (c == '=') {
 				read();
-				return token = _MINUS_EQ_;
+				token = _MINUS_EQ_;
+				return token;
 			} else if (c == '-') {
 				read();
-				return token = _DEC_;
+				token = _DEC_;
+				return token;
 			}
-			return token = _MINUS_;
+			token = _MINUS_;
+			return token;
 		}
 		if (c == '*') {
 			read();
 			if (c == '=') {
 				read();
-				return token = _MULT_EQ_;
+				token = _MULT_EQ_;
+				return token;
 			} else if (c == '*') {
 				read();
-				return token = _POW_;
+				token = _POW_;
+				return token;
 			}
-			return token = _MULT_;
+			token = _MULT_;
+			return token;
 		}
 		if (c == '/') {
 			read();
 			if (c == '=') {
 				read();
-				return token = _DIV_EQ_;
+				token = _DIV_EQ_;
+				return token;
 			}
-			return token = _DIVIDE_;
+			token = _DIVIDE_;
+			return token;
 		}
 		if (c == '%') {
 			read();
 			if (c == '=') {
 				read();
-				return token = _MOD_EQ_;
+				token = _MOD_EQ_;
+				return token;
 			}
-			return token = _MOD_;
+			token = _MOD_;
+			return token;
 		}
 		if (c == '^') {
 			read();
 			if (c == '=') {
 				read();
-				return token = _POW_EQ_;
+				token = _POW_EQ_;
+				return token;
 			}
-			return token = _POW_;
+			token = _POW_;
+			return token;
 		}
 		if (c == '>') {
 			read();
 			if (c == '=') {
 				read();
-				return token = _GE_;
+				token = _GE_;
+				return token;
 			} else if (c == '>') {
 				read();
-				return token = _APPEND_;
+				token = _APPEND_;
+				return token;
 			}
-			return token = _GT_;
+			token = _GT_;
+			return token;
 		}
 		if (c == '<') {
 			read();
 			if (c == '=') {
 				read();
-				return token = _LE_;
+				token = _LE_;
+				return token;
 			}
-			return token = _LT_;
+			token = _LT_;
+			return token;
 		}
 		if (c == '!') {
 			read();
 			if (c == '=') {
 				read();
-				return token = _NE_;
+				token = _NE_;
+				return token;
 			} else if (c == '~') {
 				read();
-				return token = _NOT_MATCHES_;
+				token = _NOT_MATCHES_;
+				return token;
 			}
-			return token = _NOT_;
+			token = _NOT_;
+			return token;
 		}
 
 		if (c == '.') {
@@ -741,7 +781,8 @@ public class AwkParser {
 			if (!hit) {
 				throw new LexerException("Decimal point encountered with no values on either side.");
 			}
-			return token = _DOUBLE_;
+			token = _DOUBLE_;
+			return token;
 		}
 
 		if (Character.isDigit(c)) {
@@ -754,7 +795,8 @@ public class AwkParser {
 					while (c > 0 && Character.isDigit(c)) {
 						read();
 					}
-					return token = _DOUBLE_;
+					token = _DOUBLE_;
+					return token;
 				} else if (Character.isDigit(c)) {
 					// integer or double.
 					read();
@@ -763,7 +805,8 @@ public class AwkParser {
 				}
 			}
 			// integer, only
-			return token = _INTEGER_;
+			token = _INTEGER_;
+			return token;
 		}
 
 		if (Character.isJavaIdentifierStart(c)) {
@@ -774,7 +817,8 @@ public class AwkParser {
 			// check for certain keywords
 			// extensions override built-in stuff
 			if (extensions.get(text.toString()) != null) {
-				return token = _EXTENSION_;
+				token = _EXTENSION_;
+				return token;
 			}
 			Integer kwToken = KEYWORDS.get(text.toString());
 			if (kwToken != null) {
@@ -783,7 +827,8 @@ public class AwkParser {
 						||
 						(!additional_type_functions && (kw == _KW_INTEGER_ || kw == _KW_DOUBLE_ || kw == _KW_STRING_));
 				if (!treatAsIdentifier) {
-					return token = kw;
+					token = kw;
+					return token;
 				}
 				// treat as identifier
 			}
@@ -791,14 +836,17 @@ public class AwkParser {
 			if (builtinIdx != null) {
 				int idx = builtinIdx.intValue();
 				if (additional_functions || idx != F_EXEC) {
-					return token = _BUILTIN_FUNC_NAME_;
+					token = _BUILTIN_FUNC_NAME_;
+					return token;
 				}
 				// treat as identifier
 			}
 			if (c == '(') {
-				return token = _FUNC_ID_;
+				token = _FUNC_ID_;
+				return token;
 			} else {
-				return token = _ID_;
+				token = _ID_;
+				return token;
 			}
 		}
 
@@ -819,7 +867,8 @@ public class AwkParser {
 					read();
 				}
 			}
-			return token = _SEMICOLON_;
+			token = _SEMICOLON_;
+			return token;
 		}
 
 		if (c == '\n') {
@@ -832,14 +881,16 @@ public class AwkParser {
 				}
 				read();
 			}
-			return token = _NEWLINE_;
+			token = _NEWLINE_;
+			return token;
 		}
 
 		if (c == '"') {
 			// string
 			read();
 			readString();
-			return token = _STRING_;
+			token = _STRING_;
+			return token;
 		}
 
 		/*
