@@ -84,7 +84,7 @@ import org.slf4j.Logger;
  *
  * @author Danny Daglas
  */
-public class AwkParameters {
+public final class AwkParameters {
 
 	private static final Logger LOG = AwkLogger.getLogger(AwkParameters.class);
 
