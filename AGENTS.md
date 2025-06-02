@@ -22,7 +22,7 @@ Compatibility tests are run with `mvn verify` to assess the compatibility with o
 
 ## Code quality reports
 
-Code quality checks are performed during the build with `mvn verify` (checkstyle, pmd, and spotbugs). Currently, there are tons of checkstyle issues, which are to be ignored for now. But pmd and spotbugs issues will fail the build. Fix any problem reported here before committing and submitting your code!
+Code quality checks are performed during the build with `mvn verify` (checkstyle, pmd, and spotbugs). Fix any problem reported here before committing and submitting your code!
 
 ## Documentation
 
