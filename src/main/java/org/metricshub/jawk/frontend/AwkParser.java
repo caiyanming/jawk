@@ -2642,16 +2642,16 @@ public class AwkParser {
 			}
 
 			if (reqInput) {
-				Address input_loop_address = null;
-				Address no_more_input = null;
+				Address inputLoopAddress = null;
+				Address noMoreInput = null;
 
-				input_loop_address = tuples.createAddress("input_loop_address");
-				tuples.address(input_loop_address);
+				inputLoopAddress = tuples.createAddress("input_loop_address");
+				tuples.address(inputLoopAddress);
 
 				ptr = this;
 
-				no_more_input = tuples.createAddress("no_more_input");
-				tuples.consumeInput(no_more_input);
+				noMoreInput = tuples.createAddress("no_more_input");
+				tuples.consumeInput(noMoreInput);
 
 				// grab all INPUT RULES
 				while (ptr != null) {
@@ -2663,10 +2663,10 @@ public class AwkParser {
 				}
 				tuples.address(nextAddress);
 
-				tuples.gotoAddress(input_loop_address);
+				tuples.gotoAddress(inputLoopAddress);
 
 				if (reqInput) {
-					tuples.address(no_more_input);
+					tuples.address(noMoreInput);
 					// compiler has issue with missing nop here
 					tuples.nop();
 				}
@@ -3176,8 +3176,8 @@ public class AwkParser {
 				ArrayReferenceAst arr = (ArrayReferenceAst) getAst1();
 				// push the index
 				assert arr.getAst2() != null;
-				int arr_ast2_result = arr.getAst2().populateTuples(tuples);
-				assert arr_ast2_result == 1;
+				int arrAst2Result = arr.getAst2().populateTuples(tuples);
+				assert arrAst2Result == 1;
 				// push the array ref itself
 				IDAst idAst = (IDAst) arr.getAst1();
 				if (idAst.isScalar()) {
@@ -3528,8 +3528,8 @@ public class AwkParser {
 			int cnt = 0;
 			while (ptr != null) {
 				assert ptr.getAst1() != null;
-				int ptr_ast1_result = ptr.getAst1().populateTuples(tuples);
-				assert ptr_ast1_result == 1;
+				int ptrAst1Result = ptr.getAst1().populateTuples(tuples);
+				assert ptrAst1Result == 1;
 				++cnt;
 				ptr = ptr.getAst2();
 			}
@@ -3679,12 +3679,12 @@ public class AwkParser {
 				// condition parameters appropriately
 				// (based on function parameter semantics)
 				if (aparam instanceof IDAst) {
-					IDAst aparam_id_ast = (IDAst) aparam;
+					IDAst aparamIdAst = (IDAst) aparam;
 					if (fparam.isScalar()) {
-						aparam_id_ast.setScalar(true);
+						aparamIdAst.setScalar(true);
 					}
 					if (fparam.isArray()) {
-						aparam_id_ast.setArray(true);
+						aparamIdAst.setArray(true);
 					}
 				}
 				// next
@@ -3730,22 +3730,22 @@ public class AwkParser {
 			if (!functionProxy.isDefined()) {
 				throw new SemanticException("function " + functionProxy + " not defined");
 			}
-			int actual_param_count;
+			int actualParamCountLocal;
 			if (getAst1() == null) {
-				actual_param_count = 0;
+				actualParamCountLocal = 0;
 			} else {
-				actual_param_count = actualParamCount();
+				actualParamCountLocal = actualParamCount();
 			}
-			int formal_param_count = functionProxy.getFunctionParamCount();
-			if (formal_param_count < actual_param_count) {
+			int formalParamCount = functionProxy.getFunctionParamCount();
+			if (formalParamCount < actualParamCountLocal) {
 				throw new SemanticException(
 						"the "
 								+ functionProxy.getFunctionName()
 								+ " function"
 								+ " only accepts at most "
-								+ formal_param_count
+								+ formalParamCount
 								+ " parameter(s), not "
-								+ actual_param_count);
+								+ actualParamCountLocal);
 			}
 			if (getAst1() != null) {
 				functionProxy.checkActualToFormalParameters(getAst1());
@@ -3759,26 +3759,26 @@ public class AwkParser {
 				throw new SemanticException("function " + functionProxy + " not defined");
 			}
 			tuples.scriptThis();
-			int actual_param_count;
+			int actualParamCountLocal;
 			if (getAst1() == null) {
-				actual_param_count = 0;
+				actualParamCountLocal = 0;
 			} else {
-				actual_param_count = getAst1().populateTuples(tuples);
+				actualParamCountLocal = getAst1().populateTuples(tuples);
 			}
-			int formal_param_count = functionProxy.getFunctionParamCount();
-			if (formal_param_count < actual_param_count) {
+			int formalParamCount = functionProxy.getFunctionParamCount();
+			if (formalParamCount < actualParamCountLocal) {
 				throw new SemanticException(
 						"the "
 								+ functionProxy.getFunctionName()
 								+ " function"
 								+ " only accepts at most "
-								+ formal_param_count
+								+ formalParamCount
 								+ " parameter(s), not "
-								+ actual_param_count);
+								+ actualParamCountLocal);
 			}
 
 			functionProxy.checkActualToFormalParameters(getAst1());
-			tuples.callFunction(functionProxy, functionProxy.getFunctionName(), formal_param_count, actual_param_count);
+			tuples.callFunction(functionProxy, functionProxy.getFunctionName(), formalParamCount, actualParamCountLocal);
 			popSourceLineNumber(tuples);
 			return 1;
 		}
@@ -4215,21 +4215,21 @@ public class AwkParser {
 
 	private final class IntegerAst extends ScalarExpressionAst implements NonStatementAst {
 
-		private Long I;
+		private Long value;
 
-		private IntegerAst(Long I) {
-			this.I = I;
+		private IntegerAst(Long value) {
+			this.value = value;
 		}
 
 		@Override
 		public String toString() {
-			return super.toString() + " (" + I + ")";
+			return super.toString() + " (" + value + ")";
 		}
 
 		@Override
 		public int populateTuples(AwkTuples tuples) {
 			pushSourceLineNumber(tuples);
-			tuples.push(I);
+			tuples.push(value);
 			popSourceLineNumber(tuples);
 			return 1;
 		}
@@ -4241,26 +4241,26 @@ public class AwkParser {
 	 */
 	private final class DoubleAst extends ScalarExpressionAst implements NonStatementAst {
 
-		private Object D;
+		private Object value;
 
-		private DoubleAst(Double D) {
-			double d = D.doubleValue();
+		private DoubleAst(Double val) {
+			double d = val.doubleValue();
 			if (d == (int) d) {
-				this.D = (int) d;
+				this.value = (int) d;
 			} else {
-				this.D = d;
+				this.value = d;
 			}
 		}
 
 		@Override
 		public String toString() {
-			return super.toString() + " (" + D + ")";
+			return super.toString() + " (" + value + ")";
 		}
 
 		@Override
 		public int populateTuples(AwkTuples tuples) {
 			pushSourceLineNumber(tuples);
-			tuples.push(D);
+			tuples.push(value);
 			popSourceLineNumber(tuples);
 			return 1;
 		}
@@ -4272,22 +4272,22 @@ public class AwkParser {
 	 */
 	private final class StringAst extends ScalarExpressionAst implements NonStatementAst {
 
-		private String S;
+		private String value;
 
 		private StringAst(String str) {
 			assert str != null;
-			this.S = str;
+			this.value = str;
 		}
 
 		@Override
 		public String toString() {
-			return super.toString() + " (" + S + ")";
+			return super.toString() + " (" + value + ")";
 		}
 
 		@Override
 		public int populateTuples(AwkTuples tuples) {
 			pushSourceLineNumber(tuples);
-			tuples.push(S);
+			tuples.push(value);
 			popSourceLineNumber(tuples);
 			return 1;
 		}
@@ -4438,8 +4438,8 @@ public class AwkParser {
 				IDAst idAst = (IDAst) arrAst.getAst1();
 				assert idAst != null;
 				assert arrAst.getAst2() != null;
-				int arr_ast2_result = arrAst.getAst2().populateTuples(tuples);
-				assert arr_ast2_result == 1;
+				int arrAst2Result = arrAst.getAst2().populateTuples(tuples);
+				assert arrAst2Result == 1;
 				tuples.incArrayRef(idAst.offset, idAst.isGlobal);
 			} else if (getAst1() instanceof DollarExpressionAst) {
 				DollarExpressionAst dollarExpr = (DollarExpressionAst) getAst1();
@@ -4488,8 +4488,8 @@ public class AwkParser {
 				IDAst idAst = (IDAst) arrAst.getAst1();
 				assert idAst != null;
 				assert arrAst.getAst2() != null;
-				int arr_ast2_result = arrAst.getAst2().populateTuples(tuples);
-				assert arr_ast2_result == 1;
+				int arrAst2Result = arrAst.getAst2().populateTuples(tuples);
+				assert arrAst2Result == 1;
 				tuples.decArrayRef(idAst.offset, idAst.isGlobal);
 			} else if (getAst1() instanceof DollarExpressionAst) {
 				DollarExpressionAst dollarExpr = (DollarExpressionAst) getAst1();
@@ -4538,14 +4538,14 @@ public class AwkParser {
 				IDAst idAst = (IDAst) arrAst.getAst1();
 				assert idAst != null;
 				assert arrAst.getAst2() != null;
-				int arr_ast2_result = arrAst.getAst2().populateTuples(tuples);
-				assert arr_ast2_result == 1;
+				int arrAst2Result = arrAst.getAst2().populateTuples(tuples);
+				assert arrAst2Result == 1;
 				tuples.incArrayRef(idAst.offset, idAst.isGlobal);
 			} else if (getAst1() instanceof DollarExpressionAst) {
 				DollarExpressionAst dollarExpr = (DollarExpressionAst) getAst1();
 				assert dollarExpr.getAst1() != null;
-				int dollarast_ast1_result = dollarExpr.getAst1().populateTuples(tuples);
-				assert dollarast_ast1_result == 1;
+				int dollarAst1Result = dollarExpr.getAst1().populateTuples(tuples);
+				assert dollarAst1Result == 1;
 				tuples.incDollarRef();
 			} else {
 				throw new NotImplementedError("unhandled postinc for " + getAst1());
@@ -4575,14 +4575,14 @@ public class AwkParser {
 				IDAst idAst = (IDAst) arrAst.getAst1();
 				assert idAst != null;
 				assert arrAst.getAst2() != null;
-				int arr_ast2_result = arrAst.getAst2().populateTuples(tuples);
-				assert arr_ast2_result == 1;
+				int arrAst2Result = arrAst.getAst2().populateTuples(tuples);
+				assert arrAst2Result == 1;
 				tuples.decArrayRef(idAst.offset, idAst.isGlobal);
 			} else if (getAst1() instanceof DollarExpressionAst) {
 				DollarExpressionAst dollarExpr = (DollarExpressionAst) getAst1();
 				assert dollarExpr.getAst1() != null;
-				int dollarast_ast1_result = dollarExpr.getAst1().populateTuples(tuples);
-				assert dollarast_ast1_result == 1;
+				int dollarAst1Result = dollarExpr.getAst1().populateTuples(tuples);
+				assert dollarAst1Result == 1;
 				tuples.decDollarRef();
 			} else {
 				throw new NotImplementedError("unhandled postinc for " + getAst1());
@@ -4657,10 +4657,10 @@ public class AwkParser {
 				JawkExtension extension = extensions.get(extensionKeyword);
 				int argCount = countParams((FunctionCallParamListAst) getAst1());
 				/// Get all required assoc array parameters:
-				int[] req_array_idxs = extension.getAssocArrayParameterPositions(extensionKeyword, argCount);
-				assert req_array_idxs != null;
+				int[] reqArrayIdxs = extension.getAssocArrayParameterPositions(extensionKeyword, argCount);
+				assert reqArrayIdxs != null;
 
-				for (int idx : req_array_idxs) {
+				for (int idx : reqArrayIdxs) {
 					AST paramAst = getParamAst((FunctionCallParamListAst) getAst1(), idx);
 					assert getAst1() instanceof FunctionCallParamListAst;
 					// if the parameter is an IDAst...
@@ -4812,8 +4812,8 @@ public class AwkParser {
 				ArrayReferenceAst arr = (ArrayReferenceAst) getAst2();
 				// push the index
 				assert arr.getAst2() != null;
-				int arr_ast2_result = arr.getAst2().populateTuples(tuples);
-				assert arr_ast2_result == 1;
+				int arrAst2Result = arr.getAst2().populateTuples(tuples);
+				assert arrAst2Result == 1;
 				// push the array ref itself
 				IDAst idAst = (IDAst) arr.getAst1();
 				tuples.assignArray(idAst.offset, idAst.isGlobal);
