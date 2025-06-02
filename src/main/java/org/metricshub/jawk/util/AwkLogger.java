@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * Utility class to handle SLF4J logging and prevent any stupid behavior,
  * like logging its own initialization, which we don't want in most cases.
  */
-public class AwkLogger {
+public final class AwkLogger {
 	static {
 		System.setProperty("slf4j.internal.verbosity", "WARN");
 	}
