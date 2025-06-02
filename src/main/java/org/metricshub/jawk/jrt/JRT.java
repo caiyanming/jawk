@@ -1262,13 +1262,13 @@ public class JRT {
 	 * </p>
 	 *
 	 * @param locale a {@link java.util.Locale} object
-	 * @param fmt_arg a {@link java.lang.String} object
+	 * @param fmtArg a {@link java.lang.String} object
 	 * @param arr an array of {@link java.lang.Object} objects
 	 * @return a {@link java.lang.String} object
 	 * @throws java.util.IllegalFormatException if any.
 	 */
-	public static String sprintfNoCatch(Locale locale, String fmt_arg, Object... arr) throws IllegalFormatException {
-		return String.format(locale, fmt_arg, arr);
+	public static String sprintfNoCatch(Locale locale, String fmtArg, Object... arr) throws IllegalFormatException {
+		return String.format(locale, fmtArg, arr);
 	}
 
 	/**
@@ -1277,11 +1277,11 @@ public class JRT {
 	 * </p>
 	 *
 	 * @param locale a {@link java.util.Locale} object
-	 * @param fmt_arg a {@link java.lang.String} object
+	 * @param fmtArg a {@link java.lang.String} object
 	 * @param arr an array of {@link java.lang.Object} objects
 	 */
-	public static void printfNoCatch(Locale locale, String fmt_arg, Object... arr) {
-		System.out.print(sprintfNoCatch(locale, fmt_arg, arr));
+	public static void printfNoCatch(Locale locale, String fmtArg, Object... arr) {
+		System.out.print(sprintfNoCatch(locale, fmtArg, arr));
 	}
 
 	/**
@@ -1291,11 +1291,11 @@ public class JRT {
 	 *
 	 * @param ps a {@link java.io.PrintStream} object
 	 * @param locale a {@link java.util.Locale} object
-	 * @param fmt_arg a {@link java.lang.String} object
+	 * @param fmtArg a {@link java.lang.String} object
 	 * @param arr an array of {@link java.lang.Object} objects
 	 */
-	public static void printfNoCatch(PrintStream ps, Locale locale, String fmt_arg, Object... arr) {
-		ps.print(sprintfNoCatch(locale, fmt_arg, arr));
+	public static void printfNoCatch(PrintStream ps, Locale locale, String fmtArg, Object... arr) {
+		ps.print(sprintfNoCatch(locale, fmtArg, arr));
 	}
 
 	/**
