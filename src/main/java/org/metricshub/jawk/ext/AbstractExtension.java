@@ -46,10 +46,10 @@ public abstract class AbstractExtension implements JawkExtension {
 	/** {@inheritDoc} */
 	@Override
 	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Extension needs direct access to runtime, VM and settings")
-	public void init(VariableManager vm, JRT jrt, final AwkSettings settings) {
-		this.vm = vm;
-		this.jrt = jrt;
-		this.settings = settings;
+	public void init(VariableManager vmParam, JRT runtime, final AwkSettings conf) {
+		this.vm = vmParam;
+		this.jrt = runtime;
+		this.settings = conf;
 	}
 
 	/**
