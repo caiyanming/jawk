@@ -1995,9 +1995,6 @@ public class AwkParser {
 	AST GETLINE_EXPRESSION(AST pipeExpr, boolean notInPrintRoot, boolean allowInKeyword) throws IOException {
 		expectKeyword("getline");
 		AST lvalue = LVALUE(notInPrintRoot, allowInKeyword);
-		if (lvalue == null) {
-			throw new ParserException("Missing lvalue in getline expression");
-		}
 		if (token == LT) {
 			lexer();
 			AST assignmentExpr = ASSIGNMENT_EXPRESSION(notInPrintRoot, allowInKeyword, false); // do NOT allow multidim

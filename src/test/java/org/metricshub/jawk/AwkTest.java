@@ -542,4 +542,10 @@ public class AwkTest {
 				"42\n\n",
 				runAwk("BEGIN { SUBSEP=\"@\"; idx = 1 SUBSEP 2; a[idx]=42; SUBSEP=\":\"; print a[idx]; print a[1,2]; }", null));
 	}
+
+	@Test
+	public void testGetlineDefaultVariable() throws Exception {
+		String script = "BEGIN { while (getline && n++ < 2) print; exit }";
+		assertEquals("a\nb\n", runAwk(script, "a\nb\nc\n"));
+	}
 }
