@@ -84,7 +84,7 @@ import org.slf4j.Logger;
  *
  * @author Danny Daglas
  */
-public class AwkParameters {
+public final class AwkParameters {
 
 	private static final Logger LOG = AwkLogger.getLogger(AwkParameters.class);
 
@@ -100,6 +100,11 @@ public class AwkParameters {
 		}
 		JAR_NAME = myName;
 	}
+
+	/**
+	 * Private constructor to prevent instantiation.
+	 */
+	private AwkParameters() {}
 
 	/**
 	 * Parses AWK command line parameters,
@@ -196,9 +201,9 @@ public class AwkParameters {
 						.addScriptSource(
 								new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, new StringReader(scriptContent), false));
 			} else {
-				// XXX Maybe we should delay that to a later stage? The only difference would be, that errors (for example: File
-				// not found, or unable to read) would occure later
-				// initialize the Readers or InputStreams
+				// Initialize the Readers or InputStreams immediately so any
+				// file related errors, such as a missing script file or read
+				// failure, are detected as early as possible.
 				for (ScriptSource scriptSource : settings.getScriptSources()) {
 					try {
 						if (scriptSource.isIntermediate()) {
