@@ -5160,7 +5160,8 @@ public class AwkParser {
 				if (set != null && set.contains(id)) {
 					map = localIds.get(currentFunctionName);
 					if (map == null) {
-						localIds.put(currentFunctionName, map = new HashMap<String, IDAst>());
+						map = new HashMap<String, IDAst>();
+						localIds.put(currentFunctionName, map);
 					}
 				} else {
 					map = globalIds;
@@ -5192,7 +5193,8 @@ public class AwkParser {
 		int addFunctionParameter(String functionName, String id) {
 			Set<String> set = functionParameters.get(functionName);
 			if (set == null) {
-				functionParameters.put(functionName, set = new HashSet<String>());
+				set = new HashSet<String>();
+				functionParameters.put(functionName, set);
 			}
 			if (set.contains(id)) {
 				throw new ParserException("multiply defined parameter " + id + " in function " + functionName);
@@ -5201,7 +5203,8 @@ public class AwkParser {
 			set.add(id);
 			Map<String, IDAst> map = localIds.get(functionName);
 			if (map == null) {
-				localIds.put(functionName, map = new HashMap<String, IDAst>());
+				map = new HashMap<String, IDAst>();
+				localIds.put(functionName, map);
 			}
 			assert map != null;
 			IDAst idAst = map.get(id);
@@ -5234,7 +5237,8 @@ public class AwkParser {
 			}
 			FunctionProxy functionProxy = functionProxies.get(functionName);
 			if (functionProxy == null) {
-				functionProxies.put(functionName, functionProxy = new FunctionProxy(functionName));
+				functionProxy = new FunctionProxy(functionName);
+				functionProxies.put(functionName, functionProxy);
 			}
 			FunctionDefAst functionDef = new FunctionDefAst(functionName, paramList, block);
 			functionProxy.setFunctionDefinition(functionDef);
@@ -5244,7 +5248,8 @@ public class AwkParser {
 		AST addFunctionCall(String id, AST paramList) {
 			FunctionProxy functionProxy = functionProxies.get(id);
 			if (functionProxy == null) {
-				functionProxies.put(id, functionProxy = new FunctionProxy(id));
+				functionProxy = new FunctionProxy(id);
+				functionProxies.put(id, functionProxy);
 			}
 			return new FunctionCallAst(functionProxy, paramList);
 		}
