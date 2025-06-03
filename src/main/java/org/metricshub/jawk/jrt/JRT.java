@@ -94,6 +94,10 @@ public class JRT {
 
 	private static final boolean IS_WINDOWS = System.getProperty("os.name").indexOf("Windows") >= 0;
 
+	/** Regular expression to detect numeric strings (AWK semantics). */
+	private static final Pattern NUMERIC_PATTERN = Pattern
+			.compile("^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?$");
+
 	private VariableManager vm;
 
 	private Map<String, Process> outputProcesses = new HashMap<String, Process>();
@@ -219,10 +223,13 @@ public class JRT {
 		// it to a Double. Because if it's a literal representation of a number,
 		// we will need to display it as a number ("12.00" --> 12)
 		if (!(o instanceof Number)) {
-			try {
-				o = Double.parseDouble(o.toString());
-			} catch (NumberFormatException e) {
-				LOG.debug("Failed to parse number", e);
+			String s = o.toString();
+			if (NUMERIC_PATTERN.matcher(s).matches()) {
+				try {
+					o = Double.parseDouble(s);
+				} catch (NumberFormatException e) {
+					LOG.debug("Failed to parse number", e);
+				}
 			}
 		}
 
