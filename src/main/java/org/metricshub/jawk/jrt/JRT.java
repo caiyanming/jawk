@@ -221,7 +221,7 @@ public class JRT {
 		// we will need to display it as a number ("12.00" --> 12)
 		if (!(o instanceof Number)) {
 			try {
-				o = Double.parseDouble(o.toString());
+				o = new BigDecimal(o.toString()).doubleValue();
 			} catch (NumberFormatException e) {
 				LOG.debug("Failed to parse number", e);
 			}
