@@ -42,6 +42,17 @@ public class AwkTestHelper {
 		return tempDirectory;
 	}
 
+	/** Result of an AWK script execution */
+	static class RunResult {
+		final String output;
+		final int exitCode;
+
+		RunResult(String output, int exitCode) {
+			this.output = output;
+			this.exitCode = exitCode;
+		}
+	}
+
 	/**
 	 * Executes the specified AWK script
 	 * <p>
@@ -55,6 +66,47 @@ public class AwkTestHelper {
 	 */
 	static String runAwk(File scriptFile, File inputFile) throws IOException, ExitException, ClassNotFoundException {
 		return runAwk(scriptFile, Collections.singletonList(inputFile));
+	}
+
+	/**
+	 * Executes the specified AWK script and returns both output and exit code.
+	 *
+	 * @param scriptFile File containing the AWK script to execute
+	 * @param inputFile Path to the file to be parsed by the AWK script
+	 * @return result of the execution as a {@link RunResult}
+	 * @throws IOException on I/O problems
+	 * @throws ClassNotFoundException when loading the interpreter fails
+	 */
+	static RunResult runAwkWithExitCode(File scriptFile, File inputFile)
+			throws IOException,
+			ClassNotFoundException {
+		AwkSettings settings = new AwkSettings();
+
+		// Default record separator should support both CRLF and LF
+		settings.setDefaultRS("\r?\n");
+		settings.setDefaultORS("\n");
+
+		// Set the input file
+		settings.addNameValueOrFileName(inputFile.getAbsolutePath());
+
+		// Create the OutputStream, to collect the result as a String
+		ByteArrayOutputStream resultBytesStream = new ByteArrayOutputStream();
+		settings.setOutputStream(new PrintStream(resultBytesStream));
+
+		// Sets the AWK script to execute
+		settings.addScriptSource(new ScriptFileSource(scriptFile.getAbsolutePath()));
+
+		// Execute the awk script against the specified input
+		Awk awk = new Awk();
+		int exit = 0;
+		try {
+			awk.invoke(settings);
+		} catch (ExitException e) {
+			exit = e.getCode();
+		}
+
+		// Return the output and the exit code
+		return new RunResult(resultBytesStream.toString("UTF-8"), exit);
 	}
 
 	/**
