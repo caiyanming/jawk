@@ -179,6 +179,9 @@ public class AVM implements AwkInterpreter, VariableManager {
 		}
 
 		jrt = new JRT(this); // this = VariableManager
+		if (settings != null) {
+			jrt.setStreams(settings.getOutputStream(), System.err);
+		}
 		for (JawkExtension ext : this.extensions.values()) {
 			ext.init(this, jrt, settings); // this = VariableManager
 		}
@@ -1242,7 +1245,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 				case AwkTuples.SYSTEM: {
 					// stack[0] = command string
 					String s = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
-					push(JRT.jrtSystem(s));
+					push(jrt.jrtSystem(s));
 					position.next();
 					break;
 				}
