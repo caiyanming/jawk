@@ -511,24 +511,10 @@ public class AVM implements AwkInterpreter, VariableManager {
 				case AwkTuples.NOT: {
 					// stack[0] = item to logically negate
 
-					// if int, then check for 0
-					// if double, then check for 0
-					// if String, then check for "" or double value of "0"
 					Object o = pop();
-					boolean result;
-					if (o instanceof Integer) {
-						result = ((Integer) o).intValue() != 0;
-					} else if (o instanceof Long) {
-						result = ((Long) o).longValue() != 0;
-					} else if (o instanceof Double) {
-						result = ((Double) o).doubleValue() != 0;
-					} else if (o instanceof String) {
-						result = (o.toString().length() > 0);
-					} else if (o instanceof UninitializedObject) {
-						result = false;
-					} else {
-						throw new Error("Unknown operandStack type: " + o.getClass() + " for value " + o);
-					}
+
+					boolean result = jrt.toBoolean(o);
+
 					if (result) {
 						push(0);
 					} else {
