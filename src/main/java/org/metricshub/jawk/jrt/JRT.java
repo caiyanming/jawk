@@ -49,6 +49,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.math.BigDecimal;
 import org.metricshub.jawk.intermediate.UninitializedObject;
 import org.metricshub.jawk.util.AwkLogger;
 import org.slf4j.Logger;
@@ -93,10 +94,6 @@ public class JRT {
 	private static final Logger LOG = AwkLogger.getLogger(JRT.class);
 
 	private static final boolean IS_WINDOWS = System.getProperty("os.name").indexOf("Windows") >= 0;
-
-	/** Regular expression to detect numeric strings (AWK semantics). */
-	private static final Pattern NUMERIC_PATTERN = Pattern
-			.compile("^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?$");
 
 	private VariableManager vm;
 
@@ -223,13 +220,10 @@ public class JRT {
 		// it to a Double. Because if it's a literal representation of a number,
 		// we will need to display it as a number ("12.00" --> 12)
 		if (!(o instanceof Number)) {
-			String s = o.toString();
-			if (NUMERIC_PATTERN.matcher(s).matches()) {
-				try {
-					o = Double.parseDouble(s);
-				} catch (NumberFormatException e) {
-					LOG.debug("Failed to parse number", e);
-				}
+			try {
+				o = new BigDecimal(o.toString()).doubleValue();
+			} catch (NumberFormatException e) {
+				LOG.debug("Failed to parse number", e);
 			}
 		}
 
