@@ -771,23 +771,28 @@ public class JRT {
 	 */
 	public void jrtParseFields() {
 		String fsString = vm.getFS().toString();
-		Enumeration<Object> tokenizer;
-		if (fsString.equals(" ")) {
-			tokenizer = new StringTokenizer(inputLine);
-		} else if (fsString.length() == 1) {
-			tokenizer = new SingleCharacterTokenizer(inputLine, fsString.charAt(0));
-		} else if (fsString.equals("")) {
-			tokenizer = new CharacterTokenizer(inputLine);
-		} else {
-			tokenizer = new RegexTokenizer(inputLine, fsString);
-		}
-
 		assert inputLine != null;
+
 		inputFields.clear();
 		inputFields.add(inputLine); // $0
-		while (tokenizer.hasMoreElements()) {
-			inputFields.add((String) tokenizer.nextElement());
+
+		if (!inputLine.isEmpty()) {
+			Enumeration<Object> tokenizer;
+			if (fsString.equals(" ")) {
+				tokenizer = new StringTokenizer(inputLine);
+			} else if (fsString.length() == 1) {
+				tokenizer = new SingleCharacterTokenizer(inputLine, fsString.charAt(0));
+			} else if (fsString.equals("")) {
+				tokenizer = new CharacterTokenizer(inputLine);
+			} else {
+				tokenizer = new RegexTokenizer(inputLine, fsString);
+			}
+
+			while (tokenizer.hasMoreElements()) {
+				inputFields.add((String) tokenizer.nextElement());
+			}
 		}
+
 		// recalc NF
 		recalculateNF();
 	}
