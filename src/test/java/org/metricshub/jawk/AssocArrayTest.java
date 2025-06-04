@@ -3,9 +3,33 @@ package org.metricshub.jawk;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.metricshub.jawk.intermediate.UninitializedObject;
 import org.metricshub.jawk.jrt.AssocArray;
 
 public class AssocArrayTest {
+
+	@Test
+	public void testInOperatorWithNumericAndStringKeys() {
+		AssocArray array = new AssocArray(false);
+		array.put(1L, "one");
+		array.put("bar", "barValue");
+
+		assertTrue(array.isIn(1L));
+		assertTrue(array.isIn("1"));
+		assertTrue(array.isIn("bar"));
+		assertFalse(array.isIn("foo"));
+		assertEquals(2, array.keySet().size());
+	}
+
+	@Test
+	public void testInOperatorWithNullKey() {
+		AssocArray array = new AssocArray(false);
+		array.put(0L, "zero");
+
+		assertTrue(array.isIn(null));
+		assertTrue(array.isIn(new UninitializedObject()));
+		assertEquals(1, array.keySet().size());
+	}
 
 	@Test
 	public void testRemoveNumericStringKey() {
