@@ -3886,7 +3886,7 @@ public class AwkParser {
 			} else if (fIdx == BUILTIN_FUNC_NAMES.get("log")) {
 				int ast1Result = getAst1().populateTuples(tuples);
 				if (ast1Result != 1) {
-					throw new SemanticException("int requires only 1 argument");
+					throw new SemanticException("log requires only 1 argument");
 				}
 				tuples.log();
 				popSourceLineNumber(tuples);
