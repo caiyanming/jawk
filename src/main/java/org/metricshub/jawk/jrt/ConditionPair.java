@@ -51,14 +51,16 @@ public class ConditionPair {
 	 * @return wether we're within the range
 	 */
 	public boolean update(boolean startMatches, boolean endMatches) {
-		boolean previousWithin = within;
-
 		if (startMatches) {
 			within = true;
 		}
+
+		boolean result = within;
+
 		if (endMatches) {
 			within = false;
 		}
-		return startMatches || previousWithin;
+
+		return result;
 	}
 }
