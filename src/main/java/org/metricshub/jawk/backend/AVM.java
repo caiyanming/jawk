@@ -2245,7 +2245,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 	 */
 	private Object dec(long l, boolean isGlobal) {
 		Object o = runtimeStack.getVariable(l, isGlobal);
-		if (o == null) {
+		if (o == null || o instanceof UninitializedObject) {
 			o = ZERO;
 			runtimeStack.setVariable(l, o, isGlobal);
 		}
