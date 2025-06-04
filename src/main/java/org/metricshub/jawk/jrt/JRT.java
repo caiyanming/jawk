@@ -99,6 +99,10 @@ public class JRT {
 
 	private Map<String, Process> outputProcesses = new HashMap<String, Process>();
 	private Map<String, PrintStream> outputStreams = new HashMap<String, PrintStream>();
+	/** PrintStream used for command output */
+	private PrintStream output = System.out;
+	/** PrintStream used for command error output */
+	private PrintStream error = System.err;
 
 	// Partitioning reader for stdin.
 	private PartitioningReader partitioningReader = null;
@@ -129,6 +133,17 @@ public class JRT {
 	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "JRT must hold the provided VariableManager for later use")
 	public JRT(VariableManager vm) {
 		this.vm = vm;
+	}
+
+	/**
+	 * Sets the streams for spawned command output and error.
+	 *
+	 * @param ps PrintStream to send command output to
+	 * @param err PrintStream to send command error output to
+	 */
+	public void setStreams(PrintStream ps, PrintStream err) {
+		output = ps == null ? System.out : ps;
+		error = err == null ? System.err : err;
 	}
 
 	/**
@@ -1096,16 +1111,15 @@ public class JRT {
 			Process p;
 			try {
 				p = spawnProcess(cmd);
-				DataPump.dump(cmd, p.getErrorStream(), System.err);
-				DataPump.dump(cmd, p.getInputStream(), System.out);
+				DataPump.dump(cmd, p.getErrorStream(), error);
+				DataPump.dump(cmd, p.getInputStream(), output);
 			} catch (IOException ioe) {
 				throw new AwkRuntimeException("Can't spawn " + cmd + ": " + ioe);
 			}
 			outputProcesses.put(cmd, p);
 			try {
 				ps = new PrintStream(p.getOutputStream(), true, StandardCharsets.UTF_8.name()); // true
-				// =
-				// auto-flush
+				// = auto-flush
 				outputStreams.put(cmd, ps);
 			} catch (java.io.UnsupportedEncodingException e) {
 				throw new IllegalStateException(e);
@@ -1248,13 +1262,13 @@ public class JRT {
 	 * @return Integer(return_code) of the created
 	 *         process. Integer(-1) is returned on an IO error.
 	 */
-	public static Integer jrtSystem(String cmd) {
+	public Integer jrtSystem(String cmd) {
 		try {
 			Process p = spawnProcess(cmd);
 			// no input to this process!
 			p.getOutputStream().close();
-			DataPump.dump(cmd, p.getErrorStream(), System.err);
-			DataPump.dump(cmd, p.getInputStream(), System.out);
+			DataPump.dump(cmd, p.getErrorStream(), error);
+			DataPump.dump(cmd, p.getInputStream(), output);
 			try {
 				int retcode = p.waitFor();
 				return Integer.valueOf(retcode);
