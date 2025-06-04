@@ -29,6 +29,7 @@ public class AssocArrayTest {
 		assertTrue(array.isIn(null));
 		assertTrue(array.isIn(new UninitializedObject()));
 		assertEquals(1, array.keySet().size());
+	}
 
 	@Test
 	public void testRemoveNumericStringKey() {
