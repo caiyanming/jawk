@@ -49,6 +49,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.math.BigDecimal;
 import org.metricshub.jawk.intermediate.UninitializedObject;
 import org.metricshub.jawk.util.AwkLogger;
 import org.slf4j.Logger;
@@ -364,24 +365,18 @@ public class JRT {
 			}
 		}
 
-		if (!(o1 instanceof Number) && !o1String.isEmpty()) {
-			char o1FirstChar = o1String.charAt(0);
-			if (o1FirstChar >= '0' && o1FirstChar <= '9') {
-				try {
-					o1 = Double.parseDouble(o1String);
-				} catch (NumberFormatException nfe) {
-					LOG.debug("Invalid number", nfe);
-				}
+		if (!(o1 instanceof Number)) {
+			try {
+				o1 = new BigDecimal(o1String).doubleValue();
+			} catch (NumberFormatException nfe) {
+				LOG.debug("Invalid number", nfe);
 			}
 		}
-		if (!(o2 instanceof Number) && !o2String.isEmpty()) {
-			char o2FirstChar = o2String.charAt(0);
-			if (o2FirstChar >= '0' && o2FirstChar <= '9') {
-				try {
-					o2 = Double.parseDouble(o2String);
-				} catch (NumberFormatException nfe) {
-					LOG.debug("Invalid number", nfe);
-				}
+		if (!(o2 instanceof Number)) {
+			try {
+				o2 = new BigDecimal(o2String).doubleValue();
+			} catch (NumberFormatException nfe) {
+				LOG.debug("Invalid number", nfe);
 			}
 		}
 
