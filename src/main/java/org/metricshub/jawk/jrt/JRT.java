@@ -797,17 +797,28 @@ public class JRT {
 	}
 
 	private static int toFieldNumber(Object o) {
-		int fieldnum;
 		if (o instanceof Number) {
-			fieldnum = ((Number) o).intValue();
-		} else {
-			try {
-				fieldnum = (int) Double.parseDouble(o.toString());
-			} catch (NumberFormatException nfe) {
+			double num = ((Number) o).doubleValue();
+			if (num < 0) {
 				throw new RuntimeException("Field $(" + o.toString() + ") is incorrect.");
 			}
+			return (int) num;
 		}
-		return fieldnum;
+
+		String str = o.toString();
+		if (str.isEmpty()) {
+			return 0;
+		}
+
+		try {
+			double num = new BigDecimal(str).doubleValue();
+			if (num < 0) {
+				throw new RuntimeException("Field $(" + o.toString() + ") is incorrect.");
+			}
+			return (int) num;
+		} catch (NumberFormatException nfe) {
+			return 0;
+		}
 	}
 
 	/**
