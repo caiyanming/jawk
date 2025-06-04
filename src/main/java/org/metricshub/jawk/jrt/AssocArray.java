@@ -261,7 +261,22 @@ public class AssocArray implements Comparator<Object> {
 	 * @return the value of the entry before it was removed
 	 */
 	public Object remove(Object key) {
-		return map.remove(key);
+		if (key == null || key instanceof UninitializedObject) {
+			key = (long) 0;
+		}
+		Object result = map.remove(key);
+		if (result != null) {
+			return result;
+		}
+
+		try {
+			long iKey = Long.parseLong(key.toString());
+			return map.remove(iKey);
+		} catch (Exception e) {
+			LOG.debug("Key parse failure", e);
+		}
+
+		return null;
 	}
 
 	/**
