@@ -85,9 +85,17 @@ public class BwkTTest {
 		// Get the input file (always the same)
 		File inputFile = new File(bwkTDirectory, "inputs/test.data");
 
-		String result = AwkTestHelper.runAwk(awkFile, inputFile);
+		AwkTestHelper.RunResult rr = AwkTestHelper.runAwkWithExitCode(awkFile, inputFile);
 		String expectedResult = AwkTestHelper.readTextFile(okFile);
-		assertEquals(expectedResult, result);
+		assertEquals(expectedResult, rr.output);
+
+		int expectedCode = 0;
+		if ("t.exit".equals(awkName)) {
+			expectedCode = 1;
+		} else if ("t.exit1".equals(awkName)) {
+			expectedCode = 2;
+		}
+		assertEquals("Unexpected exit code for " + awkName, expectedCode, rr.exitCode);
 	}
 
 	/**

@@ -278,7 +278,22 @@ public class AssocArray implements Comparator<Object> {
 	 * @return the value of the entry before it was removed
 	 */
 	public Object remove(Object key) {
-		return map.remove(key);
+		if (key == null || key instanceof UninitializedObject) {
+			key = (long) 0;
+		}
+		Object result = map.remove(key);
+		if (result != null) {
+			return result;
+		}
+
+		try {
+			long iKey = Long.parseLong(key.toString());
+			return map.remove(iKey);
+		} catch (Exception e) {
+			LOG.debug("Key parse failure", e);
+		}
+
+		return null;
 	}
 
 	/**
@@ -297,22 +312,29 @@ public class AssocArray implements Comparator<Object> {
 	 */
 	@Override
 	public int compare(Object o1, Object o2) {
-		if (o1 instanceof String || o2 instanceof String) {
-			// use string comparison
+		if (o1 instanceof String
+				|| o2 instanceof String
+				|| !(o1 instanceof Number && o2 instanceof Number)) {
+			// Fall back to string comparison if any of the keys is a
+			// String or not a Number
 			String s1 = o1.toString();
 			String s2 = o2.toString();
 			return s1.compareTo(s2);
-		} else {
-			if (o1 instanceof Double || o2 instanceof Double) {
-				Double d1 = (Double) o1;
-				Double d2 = (Double) o2;
-				return d1.compareTo(d2);
-			} else {
-				Integer i1 = (Integer) o1;
-				Integer i2 = (Integer) o2;
-				return i1.compareTo(i2);
-			}
 		}
+
+		// Both keys are numbers
+		if (o1 instanceof Double
+				|| o2 instanceof Double
+				|| o1 instanceof Float
+				|| o2 instanceof Float) {
+			double d1 = ((Number) o1).doubleValue();
+			double d2 = ((Number) o2).doubleValue();
+			return Double.compare(d1, d2);
+		}
+
+		long l1 = ((Number) o1).longValue();
+		long l2 = ((Number) o2).longValue();
+		return Long.compare(l1, l2);
 	}
 
 	/**
