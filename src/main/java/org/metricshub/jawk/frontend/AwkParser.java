@@ -4532,27 +4532,29 @@ public class AwkParser {
 		public int populateTuples(AwkTuples tuples) {
 			pushSourceLineNumber(tuples);
 			assert getAst1() != null;
-			int ast1Result = getAst1().populateTuples(tuples);
-			assert ast1Result == 1;
-			if (getAst1() instanceof IDAst) {
-				IDAst idAst = (IDAst) getAst1();
-				tuples.postInc(idAst.offset, idAst.isGlobal);
-			} else if (getAst1() instanceof ArrayReferenceAst) {
-				ArrayReferenceAst arrAst = (ArrayReferenceAst) getAst1();
-				IDAst idAst = (IDAst) arrAst.getAst1();
-				assert idAst != null;
-				assert arrAst.getAst2() != null;
-				int arrAst2Result = arrAst.getAst2().populateTuples(tuples);
-				assert arrAst2Result == 1;
-				tuples.incArrayRef(idAst.offset, idAst.isGlobal);
-			} else if (getAst1() instanceof DollarExpressionAst) {
+			if (getAst1() instanceof DollarExpressionAst) {
 				DollarExpressionAst dollarExpr = (DollarExpressionAst) getAst1();
 				assert dollarExpr.getAst1() != null;
 				int dollarAst1Result = dollarExpr.getAst1().populateTuples(tuples);
 				assert dollarAst1Result == 1;
 				tuples.incDollarRef();
 			} else {
-				throw new NotImplementedError("unhandled postinc for " + getAst1());
+				int ast1Result = getAst1().populateTuples(tuples);
+				assert ast1Result == 1;
+				if (getAst1() instanceof IDAst) {
+					IDAst idAst = (IDAst) getAst1();
+					tuples.postInc(idAst.offset, idAst.isGlobal);
+				} else if (getAst1() instanceof ArrayReferenceAst) {
+					ArrayReferenceAst arrAst = (ArrayReferenceAst) getAst1();
+					IDAst idAst = (IDAst) arrAst.getAst1();
+					assert idAst != null;
+					assert arrAst.getAst2() != null;
+					int arrAst2Result = arrAst.getAst2().populateTuples(tuples);
+					assert arrAst2Result == 1;
+					tuples.incArrayRef(idAst.offset, idAst.isGlobal);
+				} else {
+					throw new NotImplementedError("unhandled postinc for " + getAst1());
+				}
 			}
 			popSourceLineNumber(tuples);
 			return 1;

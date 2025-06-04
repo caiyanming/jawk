@@ -885,13 +885,18 @@ public class AVM implements AwkInterpreter, VariableManager {
 				}
 				case AwkTuples.INC_DOLLAR_REF: {
 					// stack[0] = dollar index (field number)
-					// same code as GET_INPUT_FIELD:
 					int fieldnum = parseIntField(pop(), position);
-					// except here, get the number, and add one
-					// push(avmGetInputField(fieldnum));
+
 					Object numObj = jrt.jrtGetInputField(fieldnum);
-					double num = JRT.toDouble(numObj) + 1;
+					double original = JRT.toDouble(numObj);
+					double num = original + 1;
 					setNumOnJRT(fieldnum, num);
+
+					if (JRT.isActuallyLong(original)) {
+						push((long) Math.rint(original));
+					} else {
+						push(Double.valueOf(original));
+					}
 
 					position.next();
 					break;
@@ -900,11 +905,17 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// stack[0] = dollar index (field number)
 					// same code as GET_INPUT_FIELD:
 					int fieldnum = parseIntField(pop(), position);
-					// except here, get the number, and add one
-					// push(avmGetInputField(fieldnum));
+
 					Object numObj = jrt.jrtGetInputField(fieldnum);
-					double num = JRT.toDouble(numObj) - 1;
+					double original = JRT.toDouble(numObj);
+					double num = original - 1;
 					setNumOnJRT(fieldnum, num);
+
+					if (JRT.isActuallyLong(original)) {
+						push((long) Math.rint(original));
+					} else {
+						push(Double.valueOf(original));
+					}
 
 					position.next();
 					break;
