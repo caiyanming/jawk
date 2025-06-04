@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.io.StringReader;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -238,19 +239,28 @@ public class AVM implements AwkInterpreter, VariableManager {
 	private Set<String> functionNames;
 
 	private static int parseIntField(Object obj, PositionForInterpretation position) {
-		int fieldVal;
-
 		if (obj instanceof Number) {
-			fieldVal = ((Number) obj).intValue();
-		} else {
-			try {
-				fieldVal = (int) Double.parseDouble(obj.toString());
-			} catch (NumberFormatException nfe) {
+			double num = ((Number) obj).doubleValue();
+			if (num < 0) {
 				throw new AwkRuntimeException(position.lineNumber(), "Field $(" + obj.toString() + ") is incorrect.");
 			}
+			return (int) num;
 		}
 
-		return fieldVal;
+		String str = obj.toString();
+		if (str.isEmpty()) {
+			return 0;
+		}
+
+		try {
+			double num = new BigDecimal(str).doubleValue();
+			if (num < 0) {
+				throw new AwkRuntimeException(position.lineNumber(), "Field $(" + obj.toString() + ") is incorrect.");
+			}
+			return (int) num;
+		} catch (NumberFormatException nfe) {
+			return 0;
+		}
 	}
 
 	private void setNumOnJRT(int fieldNum, double num) {
