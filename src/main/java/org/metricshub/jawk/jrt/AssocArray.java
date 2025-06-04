@@ -158,7 +158,24 @@ public class AssocArray implements Comparator<Object> {
 	 *         It exists to support the IN keyword.
 	 */
 	public boolean isIn(Object key) {
-		return map.get(key) != null;
+		if (key == null || key instanceof UninitializedObject) {
+			key = (long) 0;
+		}
+
+		if (map.containsKey(key)) {
+			return true;
+		}
+
+		try {
+			long iKey = Long.parseLong(key.toString());
+			if (map.containsKey(iKey)) {
+				return true;
+			}
+		} catch (Exception e) {
+			LOG.debug("Key parse failure", e);
+		}
+
+		return false;
 	}
 
 	/**
