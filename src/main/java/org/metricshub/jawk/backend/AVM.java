@@ -1855,7 +1855,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					throwExitException = true;
 
 					// If in BEGIN or in a rule, jump to the END section
-					if (!withinEndBlocks) {
+					if (!withinEndBlocks && exitAddress != null) {
 						// clear runtime stack
 						runtimeStack.popAllFrames();
 						// clear operand stack
