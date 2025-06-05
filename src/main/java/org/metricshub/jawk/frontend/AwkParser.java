@@ -1948,7 +1948,7 @@ public class AwkParser {
 			if (token == CLOSE_PAREN) {
 				funcParams = null;
 			} else {
-				funcParams = EXPRESSION_LIST(true, true); // comparators are allowed, and also in expression
+				funcParams = parsePrintParamList();
 			}
 			lexer(CLOSE_PAREN);
 		} else {
@@ -1977,9 +1977,30 @@ public class AwkParser {
 		return new ParsedPrintStatement(funcParams, outputToken, outputExpr);
 	}
 
+	/**
+	 * Parse the list of parameters of a print/printf statement enclosed in
+	 * parentheses. Commas inside the parentheses must separate arguments
+	 * instead of acting as the comma operator, while comparison operators
+	 * such as {@code >} must retain their normal meaning.
+	 */
+	private AST parsePrintParamList() throws IOException {
+		AST expr = ASSIGNMENT_EXPRESSION(true, true, false);
+		FunctionCallParamListAst head = new FunctionCallParamListAst(expr, null);
+		FunctionCallParamListAst tail = head;
+		while (token == COMMA) {
+			lexer();
+			optNewline();
+			AST next = ASSIGNMENT_EXPRESSION(true, true, false);
+			FunctionCallParamListAst node = new FunctionCallParamListAst(next, null);
+			tail.setAst2(node);
+			tail = node;
+		}
+		return head;
+	}
+
 	AST PRINT_STATEMENT() throws IOException {
-		boolean parens = c == '(';
 		expectKeyword("print");
+		boolean parens = token == OPEN_PAREN;
 		ParsedPrintStatement parsedPrintStatement = parsePrintStatement(parens);
 
 		return new PrintAst(
@@ -1989,8 +2010,8 @@ public class AwkParser {
 	}
 
 	AST PRINTF_STATEMENT() throws IOException {
-		boolean parens = c == '(';
 		expectKeyword("printf");
+		boolean parens = token == OPEN_PAREN;
 		ParsedPrintStatement parsedPrintStatement = parsePrintStatement(parens);
 
 		return new PrintfAst(
