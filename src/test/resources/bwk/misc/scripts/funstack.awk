@@ -118,7 +118,7 @@
 
 BEGIN						{ initialize() }
 
-/^ *@ *[Ss][Tt][Rr][Ii][Nn][Gg] *{/		{ do_String(); next }
+/^ *@ *[Ss][Tt][Rr][Ii][Nn][Gg] *\{/		{ do_String(); next }
 
 /^ *@ *[Pp][Rr][Ee][Aa][Mm][Bb][Ll][Ee]/	{ next }
 
@@ -163,7 +163,7 @@ function do_Article()
 	In_Article = 1
 
 	Citation_label = $0
-	sub(/^[^\{]*{/,"",Citation_label)
+	sub(/^[^\{]*\{/,"",Citation_label)
 	sub(/ *, *$/,"",Citation_label)
 
 	Author = ""
