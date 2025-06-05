@@ -179,6 +179,9 @@ public class AVM implements AwkInterpreter, VariableManager {
 		}
 
 		jrt = new JRT(this); // this = VariableManager
+		if (settings != null) {
+			jrt.setStreams(settings.getOutputStream(), System.err);
+		}
 		for (JawkExtension ext : this.extensions.values()) {
 			ext.init(this, jrt, settings); // this = VariableManager
 		}
@@ -511,24 +514,10 @@ public class AVM implements AwkInterpreter, VariableManager {
 				case AwkTuples.NOT: {
 					// stack[0] = item to logically negate
 
-					// if int, then check for 0
-					// if double, then check for 0
-					// if String, then check for "" or double value of "0"
 					Object o = pop();
-					boolean result;
-					if (o instanceof Integer) {
-						result = ((Integer) o).intValue() != 0;
-					} else if (o instanceof Long) {
-						result = ((Long) o).longValue() != 0;
-					} else if (o instanceof Double) {
-						result = ((Double) o).doubleValue() != 0;
-					} else if (o instanceof String) {
-						result = (o.toString().length() > 0);
-					} else if (o instanceof UninitializedObject) {
-						result = false;
-					} else {
-						throw new Error("Unknown operandStack type: " + o.getClass() + " for value " + o);
-					}
+
+					boolean result = jrt.toBoolean(o);
+
 					if (result) {
 						push(0);
 					} else {
@@ -885,13 +874,18 @@ public class AVM implements AwkInterpreter, VariableManager {
 				}
 				case AwkTuples.INC_DOLLAR_REF: {
 					// stack[0] = dollar index (field number)
-					// same code as GET_INPUT_FIELD:
 					int fieldnum = parseIntField(pop(), position);
-					// except here, get the number, and add one
-					// push(avmGetInputField(fieldnum));
+
 					Object numObj = jrt.jrtGetInputField(fieldnum);
-					double num = JRT.toDouble(numObj) + 1;
+					double original = JRT.toDouble(numObj);
+					double num = original + 1;
 					setNumOnJRT(fieldnum, num);
+
+					if (JRT.isActuallyLong(original)) {
+						push((long) Math.rint(original));
+					} else {
+						push(Double.valueOf(original));
+					}
 
 					position.next();
 					break;
@@ -900,11 +894,17 @@ public class AVM implements AwkInterpreter, VariableManager {
 					// stack[0] = dollar index (field number)
 					// same code as GET_INPUT_FIELD:
 					int fieldnum = parseIntField(pop(), position);
-					// except here, get the number, and add one
-					// push(avmGetInputField(fieldnum));
+
 					Object numObj = jrt.jrtGetInputField(fieldnum);
-					double num = JRT.toDouble(numObj) - 1;
+					double original = JRT.toDouble(numObj);
+					double num = original - 1;
 					setNumOnJRT(fieldnum, num);
+
+					if (JRT.isActuallyLong(original)) {
+						push((long) Math.rint(original));
+					} else {
+						push(Double.valueOf(original));
+					}
 
 					position.next();
 					break;
@@ -1242,7 +1242,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 				case AwkTuples.SYSTEM: {
 					// stack[0] = command string
 					String s = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
-					push(JRT.jrtSystem(s));
+					push(jrt.jrtSystem(s));
 					position.next();
 					break;
 				}
@@ -1869,7 +1869,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					throwExitException = true;
 
 					// If in BEGIN or in a rule, jump to the END section
-					if (!withinEndBlocks) {
+					if (!withinEndBlocks && exitAddress != null) {
 						// clear runtime stack
 						runtimeStack.popAllFrames();
 						// clear operand stack
@@ -2259,7 +2259,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 	 */
 	private Object dec(long l, boolean isGlobal) {
 		Object o = runtimeStack.getVariable(l, isGlobal);
-		if (o == null) {
+		if (o == null || o instanceof UninitializedObject) {
 			o = ZERO;
 			runtimeStack.setVariable(l, o, isGlobal);
 		}
