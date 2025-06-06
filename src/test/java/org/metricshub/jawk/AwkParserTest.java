@@ -86,6 +86,22 @@ public class AwkParserTest {
 	}
 
 	@Test
+	public void testNestedTernaryExpression() throws Exception {
+		assertEquals(
+				"Nested ternary must parse correctly",
+				"2",
+				evalAwk("1 ? 2 : 3 ? 4 : 5 "));
+	}
+
+	@Test
+	public void testTernaryAfterPrintParentheses() throws Exception {
+		assertEquals(
+				"Ternary after print parentheses must parse",
+				"20\n",
+				runAwk("BEGIN { print (1>2) ? 10 : 20 }", null));
+	}
+
+	@Test
 	public void testGron() throws Exception {
 		String gron = AwkTestHelper.readResource("/xonixx/gron.awk");
 		assertEquals("gron.awk must not trigger any parser exception", "json=[]\n", runAwk(gron, "[]"));
