@@ -26,8 +26,8 @@ public class AssocArrayTest {
 		AssocArray array = new AssocArray(false);
 		array.put(0L, "zero");
 
-		assertTrue(array.isIn(null));
-		assertTrue(array.isIn(new UninitializedObject()));
+		assertFalse(array.isIn(null));
+		assertFalse(array.isIn(new UninitializedObject()));
 		assertEquals(1, array.keySet().size());
 	}
 
@@ -56,5 +56,19 @@ public class AssocArrayTest {
 
 		assertNull(array.remove(3L));
 		assertTrue(array.isIn(1L));
+	}
+
+	@Test
+	public void testUninitializedIndexUsesEmptyString() {
+		AssocArray idxArray = new AssocArray(false);
+		Object idx = idxArray.get(0L);
+		assertTrue(idx instanceof UninitializedObject);
+
+		AssocArray array = new AssocArray(false);
+		array.put("", "empty");
+		array.put(0L, "zero");
+
+		assertEquals("empty", array.get(idx));
+		assertEquals("zero", array.get(0L));
 	}
 }
