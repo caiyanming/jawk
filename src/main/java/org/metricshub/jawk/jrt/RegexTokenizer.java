@@ -23,6 +23,9 @@ package org.metricshub.jawk.jrt;
  */
 
 import java.util.Enumeration;
+import java.util.ArrayList;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 /**
  * Similar to StringTokenizer, except that tokens are delimited
@@ -43,7 +46,20 @@ public class RegexTokenizer implements Enumeration<Object> {
 	 *        within the input string.
 	 */
 	public RegexTokenizer(String input, String delimitterRegexPattern) {
-		array = input.split(delimitterRegexPattern, -2);
+		ArrayList<String> fields = new ArrayList<>();
+		Pattern pattern = Pattern.compile(delimitterRegexPattern);
+		Matcher matcher = pattern.matcher(input);
+		int last = 0;
+		while (matcher.find()) {
+			if (matcher.start() > last) {
+				fields.add(input.substring(last, matcher.start()));
+			}
+			last = matcher.end();
+		}
+		if (last < input.length()) {
+			fields.add(input.substring(last));
+		}
+		array = fields.toArray(new String[0]);
 	}
 
 	/** {@inheritDoc} */

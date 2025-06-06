@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 import org.metricshub.jawk.intermediate.UninitializedObject;
+import java.util.Locale;
+import org.metricshub.jawk.jrt.AssocArray;
 import org.metricshub.jawk.jrt.JRT;
 
 public class JRTTest {
@@ -101,5 +103,22 @@ public class JRTTest {
 		assertEquals("a\\\\&", JRT.prepareReplacement("a\\\\\\&"));
 		assertEquals("", JRT.prepareReplacement(""));
 		assertEquals("", JRT.prepareReplacement(null));
+	}
+
+	@Test
+	public void testSplitSetsFieldZero() {
+		AssocArray aa = new AssocArray(false);
+		int n = JRT.split(aa, "a b", "%.6g", Locale.US);
+		assertEquals(2, n);
+		assertEquals(2, aa.get(0));
+	}
+
+	@Test
+	public void testSplitRegexWhitespace() {
+		AssocArray aa = new AssocArray(false);
+		int n = JRT.split("[ \t]+", aa, " 9853   shen", "%.6g", Locale.US);
+		assertEquals(2, n);
+		assertEquals("9853", aa.get(1));
+		assertEquals("shen", aa.get(2));
 	}
 }
