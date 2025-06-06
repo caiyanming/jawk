@@ -2136,10 +2136,9 @@ public class AVM implements AwkInterpreter, VariableManager {
 			}
 			ps.print(getORS().toString());
 		}
-		// for now, since we are not using Process.waitFor()
-		if (IS_WINDOWS) {
-			ps.flush();
-		}
+		// always flush to ensure ORS is written even when it does not
+		// contain a newline character
+		ps.flush();
 	}
 
 	private void printfTo(PrintStream ps, long numArgs) {
