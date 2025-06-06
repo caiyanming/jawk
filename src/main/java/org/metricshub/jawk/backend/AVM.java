@@ -35,7 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Random;
+import org.metricshub.jawk.jrt.BSDRandom;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
@@ -207,8 +207,18 @@ public class AVM implements AwkInterpreter, VariableManager {
 	private static final Integer ZERO = Integer.valueOf(0);
 	private static final Integer ONE = Integer.valueOf(1);
 
-	private final Random randomNumberGenerator = new Random();
-	private int oldseed;
+	/** Random number generator used for rand() */
+	private final BSDRandom randomNumberGenerator = new BSDRandom(1);
+
+	/**
+	 * Last seed value used with {@code srand()}.
+	 * <p>
+	 * The default seed for {@code rand()} in One True Awk is {@code 1}, so
+	 * we initialize {@code oldseed} with this value to mimic that
+	 * behaviour. This ensures deterministic sequences until the user
+	 * explicitly calls {@code srand()}.
+	 */
+	private int oldseed = 1;
 
 	private Address exitAddress = null;
 
