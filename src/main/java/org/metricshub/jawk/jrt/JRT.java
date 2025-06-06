@@ -1199,16 +1199,17 @@ public class JRT {
 		outputProcesses.remove(cmd);
 		outputStreams.remove(cmd);
 		ps.close();
-		// if windows, let the process kill itself eventually
-		if (!IS_WINDOWS) {
-			try {
-				// causes a hard exit ?!
-				p.waitFor();
-				p.exitValue();
-			} catch (InterruptedException ie) {
-				throw new AwkRuntimeException("Caught exception while waiting for process exit: " + ie);
-			}
+		try {
+			// wait for the spawned process to finish to make sure
+			// all output has been flushed and captured
+			p.waitFor();
+			p.exitValue();
+		} catch (InterruptedException ie) {
+			throw new AwkRuntimeException(
+					"Caught exception while waiting for process exit: " + ie);
 		}
+		output.flush();
+		error.flush();
 		return true;
 	}
 
@@ -1237,16 +1238,17 @@ public class JRT {
 		commandProcesses.remove(cmd);
 		try {
 			pr.close();
-			// if windows, let the process kill itself eventually
-			if (!IS_WINDOWS) {
-				try {
-					// causes a hard die ?!
-					p.waitFor();
-					p.exitValue();
-				} catch (InterruptedException ie) {
-					throw new AwkRuntimeException("Caught exception while waiting for process exit: " + ie);
-				}
+			try {
+				// wait for the process to complete so that all
+				// data pumped from the command is captured
+				p.waitFor();
+				p.exitValue();
+			} catch (InterruptedException ie) {
+				throw new AwkRuntimeException(
+						"Caught exception while waiting for process exit: " + ie);
 			}
+			output.flush();
+			error.flush();
 			return true;
 		} catch (IOException ioe) {
 			return false;
