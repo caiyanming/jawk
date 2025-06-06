@@ -384,14 +384,18 @@ public class JRT {
 			try {
 				o1 = new BigDecimal(o1String).doubleValue();
 			} catch (NumberFormatException nfe) {
-				LOG.debug("Invalid number", nfe);
+				if (o1String.length() > 0) {
+					LOG.debug("Invalid number", nfe);
+				}
 			}
 		}
 		if (!(o2 instanceof Number)) {
 			try {
 				o2 = new BigDecimal(o2String).doubleValue();
 			} catch (NumberFormatException nfe) {
-				LOG.debug("Invalid number", nfe);
+				if (o2String.length() > 0) {
+					LOG.debug("Invalid number", nfe);
+				}
 			}
 		}
 
