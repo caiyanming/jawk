@@ -2008,8 +2008,23 @@ public class AwkParser {
 		boolean parens = token == OPEN_PAREN;
 		ParsedPrintStatement parsedPrintStatement = parsePrintStatement(parens);
 
+		AST params = parsedPrintStatement.getFuncParams();
+		if (parens
+				&& token == QUESTION_MARK
+				&& params instanceof FunctionCallParamListAst
+				&& ((FunctionCallParamListAst) params).getAst2() == null) {
+			AST condExpr = ((FunctionCallParamListAst) params).getAst1();
+			lexer();
+			AST trueBlock = TERNARY_EXPRESSION(true, true, true);
+			lexer(COLON);
+			AST falseBlock = TERNARY_EXPRESSION(true, true, true);
+			params = new FunctionCallParamListAst(
+					new TernaryExpressionAst(condExpr, trueBlock, falseBlock),
+					null);
+		}
+
 		return new PrintAst(
-				parsedPrintStatement.getFuncParams(),
+				params,
 				parsedPrintStatement.getOutputToken(),
 				parsedPrintStatement.getOutputExpr());
 	}
@@ -2019,8 +2034,23 @@ public class AwkParser {
 		boolean parens = token == OPEN_PAREN;
 		ParsedPrintStatement parsedPrintStatement = parsePrintStatement(parens);
 
+		AST params = parsedPrintStatement.getFuncParams();
+		if (parens
+				&& token == QUESTION_MARK
+				&& params instanceof FunctionCallParamListAst
+				&& ((FunctionCallParamListAst) params).getAst2() == null) {
+			AST condExpr = ((FunctionCallParamListAst) params).getAst1();
+			lexer();
+			AST trueBlock = TERNARY_EXPRESSION(true, true, true);
+			lexer(COLON);
+			AST falseBlock = TERNARY_EXPRESSION(true, true, true);
+			params = new FunctionCallParamListAst(
+					new TernaryExpressionAst(condExpr, trueBlock, falseBlock),
+					null);
+		}
+
 		return new PrintfAst(
-				parsedPrintStatement.getFuncParams(),
+				params,
 				parsedPrintStatement.getOutputToken(),
 				parsedPrintStatement.getOutputExpr());
 	}
