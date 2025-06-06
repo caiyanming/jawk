@@ -44,7 +44,6 @@ import java.util.IllegalFormatException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
@@ -1508,8 +1507,8 @@ public class JRT {
 	 * @param seed a int
 	 * @return a {@link java.util.Random} object
 	 */
-	public static Random newRandom(int seed) {
-		return new Random(seed);
+	public static BSDRandom newRandom(int seed) {
+		return new BSDRandom(seed);
 	}
 
 	/**

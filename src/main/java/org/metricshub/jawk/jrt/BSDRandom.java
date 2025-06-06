@@ -1,0 +1,80 @@
+package org.metricshub.jawk.jrt;
+
+/*-
+ * ╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲
+ * Jawk
+ * ჻჻჻჻჻჻
+ * Copyright (C) 2006 - 2025 MetricsHub
+ * ჻჻჻჻჻჻
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Lesser Public License for more details.
+ *
+ * You should have received a copy of the GNU General Lesser Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/lgpl-3.0.html>.
+ * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
+ */
+
+/**
+ * Simple pseudo-random number generator compatible with the C library
+ * {@code random()} function.
+ */
+public class BSDRandom {
+
+	private static final int RAND_DEG = 31;
+	private static final int RAND_SEP = 3;
+	private final int[] state = new int[RAND_DEG];
+	private int fptr;
+	private int rptr;
+
+	/** Create a new generator with the specified seed. */
+	public BSDRandom(int seed) {
+		setSeed(seed);
+	}
+
+	/**
+	 * Seed the generator. A seed of {@code 0} is transformed to {@code 1}
+	 * as in the original implementation.
+	 */
+	public final void setSeed(int seed) {
+		if (seed == 0) {
+			seed = 1;
+		}
+		state[0] = seed;
+		for (int i = 1; i < RAND_DEG; i++) {
+			long val = 16807L * state[i - 1] % 2147483647L;
+			state[i] = (int) val;
+		}
+		fptr = RAND_SEP;
+		rptr = 0;
+		for (int i = 0; i < 10 * RAND_DEG; i++) {
+			nextInt();
+		}
+	}
+
+	private int nextInt() {
+		int val = state[fptr] + state[rptr];
+		state[fptr] = val;
+		if (++fptr >= RAND_DEG) {
+			fptr = 0;
+		}
+		if (++rptr >= RAND_DEG) {
+			rptr = 0;
+		}
+		return (val >>> 1) & 0x7fffffff;
+	}
+
+	/**
+	 * Return the next pseudo-random number in the range {@code [0.0,1.0)}.
+	 */
+	public double nextDouble() {
+		return ((double) nextInt()) / 2147483647.0;
+	}
+}
