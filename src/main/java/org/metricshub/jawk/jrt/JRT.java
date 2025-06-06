@@ -572,6 +572,7 @@ public class JRT {
 		while (e.hasMoreElements()) {
 			aa.put(++cnt, e.nextElement());
 		}
+		aa.put(0L, Integer.valueOf(cnt));
 		return cnt;
 	}
 
