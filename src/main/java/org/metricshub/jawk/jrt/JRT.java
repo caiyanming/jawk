@@ -816,6 +816,41 @@ public class JRT {
 		vm.setNF(Integer.valueOf(inputFields.size() - 1));
 	}
 
+	/**
+	 * @return true if at least one input field has been initialized.
+	 */
+	public boolean hasInputFields() {
+		return !inputFields.isEmpty();
+	}
+
+	/**
+	 * Adjust the current input field list and $0 when NF is updated by the
+	 * AWK script. Fields are either truncated or extended with empty values
+	 * so that {@code NF} truly reflects the number of fields.
+	 *
+	 * @param nfObj New value for NF
+	 */
+	public void jrtSetNF(Object nfObj) {
+		int nf = (int) toDouble(nfObj);
+		if (nf < 0) {
+			nf = 0;
+		}
+
+		int currentNF = inputFields.size() - 1;
+
+		if (nf < currentNF) {
+			for (int i = currentNF; i > nf; i--) {
+				inputFields.remove(i);
+			}
+		} else if (nf > currentNF) {
+			for (int i = currentNF + 1; i <= nf; i++) {
+				inputFields.add("");
+			}
+		}
+
+		rebuildDollarZeroFromFields();
+	}
+
 	private static int toFieldNumber(Object o) {
 		if (o instanceof Number) {
 			double num = ((Number) o).doubleValue();

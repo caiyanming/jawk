@@ -2210,6 +2210,9 @@ public class AVM implements AwkInterpreter, VariableManager {
 		}
 		push(value);
 		runtimeStack.setVariable(l, value, isGlobal);
+		if (l == nfOffset && jrt != null && jrt.hasInputFields()) {
+			jrt.jrtSetNF(value);
+		}
 	}
 
 	/**
