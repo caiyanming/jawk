@@ -159,7 +159,9 @@ public class AssocArray implements Comparator<Object> {
 	 */
 	public boolean isIn(Object key) {
 		if (key == null || key instanceof UninitializedObject) {
-			key = (long) 0;
+			// According to AWK semantics, an uninitialized index
+			// evaluates to the empty string, not numeric zero
+			key = "";
 		}
 
 		if (map.containsKey(key)) {
@@ -192,7 +194,8 @@ public class AssocArray implements Comparator<Object> {
 	 */
 	public Object get(Object key) {
 		if (key == null || key instanceof UninitializedObject) {
-			key = (long) 0;
+			// AWK evaluates an uninitialized subscript to the empty string
+			key = "";
 		}
 		Object result = map.get(key);
 		if (result != null) {
@@ -229,7 +232,7 @@ public class AssocArray implements Comparator<Object> {
 	 */
 	public Object put(Object key, Object value) {
 		if (key == null || key instanceof UninitializedObject) {
-			key = (long) 0;
+			key = "";
 		}
 		try {
 			// Save a primitive version
@@ -279,7 +282,7 @@ public class AssocArray implements Comparator<Object> {
 	 */
 	public Object remove(Object key) {
 		if (key == null || key instanceof UninitializedObject) {
-			key = (long) 0;
+			key = "";
 		}
 		Object result = map.remove(key);
 		if (result != null) {

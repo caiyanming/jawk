@@ -44,7 +44,6 @@ import java.util.IllegalFormatException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
@@ -384,14 +383,18 @@ public class JRT {
 			try {
 				o1 = new BigDecimal(o1String).doubleValue();
 			} catch (NumberFormatException nfe) {
-				LOG.debug("Invalid number", nfe);
+				if (o1String.length() > 0) {
+					LOG.debug("Invalid number", nfe);
+				}
 			}
 		}
 		if (!(o2 instanceof Number)) {
 			try {
 				o2 = new BigDecimal(o2String).doubleValue();
 			} catch (NumberFormatException nfe) {
-				LOG.debug("Invalid number", nfe);
+				if (o2String.length() > 0) {
+					LOG.debug("Invalid number", nfe);
+				}
 			}
 		}
 
@@ -572,6 +575,7 @@ public class JRT {
 		while (e.hasMoreElements()) {
 			aa.put(++cnt, e.nextElement());
 		}
+		aa.put(0L, Integer.valueOf(cnt));
 		return cnt;
 	}
 
@@ -814,6 +818,41 @@ public class JRT {
 
 	private void recalculateNF() {
 		vm.setNF(Integer.valueOf(inputFields.size() - 1));
+	}
+
+	/**
+	 * @return true if at least one input field has been initialized.
+	 */
+	public boolean hasInputFields() {
+		return !inputFields.isEmpty();
+	}
+
+	/**
+	 * Adjust the current input field list and $0 when NF is updated by the
+	 * AWK script. Fields are either truncated or extended with empty values
+	 * so that {@code NF} truly reflects the number of fields.
+	 *
+	 * @param nfObj New value for NF
+	 */
+	public void jrtSetNF(Object nfObj) {
+		int nf = (int) toDouble(nfObj);
+		if (nf < 0) {
+			nf = 0;
+		}
+
+		int currentNF = inputFields.size() - 1;
+
+		if (nf < currentNF) {
+			for (int i = currentNF; i > nf; i--) {
+				inputFields.remove(i);
+			}
+		} else if (nf > currentNF) {
+			for (int i = currentNF + 1; i <= nf; i++) {
+				inputFields.add("");
+			}
+		}
+
+		rebuildDollarZeroFromFields();
 	}
 
 	private static int toFieldNumber(Object o) {
@@ -1195,16 +1234,17 @@ public class JRT {
 		outputProcesses.remove(cmd);
 		outputStreams.remove(cmd);
 		ps.close();
-		// if windows, let the process kill itself eventually
-		if (!IS_WINDOWS) {
-			try {
-				// causes a hard exit ?!
-				p.waitFor();
-				p.exitValue();
-			} catch (InterruptedException ie) {
-				throw new AwkRuntimeException("Caught exception while waiting for process exit: " + ie);
-			}
+		try {
+			// wait for the spawned process to finish to make sure
+			// all output has been flushed and captured
+			p.waitFor();
+			p.exitValue();
+		} catch (InterruptedException ie) {
+			throw new AwkRuntimeException(
+					"Caught exception while waiting for process exit: " + ie);
 		}
+		output.flush();
+		error.flush();
 		return true;
 	}
 
@@ -1233,16 +1273,17 @@ public class JRT {
 		commandProcesses.remove(cmd);
 		try {
 			pr.close();
-			// if windows, let the process kill itself eventually
-			if (!IS_WINDOWS) {
-				try {
-					// causes a hard die ?!
-					p.waitFor();
-					p.exitValue();
-				} catch (InterruptedException ie) {
-					throw new AwkRuntimeException("Caught exception while waiting for process exit: " + ie);
-				}
+			try {
+				// wait for the process to complete so that all
+				// data pumped from the command is captured
+				p.waitFor();
+				p.exitValue();
+			} catch (InterruptedException ie) {
+				throw new AwkRuntimeException(
+						"Caught exception while waiting for process exit: " + ie);
 			}
+			output.flush();
+			error.flush();
 			return true;
 		} catch (IOException ioe) {
 			return false;
@@ -1507,8 +1548,8 @@ public class JRT {
 	 * @param seed a int
 	 * @return a {@link java.util.Random} object
 	 */
-	public static Random newRandom(int seed) {
-		return new Random(seed);
+	public static BSDRandom newRandom(int seed) {
+		return new BSDRandom(seed);
 	}
 
 	/**

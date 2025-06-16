@@ -8,11 +8,9 @@ All files must include the proper license header. When you add a new file, make 
 
 ## Build
 
-The project uses Maven to build. Use `mvn` with the `--offline` option if there is no Internet connection available.
+The project uses Maven to build. A full build is performed with `mvn verify site` (or `mvn clean verify site` when applicable).
 
-@codex, please don't try to use `mvnw` (Maven Wrapper) or to install Maven since you don't have access to the Internet. Maven is already installed and runs perfectly well. All dependencies and plugins have been downloaded and installed in the local repository during the environment setup with a complete build (`mvn verify` and `mvn site`). You can run all Maven commands offline.
-
-A full build is performed with `mvn verify site`.
+@codex, please don't try to use `mvnw` (Maven Wrapper). Maven is already installed and runs perfectly well.
 
 ## Test
 
