@@ -3,12 +3,15 @@ package org.metricshub.jawk;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.junit.Assume;
 import org.metricshub.jawk.intermediate.UninitializedObject;
 import java.util.Locale;
 import org.metricshub.jawk.jrt.AssocArray;
 import org.metricshub.jawk.jrt.JRT;
 
 public class JRTTest {
+
+	private static final boolean IS_WINDOWS = System.getProperty("os.name").contains("Windows");
 
 	@Test
 	public void testToDouble() {
@@ -103,6 +106,46 @@ public class JRTTest {
 		assertEquals("a\\\\&", JRT.prepareReplacement("a\\\\\\&"));
 		assertEquals("", JRT.prepareReplacement(""));
 		assertEquals("", JRT.prepareReplacement(null));
+	}
+
+	@Test
+	public void testSpawnProcessCat() throws Exception {
+		Assume.assumeFalse(IS_WINDOWS);
+		String result = AwkTestHelper.runAwk("BEGIN { print \"Hello\" | \"cat\"; close(\"cat\") }", null);
+		assertEquals("Hello\n", result);
+	}
+
+	@Test
+	public void testSpawnProcessMore() throws Exception {
+		Assume.assumeTrue(IS_WINDOWS);
+		String result = AwkTestHelper.runAwk("BEGIN { print \"Hello\" | \"more\"; close(\"more\") }", null);
+		assertEquals("Hello\n", result);
+	}
+
+	@Test
+	public void testSystemPipe() throws Exception {
+		Assume.assumeFalse(IS_WINDOWS);
+		String result = AwkTestHelper
+				.runAwk(
+						"BEGIN { print(system(\"echo test | grep test\")) }",
+						null);
+		assertEquals("test\n0\n", result);
+	}
+
+	@Test
+	public void testSystemPipeWindows() throws Exception {
+		Assume.assumeTrue(IS_WINDOWS);
+		String result = AwkTestHelper
+				.runAwk(
+						"BEGIN { print(system(\"echo test | findstr test\")) }",
+						null);
+		assertEquals("test\n0\n", result);
+	}
+
+	@Test
+	public void testPrintfSpecialCharacters() throws Exception {
+		String result = AwkTestHelper.runAwk("BEGIN { printf \"%c\\n\", 17379 }", null);
+		assertEquals("\u43e3\n", result);
 	}
 
 	@Test

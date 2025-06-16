@@ -1078,12 +1078,12 @@ public class JRT {
 		Process p;
 
 		if (IS_WINDOWS) {
-			// spawn the process!
-			ProcessBuilder pb = new ProcessBuilder(("cmd.exe /c " + cmd).split("[ \t]+"));
+			// spawn the process using the Windows shell
+			ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c", cmd);
 			p = pb.start();
 		} else {
-			// spawn the process!
-			ProcessBuilder pb = new ProcessBuilder(cmd.split("[ \t]+"));
+			// spawn the process using the default POSIX shell
+			ProcessBuilder pb = new ProcessBuilder("/bin/sh", "-c", cmd);
 			p = pb.start();
 		}
 
