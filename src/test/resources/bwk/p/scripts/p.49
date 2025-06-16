@@ -1,1 +1,4 @@
-$1 == "include" { system("cat " $2) }
+$1 == "include" {
+    cmd = (ENVIRON["COMSPEC"] != "" ? "more" : "cat")
+    system(cmd " " $2)
+}
