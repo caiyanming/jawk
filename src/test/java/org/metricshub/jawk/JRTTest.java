@@ -8,7 +8,6 @@ import org.metricshub.jawk.intermediate.UninitializedObject;
 import java.util.Locale;
 import org.metricshub.jawk.jrt.AssocArray;
 import org.metricshub.jawk.jrt.JRT;
-import org.metricshub.jawk.AwkTestHelper;
 
 public class JRTTest {
 
@@ -147,6 +146,7 @@ public class JRTTest {
 	public void testPrintfSpecialCharacters() throws Exception {
 		String result = AwkTestHelper.runAwk("BEGIN { printf \"%c\\n\", 17379 }", null);
 		assertEquals("\u43e3\n", result);
+	}
 
 	@Test
 	public void testSplitSetsFieldZero() {
