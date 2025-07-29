@@ -139,15 +139,10 @@
 					<directories>
 						<directory>${project.build.sourceDirectory}</directory>
 						<directory>${project.build.testSourceDirectory}</directory>
-						<directory>${project.basedir}</directory>
 					</directories>
 					<includes>
 						<include>**/*.java</include>
-						<include>pom.xml</include>
 					</includes>
-					<excludes>
-						<exclude>**/target/**</exclude>
-					</excludes>
 					<configFile>metricshub-eclipse-formatter.xml</configFile>
 				</configuration>
 			</plugin>
