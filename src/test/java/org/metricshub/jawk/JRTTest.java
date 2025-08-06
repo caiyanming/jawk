@@ -160,8 +160,18 @@ public class JRTTest {
 	public void testSplitRegexWhitespace() {
 		AssocArray aa = new AssocArray(false);
 		int n = JRT.split("[ \t]+", aa, " 9853   shen", "%.6g", Locale.US);
-		assertEquals(2, n);
-		assertEquals("9853", aa.get(1));
-		assertEquals("shen", aa.get(2));
+		assertEquals(3, n);
+		assertEquals("", aa.get(1));
+		assertEquals("9853", aa.get(2));
+		assertEquals("shen", aa.get(3));
+	}
+
+	@Test
+	public void testRegexFsKeepsLeadingAndTrailingSeparators() throws Exception {
+		String result = AwkTestHelper
+				.runAwk(
+						"BEGIN { FS = \"[ \\t\\n]+\" } { print $2 }",
+						"  a  b  c  d ");
+		assertEquals("a\n", result);
 	}
 }
