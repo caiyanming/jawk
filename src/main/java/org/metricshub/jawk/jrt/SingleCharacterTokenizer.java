@@ -33,8 +33,9 @@ import java.util.Enumeration;
 public class SingleCharacterTokenizer implements Enumeration<Object> {
 
 	private String input;
-	private int splitChar;
-	private int idx = 0;
+	private char splitChar;
+	private int currentPos = 0;
+	private boolean hasMoreTokens = true;
 
 	/**
 	 * Construct a RegexTokenizer.
@@ -44,32 +45,33 @@ public class SingleCharacterTokenizer implements Enumeration<Object> {
 	 *        within the input string.
 	 */
 	public SingleCharacterTokenizer(String input, int splitChar) {
-		// input + sentinel
-		this.input = input + ((char) splitChar);
-		this.splitChar = splitChar;
+		this.input = input;
+		this.splitChar = (char) splitChar;
+		hasMoreTokens = !input.isEmpty();
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public boolean hasMoreElements() {
-		return idx < input.length();
+		return hasMoreTokens;
 	}
-
-	private StringBuffer sb = new StringBuffer();
 
 	/** {@inheritDoc} */
 	@Override
 	public Object nextElement() {
-		sb.setLength(0);
-		while (idx < input.length()) {
-			if (input.charAt(idx) == splitChar) {
-				++idx;
-				break;
-			} else {
-				sb.append(input.charAt(idx++));
+
+		for (int i = currentPos; i < input.length(); i++) {
+			if (input.charAt(i) == splitChar) {
+				String token = input.substring(currentPos, i);
+				currentPos = i + 1;
+				return token;
 			}
 		}
 
-		return sb.toString();
+		// We reached the end of the input, return what we have
+		String token = input.substring(currentPos);
+		currentPos = input.length();
+		hasMoreTokens = false;
+		return token;
 	}
 }

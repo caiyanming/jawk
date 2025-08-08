@@ -43,7 +43,11 @@ public class RegexTokenizer implements Enumeration<Object> {
 	 *        within the input string.
 	 */
 	public RegexTokenizer(String input, String delimitterRegexPattern) {
-		array = input.split(delimitterRegexPattern, -1);
+		if (input.isEmpty()) {
+			array = new String[0];
+		} else {
+			array = input.split(delimitterRegexPattern, -1);
+		}
 	}
 
 	/** {@inheritDoc} */
