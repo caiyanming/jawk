@@ -44,8 +44,8 @@ public class AwkTestHelper {
 
 	/** Result of an AWK script execution */
 	static class RunResult {
-		final String output;
-		final int exitCode;
+		String output;
+		int exitCode;
 
 		RunResult(String output, int exitCode) {
 			this.output = output;
@@ -225,7 +225,7 @@ public class AwkTestHelper {
 
 		// Create the OutputStream, to collect the result as a String
 		ByteArrayOutputStream resultBytesStream = new ByteArrayOutputStream();
-		settings.setOutputStream(new PrintStream(resultBytesStream));
+		settings.setOutputStream(new PrintStream(resultBytesStream, true, StandardCharsets.UTF_8.name()));
 
 		// Set TEMPDIR so the AWK scripts can "play" with it
 		if (setTempDir) {

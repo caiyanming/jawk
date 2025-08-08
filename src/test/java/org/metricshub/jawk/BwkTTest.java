@@ -87,6 +87,18 @@ public class BwkTTest {
 
 		AwkTestHelper.RunResult rr = AwkTestHelper.runAwkWithExitCode(awkFile, inputFile);
 		String expectedResult = AwkTestHelper.readTextFile(okFile);
+
+		// For BWK t tests, we won't take into account \r end of lines
+		rr.output = rr.output.replace("\r", "");
+
+		// Special case: certain tests loop through a map, which cannot be expected to be sorted
+		// the same way between C and Java. So we sort the result manually.
+		if ("t.in2".equals(awkName) || "t.intest2".equals(awkName)) {
+			rr.output = Arrays.stream(rr.output.split("\\R")).sorted().collect(Collectors.joining("\n"));
+			expectedResult = Arrays.stream(expectedResult.split("\\R")).sorted().collect(Collectors.joining("\n"));
+		}
+
+		// Output must now equal the expected result
 		assertEquals(expectedResult, rr.output);
 
 		int expectedCode = 0;

@@ -119,7 +119,7 @@ public class JRTTest {
 	public void testSpawnProcessMore() throws Exception {
 		Assume.assumeTrue(IS_WINDOWS);
 		String result = AwkTestHelper.runAwk("BEGIN { print \"Hello\" | \"more\"; close(\"more\") }", null);
-		assertEquals("Hello\n", result);
+		assertEquals("Hello\r\n\r\n", result);
 	}
 
 	@Test
@@ -137,9 +137,9 @@ public class JRTTest {
 		Assume.assumeTrue(IS_WINDOWS);
 		String result = AwkTestHelper
 				.runAwk(
-						"BEGIN { print(system(\"echo test | findstr test\")) }",
+						"BEGIN { print(system(\"echo test|findstr test\")) }",
 						null);
-		assertEquals("test\n0\n", result);
+		assertEquals("test\r\n0\n", result);
 	}
 
 	@Test
