@@ -251,6 +251,83 @@ public class AVM implements AwkInterpreter, VariableManager {
 	private Map<String, Boolean> globalVariableArrays;
 	private Set<String> functionNames;
 
+	/**
+	 * Evaluate the provided tuples as an AWK expression.
+	 *
+	 * @param tuples Tuples representing the expression
+	 * @param input Optional input line used to populate $0 and related fields
+	 * @return The resulting value of the expression
+	 * @throws ExitException if the evaluation triggers an exit
+	 * @throws IOException if an IO error occurs during evaluation
+	 */
+	public Object eval(AwkTuples tuples, String input) throws ExitException, IOException {
+		globalVariableOffsets = tuples.getGlobalVariableOffsetMap();
+		globalVariableArrays = tuples.getGlobalVariableAarrayMap();
+		functionNames = tuples.getFunctionNameSet();
+
+		runtimeStack.setNumGlobals(globalVariableOffsets.size());
+
+		nfOffset = getOffset("NF");
+		nrOffset = getOffset("NR");
+		fnrOffset = getOffset("FNR");
+		fsOffset = getOffset("FS");
+		rsOffset = getOffset("RS");
+		ofsOffset = getOffset("OFS");
+		orsOffset = getOffset("ORS");
+		rstartOffset = getOffset("RSTART");
+		rlengthOffset = getOffset("RLENGTH");
+		filenameOffset = getOffset("FILENAME");
+		subsepOffset = getOffset("SUBSEP");
+		convfmtOffset = getOffset("CONVFMT");
+		ofmtOffset = getOffset("OFMT");
+		environOffset = getOffset("ENVIRON");
+		argcOffset = getOffset("ARGC");
+		argvOffset = getOffset("ARGV");
+
+		if (fsOffset != NULL_OFFSET) {
+			runtimeStack.setVariable(fsOffset, initialFsValue == null ? " " : initialFsValue, true);
+		}
+		if (rsOffset != NULL_OFFSET) {
+			runtimeStack.setVariable(rsOffset, settings.getDefaultRS(), true);
+		}
+		if (ofsOffset != NULL_OFFSET) {
+			runtimeStack.setVariable(ofsOffset, " ", true);
+		}
+		if (orsOffset != NULL_OFFSET) {
+			runtimeStack.setVariable(orsOffset, settings.getDefaultORS(), true);
+		}
+		if (nfOffset != NULL_OFFSET) {
+			runtimeStack.setVariable(nfOffset, ZERO, true);
+		}
+		if (nrOffset != NULL_OFFSET) {
+			runtimeStack.setVariable(nrOffset, ZERO, true);
+		}
+		if (fnrOffset != NULL_OFFSET) {
+			runtimeStack.setVariable(fnrOffset, ZERO, true);
+		}
+
+		jrt.assignInitialVariables(initialVariables);
+
+		if (input != null) {
+			jrt.setInputLine(input);
+			jrt.jrtParseFields();
+			if (nrOffset != NULL_OFFSET) {
+				runtimeStack.setVariable(nrOffset, ONE, true);
+			}
+			if (fnrOffset != NULL_OFFSET) {
+				runtimeStack.setVariable(fnrOffset, ONE, true);
+			}
+		}
+
+		interpret(tuples);
+		return operandStack.size() == 0 ? null : pop();
+	}
+
+	private int getOffset(String name) {
+		Integer i = globalVariableOffsets.get(name);
+		return i == null ? NULL_OFFSET : i.intValue();
+	}
+
 	private static int parseIntField(Object obj, PositionForInterpretation position) {
 		if (obj instanceof Number) {
 			double num = ((Number) obj).doubleValue();

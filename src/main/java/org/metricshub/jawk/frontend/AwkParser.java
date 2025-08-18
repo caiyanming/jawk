@@ -25,6 +25,7 @@ package org.metricshub.jawk.frontend;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.PrintStream;
+import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -370,6 +371,62 @@ public class AwkParser {
 		read();
 		lexer();
 		return SCRIPT();
+	}
+
+	/**
+	 * Parse a single AWK expression and return the corresponding tuples.
+	 *
+	 * @param expression The expression to parse
+	 * @return tuples representing the expression
+	 * @throws IOException upon an IO error or parsing error
+	 */
+	public AwkTuples parseExpression(String expression) throws IOException {
+		if (expression == null) {
+			throw new IOException("No expression supplied");
+		}
+
+		this.scriptSources = Collections
+				.unmodifiableList(
+						Collections
+								.singletonList(
+										new ScriptSource(
+												ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
+												new StringReader(expression),
+												false)));
+		scriptSourcesCurrentIndex = 0;
+		reader = new LineNumberReader(this.scriptSources.get(scriptSourcesCurrentIndex).getReader());
+		read();
+		lexer();
+		AST ast = TERNARY_EXPRESSION(true, true, false);
+		if (token != EOF) {
+			throw new LexerException("Unexpected token after expression: " + text);
+		}
+
+		AwkTuples tuples = new AwkTuples();
+		int result = ast.populateTuples(tuples);
+		assert result == 1;
+		tuples.postProcess();
+
+		// ensure special variables have offsets
+		symbolTable.getID("NR");
+		symbolTable.getID("FNR");
+		symbolTable.getID("NF");
+		symbolTable.getID("FS");
+		symbolTable.getID("RS");
+		symbolTable.getID("OFS");
+		symbolTable.getID("ORS");
+		symbolTable.getID("RSTART");
+		symbolTable.getID("RLENGTH");
+		symbolTable.getID("FILENAME");
+		symbolTable.getID("SUBSEP");
+		symbolTable.getID("CONVFMT");
+		symbolTable.getID("OFMT");
+		symbolTable.getID("ENVIRON");
+		symbolTable.getID("ARGC");
+		symbolTable.getID("ARGV");
+
+		populateGlobalVariableNameToOffsetMappings(tuples);
+		return tuples;
 	}
 
 	/**
