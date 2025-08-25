@@ -614,151 +614,159 @@ public class JRT {
 	}
 
 	/**
-	 * Attempt to consume one line of input, either from stdin
-	 * or from filenames passed in to ARGC/ARGV via
-	 * the command-line.
+	 * Attempt to consume one line of input. Input may come from standard input or
+	 * from files/variable assignments supplied on the command line via
+	 * {@code ARGV}. Variable assignment arguments are evaluated lazily when
+	 * encountered.
 	 *
-	 * @param forGetline true if call is for getline, false otherwise.
-	 * @return true if line is consumed, false otherwise.
-	 * @throws java.io.IOException upon an IO error.
-	 * @param input a {@link java.io.InputStream} object
-	 * @param locale a {@link java.util.Locale} object
+	 * @param input stream used when consuming from standard input
+	 * @param forGetline {@code true} if the call is for {@code getline}; when
+	 *        {@code false} the fields of {@code $0} are parsed
+	 *        automatically
+	 * @param locale locale used for string conversion
+	 * @return {@code true} if a line was consumed, {@code false} if no more input
+	 *         is available
+	 * @throws IOException upon an IO error
 	 */
-	public boolean jrtConsumeInput(final InputStream input, boolean forGetline, Locale locale) throws IOException {
-		// first time!
-		if (arglistAa == null) {
-			Object arglistObj = vm.getARGV(); // vm.getVariable("argv_field", true);
-			arglistAa = (AssocArray) arglistObj;
-			arglistIdx = 1;
-
-			// calculate hasFilenames
-
-			int argc = (int) toDouble(vm.getARGC()); // (vm.getVariable("argc_field", true));
-			// 1 .. argc doesn't make sense
-			// 1 .. argc-1 does since arguments of:
-			// a b c
-			// result in:
-			// ARGC=4
-			// ARGV[0]="java Awk"
-			// ARGV[1]="a"
-			// ARGV[2]="b"
-			// ARGV[3]="c"
-			for (long i = 1; i < argc; i++) {
-				if (arglistAa.isIn(i)) {
-					Object namevalueOrFilenameObject = arglistAa.get(i);
-					String namevalueOrFilename = toAwkString(namevalueOrFilenameObject, vm.getCONVFMT().toString(), locale);
-					if (namevalueOrFilename.indexOf('=') == -1) {
-						// filename!
-						hasFilenames = true;
-						break;
-					}
-				}
-			}
-		}
-
-		// initial: pr == null
-		// subsequent: pr != null, but eof
+	public boolean consumeInput(final InputStream input, boolean forGetline, Locale locale) throws IOException {
+		initializeArgList(locale);
 
 		while (true) {
 			try {
-				if (partitioningReader == null) {
-					int argc = (int) toDouble(vm.getARGC()); // (vm.getVariable("argc_field", true));
-					Object o = BLANK;
-					while (arglistIdx <= argc) {
-						o = arglistAa.get(arglistIdx);
-						++arglistIdx;
-						if (!(o instanceof UninitializedObject || o.toString().isEmpty())) {
-							break;
-						}
-					}
-					if (!(o instanceof UninitializedObject || o.toString().isEmpty())) {
-						String nameValueOrFilename = toAwkString(o, vm.getCONVFMT().toString(), locale);
-						if (nameValueOrFilename.indexOf('=') == -1) {
-							partitioningReader = new PartitioningReader(
-									new InputStreamReader(new FileInputStream(nameValueOrFilename), StandardCharsets.UTF_8),
-									vm.getRS().toString(),
-									true);
-							vm.setFILENAME(nameValueOrFilename);
-							vm.resetFNR();
-						} else {
-							setFilelistVariable(nameValueOrFilename);
-							if (!hasFilenames) {
-								// stdin with a variable!
-								partitioningReader = new PartitioningReader(
-										new InputStreamReader(input, StandardCharsets.UTF_8),
-										vm.getRS().toString());
-								vm.setFILENAME("");
-							} else {
-								continue;
-							}
-						}
-					} else if (!hasFilenames) {
-						partitioningReader = new PartitioningReader(
-								new InputStreamReader(input, StandardCharsets.UTF_8),
-								vm.getRS().toString());
-						vm.setFILENAME("");
-					} else {
-						return false;
-					}
-				} else if (inputLine == null) {
-					if (hasFilenames) {
-						int argc = (int) toDouble(vm.getARGC());
-						Object o = BLANK;
-						while (arglistIdx <= argc) {
-							o = arglistAa.get(arglistIdx);
-							++arglistIdx;
-							if (!(o instanceof UninitializedObject || o.toString().isEmpty())) {
-								break;
-							}
-						}
-						if (!(o instanceof UninitializedObject || o.toString().isEmpty())) {
-							String nameValueOrFilename = toAwkString(o, vm.getCONVFMT().toString(), locale);
-							if (nameValueOrFilename.indexOf('=') == -1) {
-								// true = from filename list
-								partitioningReader = new PartitioningReader(
-										new InputStreamReader(new FileInputStream(nameValueOrFilename), StandardCharsets.UTF_8),
-										vm.getRS().toString(),
-										true);
-								vm.setFILENAME(nameValueOrFilename);
-								vm.resetFNR();
-							} else {
-								setFilelistVariable(nameValueOrFilename);
-								vm.incNR();
-								continue;
-							}
-						} else {
-							return false;
-						}
-					} else {
-						return false;
-					}
+				if ((partitioningReader == null || inputLine == null)
+						&& !prepareNextReader(input, locale)) {
+					return false;
 				}
-
-				// when active_input == false, usually means
-				// to instantiate "pr" (PartitioningReader for $0, etc)
-				// for Jawk extensions
-				// if (!active_input)
-				// return false;
 
 				inputLine = partitioningReader.readRecord();
 				if (inputLine == null) {
 					continue;
-				} else {
-					if (!forGetline) {
-						// For getline the caller will re-acquire $0; otherwise parse fields
-						jrtParseFields();
-					}
-					vm.incNR();
-					if (partitioningReader.fromFilenameList()) {
-						vm.incFNR();
-					}
-					return true;
 				}
+
+				if (!forGetline) {
+					// For getline the caller will re-acquire $0; otherwise parse fields
+					jrtParseFields();
+				}
+				vm.incNR();
+				if (partitioningReader.fromFilenameList()) {
+					vm.incFNR();
+				}
+				return true;
 			} catch (IOException ioe) {
 				LOG.warn("IO Exception", ioe);
-				continue;
 			}
 		}
+	}
+
+	/**
+	 * Initialize internal state for traversing {@code ARGV}.
+	 *
+	 * @param locale locale used for string conversion when inspecting arguments
+	 */
+	private void initializeArgList(Locale locale) {
+		if (arglistAa != null) {
+			return;
+		}
+		arglistAa = (AssocArray) vm.getARGV();
+		arglistIdx = 1;
+		hasFilenames = detectFilenames(locale);
+	}
+
+	/**
+	 * Determine whether {@code ARGV} contains any filename entries (arguments
+	 * without an equals sign).
+	 *
+	 * @param locale locale used for string conversion
+	 * @return {@code true} if at least one filename was found
+	 */
+	private boolean detectFilenames(Locale locale) {
+		int argc = getArgCount();
+		for (long i = 1; i < argc; i++) {
+			if (arglistAa.isIn(i)) {
+				String arg = toAwkString(arglistAa.get(i), vm.getCONVFMT().toString(), locale);
+				if (arg.indexOf('=') == -1) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Retrieve the number of command-line arguments supplied to the script.
+	 *
+	 * @return {@code ARGC} converted to an {@code int}
+	 */
+	private int getArgCount() {
+		return Math.toIntExact(toLong(vm.getARGC()));
+	}
+
+	/**
+	 * Obtain the next valid argument from {@code ARGV}, skipping uninitialized or
+	 * empty entries.
+	 *
+	 * @param locale locale used for string conversion
+	 * @return the next argument as an AWK string, or {@code null} if none remain
+	 */
+	private String nextArgument(Locale locale) {
+		int argc = getArgCount();
+		while (arglistIdx <= argc) {
+			Object o = arglistAa.get(arglistIdx++);
+			if (!(o instanceof UninitializedObject || o.toString().isEmpty())) {
+				return toAwkString(o, vm.getCONVFMT().toString(), locale);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Prepare the {@link PartitioningReader} for the next input source. This may
+	 * be a filename, a variable assignment, or standard input if no filenames
+	 * remain.
+	 *
+	 * @param input default input stream used when reading from standard input
+	 * @param locale locale used for string conversion
+	 * @return {@code true} if a reader was prepared, {@code false} if no more
+	 *         input is available
+	 * @throws IOException if an I/O error occurs while opening a file
+	 */
+	private boolean prepareNextReader(InputStream input, Locale locale) throws IOException {
+		boolean ready = false;
+		while (!ready) {
+			String arg = nextArgument(locale);
+			if (arg == null) {
+				if (partitioningReader == null && !hasFilenames) {
+					partitioningReader = new PartitioningReader(
+							new InputStreamReader(input, StandardCharsets.UTF_8),
+							vm.getRS().toString());
+					vm.setFILENAME("");
+					return true;
+				}
+				return false;
+			}
+			if (arg.indexOf('=') != -1) {
+				setFilelistVariable(arg);
+				if (partitioningReader == null && !hasFilenames) {
+					partitioningReader = new PartitioningReader(
+							new InputStreamReader(input, StandardCharsets.UTF_8),
+							vm.getRS().toString());
+					vm.setFILENAME("");
+					return true;
+				}
+				if (partitioningReader != null) {
+					vm.incNR();
+				}
+			} else {
+				partitioningReader = new PartitioningReader(
+						new InputStreamReader(new FileInputStream(arg), StandardCharsets.UTF_8),
+						vm.getRS().toString(),
+						true);
+				vm.setFILENAME(arg);
+				vm.resetFNR();
+				ready = true;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -779,6 +787,12 @@ public class JRT {
 		}
 	}
 
+	/**
+	 * Parse a {@code name=value} argument from the command line and assign it to
+	 * the corresponding AWK variable.
+	 *
+	 * @param nameValue argument in the form {@code name=value}
+	 */
 	private void setFilelistVariable(String nameValue) {
 		int eqIdx = nameValue.indexOf('=');
 		// variable name should be non-blank

@@ -2464,8 +2464,17 @@ public class AVM implements AwkInterpreter, VariableManager {
 		return retval;
 	}
 
+	/**
+	 * Consume input from the current source defined in {@link #settings} and push
+	 * the line onto the stack when {@code getline} semantics are required.
+	 *
+	 * @param forGetline {@code true} when called for {@code getline}; otherwise
+	 *        fields are parsed immediately and nothing is pushed
+	 * @return {@code true} if a line of input was read
+	 * @throws IOException if an I/O error occurs while reading input
+	 */
 	private boolean avmConsumeInput(boolean forGetline) throws IOException {
-		boolean retval = jrt.jrtConsumeInput(settings.getInput(), forGetline, locale);
+		boolean retval = jrt.consumeInput(settings.getInput(), forGetline, locale);
 		if (retval && forGetline) {
 			push(jrt.getInputLine());
 		}
