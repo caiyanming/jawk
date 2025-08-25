@@ -251,6 +251,30 @@ public class AVM implements AwkInterpreter, VariableManager {
 	private Map<String, Boolean> globalVariableArrays;
 	private Set<String> functionNames;
 
+	/**
+	 * Evaluate the provided tuples as an AWK expression.
+	 *
+	 * @param tuples Tuples representing the expression
+	 * @param input Optional input line used to populate $0 and related fields
+	 * @return The resulting value of the expression
+	 * @throws IOException if an IO error occurs during evaluation
+	 */
+	public Object eval(AwkTuples tuples, String input) throws IOException {
+		jrt.assignInitialVariables(initialVariables);
+
+		// Now execute the tuples
+		try {
+			interpret(tuples);
+		} catch (ExitException e) {
+			// Special case (which should never happen):
+			// return the value of the "exit" statement if any
+			return e.getCode();
+		}
+
+		// Return the top of the stack, which is the value of the specified expression
+		return operandStack.size() == 0 ? null : pop();
+	}
+
 	private static int parseIntField(Object obj, PositionForInterpretation position) {
 		if (obj instanceof Number) {
 			double num = ((Number) obj).doubleValue();
@@ -676,6 +700,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
+
 				case AwkTuples.ASSIGN_AS_INPUT: {
 					// stack[0] = value
 					jrt.setInputLine(pop().toString());
@@ -684,6 +709,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
+
 				case AwkTuples.ASSIGN_AS_INPUT_FIELD: {
 					// stack[0] = field number
 					// stack[1] = value
@@ -1532,6 +1558,13 @@ public class AVM implements AwkInterpreter, VariableManager {
 					}
 					break;
 				}
+
+				case AwkTuples.SET_INPUT_FOR_EVAL: {
+					jrt.setInputLineforEval(settings.getInput());
+					position.next();
+					break;
+				}
+
 				case AwkTuples.GETLINE_INPUT: {
 					avmConsumeInputForGetline();
 					position.next();
@@ -2431,8 +2464,17 @@ public class AVM implements AwkInterpreter, VariableManager {
 		return retval;
 	}
 
+	/**
+	 * Consume input from the current source defined in {@link #settings} and push
+	 * the line onto the stack when {@code getline} semantics are required.
+	 *
+	 * @param forGetline {@code true} when called for {@code getline}; otherwise
+	 *        fields are parsed immediately and nothing is pushed
+	 * @return {@code true} if a line of input was read
+	 * @throws IOException if an I/O error occurs while reading input
+	 */
 	private boolean avmConsumeInput(boolean forGetline) throws IOException {
-		boolean retval = jrt.jrtConsumeInput(settings.getInput(), forGetline, locale);
+		boolean retval = jrt.consumeInput(settings.getInput(), forGetline, locale);
 		if (retval && forGetline) {
 			push(jrt.getInputLine());
 		}

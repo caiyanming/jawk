@@ -4,14 +4,18 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.metricshub.jawk.AwkTestHelper.evalAwk;
 import static org.metricshub.jawk.AwkTestHelper.runAwk;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -19,6 +23,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.metricshub.jawk.frontend.AwkParser;
+import org.metricshub.jawk.intermediate.AwkTuples;
+import org.metricshub.jawk.util.AwkSettings;
 
 public class AwkTest {
 
@@ -225,15 +231,15 @@ public class AwkTest {
 
 	@Test
 	public void testNot() throws Exception {
-		assertEquals("!0 must return 1", "1", evalAwk("!0"));
-		assertEquals("!1 must return 0", "0", evalAwk("!1"));
-		assertEquals("!0.0 must return 1", "1", evalAwk("!0.0"));
-		assertEquals("!0.1 must return 0", "0", evalAwk("!0.1"));
-		assertEquals("!2^31 must return 0", "0", evalAwk("!2^31"));
-		assertEquals("!2^33 must return 0", "0", evalAwk("!2^33"));
-		assertEquals("!\"\" must return 1", "1", evalAwk("!\"\""));
-		assertEquals("!\"a\" must return 0", "0", evalAwk("!\"a\""));
-		assertEquals("!uninitialized must return true", "1", evalAwk("!uninitialized"));
+		assertEquals("!0 must return 1", 1, Awk.eval("!0"));
+		assertEquals("!1 must return 0", 0, Awk.eval("!1"));
+		assertEquals("!0.0 must return 1", 1, Awk.eval("!0.0"));
+		assertEquals("!0.1 must return 0", 0, Awk.eval("!0.1"));
+		assertEquals("!2^31 must return 0", 0, Awk.eval("!2^31"));
+		assertEquals("!2^33 must return 0", 0, Awk.eval("!2^33"));
+		assertEquals("!\"\" must return 1", 1, Awk.eval("!\"\""));
+		assertEquals("!\"a\" must return 0", 0, Awk.eval("!\"a\""));
+		assertEquals("!uninitialized must return true", 1, Awk.eval("!uninitialized"));
 	}
 
 	@Test
@@ -305,12 +311,12 @@ public class AwkTest {
 
 	@Test
 	public void testPrintfC() throws Exception {
-		assertEquals("A", evalAwk("sprintf(\"%c\", 65)"));
+		assertEquals("A", Awk.eval("sprintf(\"%c\", 65)"));
 	}
 
 	@Test
 	public void testConcatenationLeftAssociativity() throws Exception {
-		assertEquals("Concatenated elements must be eval'ed from left to right", "0123", evalAwk("a++ a++ a++ a++"));
+		assertEquals("Concatenated elements must be eval'ed from left to right", "0123", Awk.eval("a++ a++ a++ a++"));
 	}
 
 	@Test
@@ -323,7 +329,7 @@ public class AwkTest {
 
 	@Test
 	public void testAtan2ArgumentsLeftAssociativity() throws Exception {
-		assertEquals("atan2 arguments must be eval'ed from left to right", "0", evalAwk("atan2(a++, a++)"));
+		assertEquals("atan2 arguments must be eval'ed from left to right", 0.0, Awk.eval("atan2(a++, a++)"));
 	}
 
 	@Test
@@ -354,18 +360,18 @@ public class AwkTest {
 	public void testChainedAdditionsAndSubtractionsLeftAssociativity() throws Exception {
 		assertEquals(
 				"Chained additions and subtractions must be eval'ed from left to right",
-				"6",
-				evalAwk("10 - 3 - 2 + 1"));
+				6L,
+				Awk.eval("10 - 3 - 2 + 1"));
 	}
 
 	@Test
 	public void testChainedMultiplicationsAndDivisionsLeftAssociativity() throws Exception {
-		assertEquals("Chained multiplies and divides must be eval'ed from left to right", "5", evalAwk("12 / 3 / 4 * 5"));
+		assertEquals("Chained multiplies and divides must be eval'ed from left to right", 5L, Awk.eval("12 / 3 / 4 * 5"));
 	}
 
 	@Test
 	public void testChainedExponentiationRightAssociativity() throws Exception {
-		assertEquals("Chained powers must be eval'ed from right to left", "4", evalAwk("256 ^ 0.5 ^ 4 ^ 0.5"));
+		assertEquals("Chained powers must be eval'ed from right to left", 4L, Awk.eval("256 ^ 0.5 ^ 4 ^ 0.5"));
 	}
 
 	// Additional tests to further cover left associativity:
@@ -399,30 +405,30 @@ public class AwkTest {
 		assertEquals(
 				"Chained string concatenation must be eval'ed from left to right",
 				"abcde",
-				evalAwk("\"a\" \"b\" \"c\" \"d\" \"e\""));
+				Awk.eval("\"a\" \"b\" \"c\" \"d\" \"e\""));
 	}
 
 	@Test
 	public void testComplexExpressionLeftAssociativity() throws Exception {
 		assertEquals(
 				"Complex expression with mixed operators must be eval'ed from left to right",
-				"8",
-				evalAwk("10 + 12 / 3 * 2 - 6 / 3 * 5"));
+				8L,
+				Awk.eval("10 + 12 / 3 * 2 - 6 / 3 * 5"));
 	}
 
 	@Test
 	public void testSubstr() throws Exception {
-		assertEquals("234", evalAwk("substr(\"12345\", 2, 3)"));
-		assertEquals("2345", evalAwk("substr(\"12345\", 2, 10)"));
-		assertEquals("123", evalAwk("substr(\"12345\", 0, 3)"));
-		assertEquals("123", evalAwk("substr(\"12345\", -1, 3)"));
-		assertEquals("", evalAwk("substr(\"12345\", 2, 0)"));
-		assertEquals("", evalAwk("substr(\"12345\", 2, -1)"));
-		assertEquals("", evalAwk("substr(\"12345\", -1, -1)"));
-		assertEquals("", evalAwk("substr(\"12345\", 10, 3)"));
-		assertEquals("2345", evalAwk("substr(\"12345\", 2)"));
-		assertEquals("12345", evalAwk("substr(\"12345\", 0)"));
-		assertEquals("12345", evalAwk("substr(\"12345\", -1)"));
+		assertEquals("234", Awk.eval("substr(\"12345\", 2, 3)"));
+		assertEquals("2345", Awk.eval("substr(\"12345\", 2, 10)"));
+		assertEquals("123", Awk.eval("substr(\"12345\", 0, 3)"));
+		assertEquals("123", Awk.eval("substr(\"12345\", -1, 3)"));
+		assertEquals("", Awk.eval("substr(\"12345\", 2, 0)").toString());
+		assertEquals("", Awk.eval("substr(\"12345\", 2, -1)").toString());
+		assertEquals("", Awk.eval("substr(\"12345\", -1, -1)").toString());
+		assertEquals("", Awk.eval("substr(\"12345\", 10, 3)").toString());
+		assertEquals("2345", Awk.eval("substr(\"12345\", 2)"));
+		assertEquals("12345", Awk.eval("substr(\"12345\", 0)"));
+		assertEquals("12345", Awk.eval("substr(\"12345\", -1)"));
 	}
 
 	@Test
@@ -547,5 +553,83 @@ public class AwkTest {
 	public void testGetlineDefaultVariable() throws Exception {
 		String script = "BEGIN { while (getline && n++ < 2) print; exit }";
 		assertEquals("a\nb\n", runAwk(script, "a\nb\nc\n"));
+	}
+
+	@Test
+	public void testEvalNumericExpression() throws Exception {
+		Object result = Awk.eval("1 + 2", null);
+		assertTrue(result instanceof Number);
+		assertEquals(3, ((Number) result).intValue());
+	}
+
+	@Test
+	public void testEvalFieldExtraction() throws Exception {
+		Object result = Awk.eval("$2", "my text input");
+		assertEquals("text", result);
+	}
+
+	@Test
+	public void testEvalNF() throws Exception {
+		Object result = Awk.eval("NF", "a b c");
+		assertEquals(3, ((Number) result).intValue());
+	}
+
+	@Test
+	public void testEvalFailsStatement() throws Exception {
+		assertThrows(AwkParser.ParserException.class, () -> Awk.eval("print 3.14", null));
+		assertThrows(AwkParser.ParserException.class, () -> Awk.eval("1 + 2, 3", null));
+		assertThrows(AwkParser.ParserException.class, () -> Awk.eval("1 + 2 ; 3 + 4", null));
+		assertThrows(AwkParser.ParserException.class, () -> Awk.eval("BEGIN { print 5 }", null));
+	}
+
+	@Test
+	public void compileFromString() throws Exception {
+		String script = "{ print $0 }";
+		AwkTuples tuples = Awk.compile(script);
+
+		AwkSettings settings = new AwkSettings();
+		settings.setInput(new ByteArrayInputStream("foo\nbar\n".getBytes(StandardCharsets.UTF_8)));
+		settings.setDefaultRS("\n");
+		settings.setDefaultORS("\n");
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		settings.setOutputStream(new PrintStream(out, false, StandardCharsets.UTF_8.name()));
+
+		new Awk().invoke(tuples, settings);
+
+		assertEquals("foo\nbar\n", out.toString(StandardCharsets.UTF_8.name()));
+	}
+
+	@Test
+	public void compileFromReader() throws Exception {
+		String script = "{ print $0 }";
+		AwkTuples tuples = Awk.compile(new StringReader(script));
+
+		AwkSettings settings = new AwkSettings();
+		settings.setInput(new ByteArrayInputStream("one\n".getBytes(StandardCharsets.UTF_8)));
+		settings.setDefaultRS("\n");
+		settings.setDefaultORS("\n");
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		settings.setOutputStream(new PrintStream(out, false, StandardCharsets.UTF_8.name()));
+
+		new Awk().invoke(tuples, settings);
+
+		assertEquals("one\n", out.toString(StandardCharsets.UTF_8.name()));
+	}
+
+	@Test
+	public void invokeWithExplicitExtensions() throws Exception {
+		String script = "{ print $0 }";
+		AwkTuples tuples = Awk.compile(script);
+
+		AwkSettings settings = new AwkSettings();
+		settings.setInput(new ByteArrayInputStream("value\n".getBytes(StandardCharsets.UTF_8)));
+		settings.setDefaultRS("\n");
+		settings.setDefaultORS("\n");
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		settings.setOutputStream(new PrintStream(out, false, StandardCharsets.UTF_8.name()));
+
+		new Awk().invoke(tuples, settings, Collections.emptyMap());
+
+		assertEquals("value\n", out.toString(StandardCharsets.UTF_8.name()));
 	}
 }

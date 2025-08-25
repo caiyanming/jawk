@@ -142,12 +142,6 @@ public class AwkSettings {
 	private PrintStream outputStream = System.out;
 
 	/**
-	 * Compiled destination directory (if provided);
-	 * <code>"."</code> by default.
-	 */
-	private String destinationDirectory = ".";
-
-	/**
 	 * Locale for the output of numbers
 	 * <code>US-English</code> by default.
 	 */
@@ -187,7 +181,6 @@ public class AwkSettings {
 		desc.append("catchIllegalFormatExceptions = ").append(isCatchIllegalFormatExceptions()).append(newLine);
 		desc.append("writeIntermediateFile = ").append(isWriteIntermediateFile()).append(newLine);
 		desc.append("outputFilename = ").append(getOutputFilename()).append(newLine);
-		desc.append("destinationDirectory = ").append(getDestinationDirectory()).append(newLine);
 
 		return desc.toString();
 	}
@@ -575,30 +568,6 @@ public class AwkSettings {
 	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Caller-supplied PrintStream must be used directly; no defensive copy possible.")
 	public void setOutputStream(PrintStream pOutputStream) {
 		outputStream = pOutputStream;
-	}
-
-	/**
-	 * Compiled destination directory (if provided);
-	 * <code>"."</code> by default.
-	 *
-	 * @return the destinationDirectory
-	 */
-	public String getDestinationDirectory() {
-		return destinationDirectory;
-	}
-
-	/**
-	 * Compiled destination directory (if provided).
-	 *
-	 * @param destinationDirectory the destinationDirectory to set,
-	 *        <code>"."</code> by default.
-	 */
-	public void setDestinationDirectory(String destinationDirectory) {
-		if (destinationDirectory == null) {
-			throw new IllegalArgumentException("The destination directory might never be null (you might want to use \".\")");
-		}
-
-		this.destinationDirectory = destinationDirectory;
 	}
 
 	/**

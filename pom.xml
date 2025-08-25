@@ -113,7 +113,7 @@
 		<dependency>
 			<groupId>com.github.spotbugs</groupId>
 			<artifactId>spotbugs-annotations</artifactId>
-			<version>4.9.3</version>
+			<version>4.9.4</version>
 		</dependency>
 
 	</dependencies>
@@ -344,6 +344,14 @@
 				<version>3.5.3</version>
 			</plugin>
 
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-changelog-plugin</artifactId>
+				<version>3.0.0-M1</version>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
 		</plugins>
 	</reporting>
 
