@@ -20,12 +20,32 @@ See [usage and examples of Jawk CLI](cli.html).
 
 ## Run AWK inside Java
 
-The `Awk` class provides several `run(...)` helpers to execute a script with one
-line of code:
+The `Awk` class exposes several APIs to evaluate expressions and execute
+scripts.
+
+### Evaluate an expression
+
+```java
+Object value = Awk.eval("2 + 3");
+```
+
+### Run a script directly
 
 ```java
 String output = Awk.run("{ print $1 }", "foo bar");
 ```
+
+### Compile and invoke a script
+
+```java
+AwkTuples tuples = Awk.compile("{ print $0 }");
+AwkSettings settings = new AwkSettings();
+// configure input/output streams here
+new Awk().invoke(tuples, settings);
+```
+
+`compileForEval(...)` and `Awk.eval(AwkTuples, ...)` provide the same workflow
+for expressions.
 
 See [AWK in Java documentation](java.html) for advanced examples.
 

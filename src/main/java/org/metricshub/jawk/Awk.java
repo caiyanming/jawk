@@ -119,88 +119,78 @@ public class Awk {
 	 *         and a specific exit code is requested.
 	 */
 	public void invoke(AwkSettings settings) throws IOException, ClassNotFoundException, ExitException {
+		// key = Keyword, value = JawkExtension
+		Map<String, JawkExtension> extensions;
+		if (settings.isUserExtensions()) {
+			extensions = getJawkExtensions();
+			LOG.trace("user extensions = {}", extensions.keySet());
+		} else {
+			extensions = Collections.emptyMap();
+			LOG.trace("user extensions not enabled");
+		}
+
+		AwkTuples tuples = compile(settings, extensions);
+		if (tuples == null) {
+			return;
+		}
+
+		invoke(tuples, settings, extensions);
+	}
+
+	/**
+	 * <p>
+	 * invoke.
+	 * </p>
+	 *
+	 * @param tuples precompiled {@link AwkTuples} to interpret
+	 * @param settings runtime settings
+	 * @throws java.io.IOException upon an IO error.
+	 * @throws java.lang.ClassNotFoundException if intermediate code is specified
+	 *         but deserialization fails to load in the JVM
+	 * @throws org.metricshub.jawk.ExitException if interpretation is requested,
+	 *         and a specific exit code is requested.
+	 */
+	public void invoke(AwkTuples tuples, AwkSettings settings)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		// key = Keyword, value = JawkExtension
+		Map<String, JawkExtension> extensions;
+		if (settings.isUserExtensions()) {
+			extensions = getJawkExtensions();
+			LOG.trace("user extensions = {}", extensions.keySet());
+		} else {
+			extensions = Collections.emptyMap();
+			LOG.trace("user extensions not enabled");
+		}
+
+		invoke(tuples, settings, extensions);
+	}
+
+	/**
+	 * Interprets the specified precompiled {@link AwkTuples} using the provided
+	 * {@link AwkSettings} and optional extension map.
+	 *
+	 * @param tuples precompiled tuples to interpret
+	 * @param settings runtime settings
+	 * @param extensions extensions available to the script (key = keyword,
+	 *        value = {@link JawkExtension})
+	 * @throws IOException upon an IO error
+	 * @throws ExitException if interpretation is requested, and a specific exit
+	 *         code is requested
+	 */
+	public void invoke(
+			AwkTuples tuples,
+			AwkSettings settings,
+			Map<String, JawkExtension> extensions)
+			throws IOException,
+			ExitException {
+		if (tuples == null) {
+			return;
+		}
+
 		AVM avm = null;
 		try {
-			// key = Keyword, value = JawkExtension
-			Map<String, JawkExtension> extensions;
-			if (settings.isUserExtensions()) {
-				extensions = getJawkExtensions();
-				LOG.trace("user extensions = {}", extensions.keySet());
-			} else {
-				extensions = Collections.emptyMap();
-				LOG.trace("user extensions not enabled");
-			}
-
-			AwkTuples tuples = new AwkTuples();
-			// to be defined below
-
-			List<ScriptSource> notIntermediateScriptSources = new ArrayList<ScriptSource>(settings.getScriptSources().size());
-			for (ScriptSource scriptSource : settings.getScriptSources()) {
-				if (scriptSource.isIntermediate()) {
-					// read the intermediate file, bypassing frontend processing
-					// if several intermediate files are supplied, the most recent one
-					// encountered in the list takes precedence
-					tuples = (AwkTuples) readObjectFromInputStream(scriptSource.getInputStream());
-				} else {
-					notIntermediateScriptSources.add(scriptSource);
-				}
-			}
-			if (!notIntermediateScriptSources.isEmpty()) {
-				AwkParser parser = new AwkParser(
-						settings.isAdditionalFunctions(),
-						settings.isAdditionalTypeFunctions(),
-						extensions);
-				// parse the script
-				AwkSyntaxTree ast = parser.parse(notIntermediateScriptSources);
-
-				if (settings.isDumpSyntaxTree()) {
-					// dump the syntax tree of the script to a file
-					String filename = settings.getOutputFilename("syntax_tree.lst");
-					LOG.info("writing to '{}'", filename);
-					PrintStream ps = new PrintStream(new FileOutputStream(filename), false, StandardCharsets.UTF_8.name());
-					if (ast != null) {
-						ast.dump(ps);
-					}
-					ps.close();
-					return;
-				}
-				// otherwise, attempt to traverse the syntax tree and build
-				// the intermediate code
-				if (ast != null) {
-					// 1st pass to tie actual parameters to back-referenced formal parameters
-					ast.semanticAnalysis();
-					// 2nd pass to tie actual parameters to forward-referenced formal parameters
-					ast.semanticAnalysis();
-					// build tuples
-					int result = ast.populateTuples(tuples);
-					// ASSERTION: NOTHING should be left on the operand stack ...
-					assert result == 0;
-					// Assign queue.next to the next element in the queue.
-					// Calls touch(...) per Tuple so that addresses can be normalized/assigned/allocated
-					tuples.postProcess();
-					// record global_var -> offset mapping into the tuples
-					// so that the interpreter/compiler can assign variables
-					// on the "file list input" command line
-					parser.populateGlobalVariableNameToOffsetMappings(tuples);
-				}
-				if (settings.isWriteIntermediateFile()) {
-					// dump the intermediate code to an intermediate code file
-					String filename = settings.getOutputFilename("a.ai");
-					LOG.info("writing to '{}'", filename);
-					writeObjectToFile(tuples, filename);
-					return;
-				}
-			}
-			if (settings.isDumpIntermediateCode()) {
-				// dump the intermediate code to a human-readable text file
-				String filename = settings.getOutputFilename("avm.lst");
-				LOG.info("writing to '{}'", filename);
-				PrintStream ps = new PrintStream(new FileOutputStream(filename), false, StandardCharsets.UTF_8.name());
-				tuples.dump(ps);
-				ps.close();
-				return;
-			}
-
 			// interpret!
 			avm = new AVM(settings, extensions);
 			avm.interpret(tuples);
@@ -564,6 +554,111 @@ public class Awk {
 				throw e;
 			}
 		}
+	}
+
+	/**
+	 * Compiles the specified AWK script and returns the intermediate representation
+	 * as {@link AwkTuples}.
+	 *
+	 * @param script AWK script to compile
+	 * @return compiled {@link AwkTuples}
+	 * @throws IOException if an I/O error occurs during compilation
+	 * @throws ClassNotFoundException if intermediate code cannot be loaded
+	 */
+	public static AwkTuples compile(String script) throws IOException, ClassNotFoundException {
+		return compile(new StringReader(script));
+	}
+
+	/**
+	 * Compiles the specified AWK script and returns the intermediate representation
+	 * as {@link AwkTuples}.
+	 *
+	 * @param script AWK script to compile (as a {@link Reader})
+	 * @return compiled {@link AwkTuples}
+	 * @throws IOException if an I/O error occurs during compilation
+	 * @throws ClassNotFoundException if intermediate code cannot be loaded
+	 */
+	public static AwkTuples compile(Reader script) throws IOException, ClassNotFoundException {
+		AwkSettings settings = new AwkSettings();
+		settings.addScriptSource(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, script, false));
+
+		Awk awk = new Awk();
+		return awk.compile(settings, Collections.emptyMap());
+	}
+
+	private AwkTuples compile(AwkSettings settings, Map<String, JawkExtension> extensions)
+			throws IOException,
+			ClassNotFoundException {
+
+		AwkTuples tuples = new AwkTuples();
+		List<ScriptSource> notIntermediateScriptSources = new ArrayList<ScriptSource>(settings.getScriptSources().size());
+		for (ScriptSource scriptSource : settings.getScriptSources()) {
+			if (scriptSource.isIntermediate()) {
+				// read the intermediate file, bypassing frontend processing
+				// if several intermediate files are supplied, the most recent one
+				// encountered in the list takes precedence
+				tuples = (AwkTuples) readObjectFromInputStream(scriptSource.getInputStream());
+			} else {
+				notIntermediateScriptSources.add(scriptSource);
+			}
+		}
+		if (!notIntermediateScriptSources.isEmpty()) {
+			AwkParser parser = new AwkParser(
+					settings.isAdditionalFunctions(),
+					settings.isAdditionalTypeFunctions(),
+					extensions);
+			// parse the script
+			AwkSyntaxTree ast = parser.parse(notIntermediateScriptSources);
+
+			if (settings.isDumpSyntaxTree()) {
+				// dump the syntax tree of the script to a file
+				String filename = settings.getOutputFilename("syntax_tree.lst");
+				LOG.info("writing to '{}'", filename);
+				PrintStream ps = new PrintStream(new FileOutputStream(filename), false, StandardCharsets.UTF_8.name());
+				if (ast != null) {
+					ast.dump(ps);
+				}
+				ps.close();
+				return null;
+			}
+			// otherwise, attempt to traverse the syntax tree and build
+			// the intermediate code
+			if (ast != null) {
+				// 1st pass to tie actual parameters to back-referenced formal parameters
+				ast.semanticAnalysis();
+				// 2nd pass to tie actual parameters to forward-referenced formal parameters
+				ast.semanticAnalysis();
+				// build tuples
+				int result = ast.populateTuples(tuples);
+				// ASSERTION: NOTHING should be left on the operand stack ...
+				assert result == 0;
+				// Assign queue.next to the next element in the queue.
+				// Calls touch(...) per Tuple so that addresses can be normalized/assigned/allocated
+				tuples.postProcess();
+				// record global_var -> offset mapping into the tuples
+				// so that the interpreter/compiler can assign variables
+				// on the "file list input" command line
+				parser.populateGlobalVariableNameToOffsetMappings(tuples);
+			}
+			if (settings.isWriteIntermediateFile()) {
+				// dump the intermediate code to an intermediate code file
+				String filename = settings.getOutputFilename("a.ai");
+				LOG.info("writing to '{}'", filename);
+				writeObjectToFile(tuples, filename);
+				return null;
+			}
+		}
+		if (settings.isDumpIntermediateCode()) {
+			// dump the intermediate code to a human-readable text file
+			String filename = settings.getOutputFilename("avm.lst");
+			LOG.info("writing to '{}'", filename);
+			PrintStream ps = new PrintStream(new FileOutputStream(filename), false, StandardCharsets.UTF_8.name());
+			tuples.dump(ps);
+			ps.close();
+			return null;
+		}
+
+		return tuples;
 	}
 
 	/**

@@ -6,11 +6,16 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.metricshub.jawk.AwkTestHelper.runAwk;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -18,6 +23,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.metricshub.jawk.frontend.AwkParser;
+import org.metricshub.jawk.intermediate.AwkTuples;
+import org.metricshub.jawk.util.AwkSettings;
 
 public class AwkTest {
 
@@ -573,5 +580,56 @@ public class AwkTest {
 		assertThrows(AwkParser.ParserException.class, () -> Awk.eval("1 + 2, 3", null));
 		assertThrows(AwkParser.ParserException.class, () -> Awk.eval("1 + 2 ; 3 + 4", null));
 		assertThrows(AwkParser.ParserException.class, () -> Awk.eval("BEGIN { print 5 }", null));
+	}
+
+	@Test
+	public void compileFromString() throws Exception {
+		String script = "{ print $0 }";
+		AwkTuples tuples = Awk.compile(script);
+
+		AwkSettings settings = new AwkSettings();
+		settings.setInput(new ByteArrayInputStream("foo\nbar\n".getBytes(StandardCharsets.UTF_8)));
+		settings.setDefaultRS("\n");
+		settings.setDefaultORS("\n");
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		settings.setOutputStream(new PrintStream(out, false, StandardCharsets.UTF_8.name()));
+
+		new Awk().invoke(tuples, settings);
+
+		assertEquals("foo\nbar\n", out.toString(StandardCharsets.UTF_8.name()));
+	}
+
+	@Test
+	public void compileFromReader() throws Exception {
+		String script = "{ print $0 }";
+		AwkTuples tuples = Awk.compile(new StringReader(script));
+
+		AwkSettings settings = new AwkSettings();
+		settings.setInput(new ByteArrayInputStream("one\n".getBytes(StandardCharsets.UTF_8)));
+		settings.setDefaultRS("\n");
+		settings.setDefaultORS("\n");
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		settings.setOutputStream(new PrintStream(out, false, StandardCharsets.UTF_8.name()));
+
+		new Awk().invoke(tuples, settings);
+
+		assertEquals("one\n", out.toString(StandardCharsets.UTF_8.name()));
+	}
+
+	@Test
+	public void invokeWithExplicitExtensions() throws Exception {
+		String script = "{ print $0 }";
+		AwkTuples tuples = Awk.compile(script);
+
+		AwkSettings settings = new AwkSettings();
+		settings.setInput(new ByteArrayInputStream("value\n".getBytes(StandardCharsets.UTF_8)));
+		settings.setDefaultRS("\n");
+		settings.setDefaultORS("\n");
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		settings.setOutputStream(new PrintStream(out, false, StandardCharsets.UTF_8.name()));
+
+		new Awk().invoke(tuples, settings, Collections.emptyMap());
+
+		assertEquals("value\n", out.toString(StandardCharsets.UTF_8.name()));
 	}
 }
