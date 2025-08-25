@@ -361,7 +361,7 @@ public class AwkParser {
 	 * @return The abstract syntax tree of this script.
 	 * @throws java.io.IOException upon an IO error.
 	 */
-	public AwkSyntaxTree parse(List<ScriptSource> localScriptSources) throws IOException {
+	public AstNode parse(List<ScriptSource> localScriptSources) throws IOException {
 		if (localScriptSources == null || localScriptSources.isEmpty()) {
 			throw new IOException("No script sources supplied");
 		}
@@ -380,7 +380,7 @@ public class AwkParser {
 	 * @return tuples representing the expression
 	 * @throws IOException upon an IO error or parsing error
 	 */
-	public AwkSyntaxTree parseExpression(ScriptSource expressionSource) throws IOException {
+	public AstNode parseExpression(ScriptSource expressionSource) throws IOException {
 
 		// Sanity check
 		if (expressionSource == null) {
@@ -2229,7 +2229,7 @@ public class AwkParser {
 	// parser
 	// ===============================================================================
 	// AST class defs
-	private abstract class AST implements AwkSyntaxTree {
+	private abstract class AST extends AstNode {
 
 		private final String sourceDescription = scriptSources.get(scriptSourcesCurrentIndex).getDescription();
 		private final int lineNo = reader.getLineNumber() + 1;

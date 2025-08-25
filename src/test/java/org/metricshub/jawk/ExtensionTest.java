@@ -12,7 +12,7 @@ import org.junit.Test;
 import org.metricshub.jawk.backend.AVM;
 import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.frontend.AwkParser;
-import org.metricshub.jawk.frontend.AwkSyntaxTree;
+import org.metricshub.jawk.frontend.AstNode;
 import org.metricshub.jawk.intermediate.AwkTuples;
 import org.metricshub.jawk.util.AwkSettings;
 import org.metricshub.jawk.util.ScriptSource;
@@ -49,7 +49,7 @@ public class ExtensionTest {
 		AVM avm = null;
 		try {
 			AwkParser parser = new AwkParser(false, false, myExtensionMap);
-			AwkSyntaxTree ast = parser.parse(settings.getScriptSources());
+			AstNode ast = parser.parse(settings.getScriptSources());
 			ast.semanticAnalysis();
 			ast.semanticAnalysis();
 			AwkTuples tuples = new AwkTuples();

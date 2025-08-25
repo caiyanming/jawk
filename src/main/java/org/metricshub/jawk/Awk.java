@@ -49,7 +49,7 @@ import java.util.StringTokenizer;
 import org.metricshub.jawk.backend.AVM;
 import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.frontend.AwkParser;
-import org.metricshub.jawk.frontend.AwkSyntaxTree;
+import org.metricshub.jawk.frontend.AstNode;
 import org.metricshub.jawk.intermediate.AwkTuples;
 import org.metricshub.jawk.util.AwkLogger;
 import org.metricshub.jawk.util.AwkSettings;
@@ -608,7 +608,7 @@ public class Awk {
 					settings.isAdditionalTypeFunctions(),
 					extensions);
 			// parse the script
-			AwkSyntaxTree ast = parser.parse(notIntermediateScriptSources);
+			AstNode ast = parser.parse(notIntermediateScriptSources);
 
 			if (settings.isDumpSyntaxTree()) {
 				// dump the syntax tree of the script to a file
@@ -680,7 +680,7 @@ public class Awk {
 
 		// Parse the expression
 		AwkParser parser = new AwkParser(false, false, extensions);
-		AwkSyntaxTree ast = parser.parseExpression(expressionSource);
+		AstNode ast = parser.parseExpression(expressionSource);
 
 		// Create the tuples that we will return
 		AwkTuples tuples = new AwkTuples();
