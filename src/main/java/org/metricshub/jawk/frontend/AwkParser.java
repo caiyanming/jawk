@@ -29,6 +29,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -59,27 +60,16 @@ public class AwkParser {
 	private static final Logger LOG = AwkLogger.getLogger(AwkParser.class);
 
 	/**
-	 * Interface for statement AST nodes that can be interrupted
-	 * with a break statement.
+	 * Flags that describe special behaviours of AST nodes. These replace the
+	 * previous marker interfaces such as {@code Breakable} and
+	 * {@code NonStatementAst}.
 	 */
-	private interface Breakable {
-		Address breakAddress();
-	}
-
-	/**
-	 * Interface for statement AST nodes that can be entered
-	 * via a next statement.
-	 */
-	private interface Nextable {
-		Address nextAddress();
-	}
-
-	/**
-	 * Interface for statement AST nodes that can be re-entered
-	 * with a continue statement.
-	 */
-	private interface Continueable {
-		Address continueAddress();
+	private enum AstFlag {
+		BREAKABLE,
+		NEXTABLE,
+		CONTINUEABLE,
+		RETURNABLE,
+		NON_STATEMENT
 	}
 
 	/** Lexer token values, similar to yytok values in lex/yacc. */
@@ -1780,7 +1770,7 @@ public class AwkParser {
 			} else if (additionalFunctions && token == KEYWORDS.get("_dump")) {
 				stmt = DUMP_STATEMENT();
 			} else {
-				stmt = EXPRESSION_STATEMENT(true, false); // allow in keyword, do NOT allow NonStatementAsts
+				stmt = EXPRESSION_STATEMENT(true, false); // allow in keyword, do NOT allow non-statement ASTs
 			}
 			terminator();
 			return stmt;
@@ -1796,7 +1786,7 @@ public class AwkParser {
 		// return new ExpressionStatementAst(ASSIGNMENT_EXPRESSION(true, allowInKeyword, false));
 
 		AST exprAst = ASSIGNMENT_EXPRESSION(true, allowInKeyword, false);
-		if (!allowNonStatementAsts && exprAst instanceof NonStatementAst) {
+		if (!allowNonStatementAsts && exprAst.hasFlag(AstFlag.NON_STATEMENT)) {
 			throw new ParserException("Not a valid statement.");
 		}
 		return new ExpressionStatementAst(exprAst);
@@ -1959,7 +1949,7 @@ public class AwkParser {
 		} else if (token == KEYWORDS.get("printf")) {
 			return PRINTF_STATEMENT();
 		} else {
-			// allow NonStatementAsts
+			// allow non-statement ASTs
 			return EXPRESSION_STATEMENT(allowInKeyword, true);
 		}
 	}
@@ -2235,6 +2225,31 @@ public class AwkParser {
 		private final int lineNo = reader.getLineNumber() + 1;
 		private AST parent;
 		private AST ast1, ast2, ast3, ast4;
+		private final EnumSet<AstFlag> flags = EnumSet.noneOf(AstFlag.class);
+
+		protected final void addFlag(AstFlag flag) {
+			flags.add(flag);
+		}
+
+		protected final boolean hasFlag(AstFlag flag) {
+			return flags.contains(flag);
+		}
+
+		protected Address breakAddress() {
+			return null;
+		}
+
+		protected Address continueAddress() {
+			return null;
+		}
+
+		protected Address nextAddress() {
+			return null;
+		}
+
+		protected Address returnAddress() {
+			return null;
+		}
 
 		protected final AST getParent() {
 			return parent;
@@ -2281,10 +2296,10 @@ public class AwkParser {
 			ast4 = a4;
 		}
 
-		protected final AST searchFor(Class<?> cls) {
+		protected final AST searchFor(AstFlag flag) {
 			AST ptr = this;
 			while (ptr != null) {
-				if (cls.isInstance(ptr)) {
+				if (ptr.hasFlag(flag)) {
 					return ptr;
 				}
 				ptr = ptr.parent;
@@ -2856,10 +2871,11 @@ public class AwkParser {
 	}
 
 	// made non-static to access the "nextAddress" field of the frontend
-	private final class RuleAst extends AST implements Nextable {
+	private final class RuleAst extends AST {
 
 		private RuleAst(AST optExpression, AST optRule) {
 			super(optExpression, optRule);
+			addFlag(AstFlag.NEXTABLE);
 		}
 
 		@Override
@@ -2974,13 +2990,15 @@ public class AwkParser {
 		}
 	}
 
-	private final class WhileStatementAst extends AST implements Breakable, Continueable {
+	private final class WhileStatementAst extends AST {
 
 		private Address breakAddress;
 		private Address continueAddress;
 
 		private WhileStatementAst(AST expr, AST block) {
 			super(expr, block);
+			addFlag(AstFlag.BREAKABLE);
+			addFlag(AstFlag.CONTINUEABLE);
 		}
 
 		@Override
@@ -3028,13 +3046,15 @@ public class AwkParser {
 		}
 	}
 
-	private final class DoStatementAst extends AST implements Breakable, Continueable {
+	private final class DoStatementAst extends AST {
 
 		private Address breakAddress;
 		private Address continueAddress;
 
 		private DoStatementAst(AST block, AST expr) {
 			super(block, expr);
+			addFlag(AstFlag.BREAKABLE);
+			addFlag(AstFlag.CONTINUEABLE);
 		}
 
 		@Override
@@ -3083,13 +3103,15 @@ public class AwkParser {
 		}
 	}
 
-	private final class ForStatementAst extends AST implements Breakable, Continueable {
+	private final class ForStatementAst extends AST {
 
 		private Address breakAddress;
 		private Address continueAddress;
 
 		private ForStatementAst(AST expr1, AST expr2, AST expr3, AST block) {
 			super(expr1, expr2, expr3, block);
+			addFlag(AstFlag.BREAKABLE);
+			addFlag(AstFlag.CONTINUEABLE);
 		}
 
 		@Override
@@ -3156,13 +3178,15 @@ public class AwkParser {
 		}
 	}
 
-	private final class ForInStatementAst extends AST implements Breakable, Continueable {
+	private final class ForInStatementAst extends AST {
 
 		private Address breakAddress;
 		private Address continueAddress;
 
 		private ForInStatementAst(AST keyIdAst, AST arrayIdAst, AST block) {
 			super(keyIdAst, arrayIdAst, block);
+			addFlag(AstFlag.BREAKABLE);
+			addFlag(AstFlag.CONTINUEABLE);
 		}
 
 		@Override
@@ -3739,18 +3763,12 @@ public class AwkParser {
 		}
 	}
 
-	private interface Returnable {
-		Address returnAddress();
-	}
-
 	// made non-static to access the symbol table
-	private final class FunctionDefAst extends AST implements Returnable {
+	private final class FunctionDefAst extends AST {
 
 		private String id;
 		private Address functionAddress;
 		private Address returnAddress;
-
-		// to satisfy the Returnable interface
 
 		@Override
 		public Address returnAddress() {
@@ -3762,6 +3780,7 @@ public class AwkParser {
 			super(params, funcBody);
 			this.id = id;
 			setFunctionFlag(true);
+			addFlag(AstFlag.RETURNABLE);
 		}
 
 		public Address getAddress() {
@@ -4287,18 +4306,17 @@ public class AwkParser {
 	}
 
 	/**
-	 * A tag interface for non-statement expressions.
+	 * Flag for non-statement expressions.
 	 * Unknown for certain, but I think this is done
 	 * to avoid partial variable assignment mistakes.
 	 * For example, instead of a=3, the programmer
 	 * inadvertently places the a on the line. If IDAsts
-	 * were not tagged with NonStatementAst, then the
+	 * were not tagged with AstFlag.NON_STATEMENT, then the
 	 * incomplete assignment would parse properly, and
 	 * the developer might remain unaware of this issue.
 	 */
-	private interface NonStatementAst {}
 
-	private final class IDAst extends AST implements NonStatementAst {
+	private final class IDAst extends AST {
 
 		private String id;
 		private int offset = AVM.NULL_OFFSET;
@@ -4307,6 +4325,7 @@ public class AwkParser {
 		private IDAst(String id, boolean isGlobal) {
 			this.id = id;
 			this.isGlobal = isGlobal;
+			addFlag(AstFlag.NON_STATEMENT);
 		}
 
 		private boolean isArray = false;
@@ -4373,12 +4392,13 @@ public class AwkParser {
 		}
 	}
 
-	private final class IntegerAst extends ScalarExpressionAst implements NonStatementAst {
+	private final class IntegerAst extends ScalarExpressionAst {
 
 		private Long value;
 
 		private IntegerAst(Long value) {
 			this.value = value;
+			addFlag(AstFlag.NON_STATEMENT);
 		}
 
 		@Override
@@ -4399,7 +4419,7 @@ public class AwkParser {
 	 * Can either assume the role of a double or an integer
 	 * by aggressively normalizing the value to an int if possible.
 	 */
-	private final class DoubleAst extends ScalarExpressionAst implements NonStatementAst {
+	private final class DoubleAst extends ScalarExpressionAst {
 
 		private Object value;
 
@@ -4410,6 +4430,7 @@ public class AwkParser {
 			} else {
 				this.value = d;
 			}
+			addFlag(AstFlag.NON_STATEMENT);
 		}
 
 		@Override
@@ -4430,13 +4451,14 @@ public class AwkParser {
 	 * A string is a string; Awk doesn't attempt to normalize
 	 * it until it is used in an arithmetic operation!
 	 */
-	private final class StringAst extends ScalarExpressionAst implements NonStatementAst {
+	private final class StringAst extends ScalarExpressionAst {
 
 		private String value;
 
 		private StringAst(String str) {
 			assert str != null;
 			this.value = str;
+			addFlag(AstFlag.NON_STATEMENT);
 		}
 
 		@Override
@@ -5007,7 +5029,7 @@ public class AwkParser {
 		@Override
 		public int populateTuples(AwkTuples tuples) {
 			pushSourceLineNumber(tuples);
-			Returnable returnable = (Returnable) searchFor(Returnable.class);
+			AST returnable = searchFor(AstFlag.RETURNABLE);
 			if (returnable == null) {
 				throw new SemanticException("Cannot use return here.");
 			}
@@ -5087,7 +5109,7 @@ public class AwkParser {
 		@Override
 		public int populateTuples(AwkTuples tuples) {
 			pushSourceLineNumber(tuples);
-			Breakable breakable = (Breakable) searchFor(Breakable.class);
+			AST breakable = searchFor(AstFlag.BREAKABLE);
 			if (breakable == null) {
 				throw new SemanticException("cannot break; not within a loop");
 			}
@@ -5157,7 +5179,7 @@ public class AwkParser {
 		@Override
 		public int populateTuples(AwkTuples tuples) {
 			pushSourceLineNumber(tuples);
-			Nextable nextable = (Nextable) searchFor(Nextable.class);
+			AST nextable = searchFor(AstFlag.NEXTABLE);
 			if (nextable == null) {
 				throw new SemanticException("cannot next; not within any input rules");
 			}
@@ -5177,7 +5199,7 @@ public class AwkParser {
 		@Override
 		public int populateTuples(AwkTuples tuples) {
 			pushSourceLineNumber(tuples);
-			Continueable continueable = (Continueable) searchFor(Continueable.class);
+			AST continueable = searchFor(AstFlag.CONTINUEABLE);
 			if (continueable == null) {
 				throw new SemanticException("cannot issue a continue; not within any loops");
 			}
