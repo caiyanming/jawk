@@ -42,7 +42,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.metricshub.jawk.ExitException;
 import org.metricshub.jawk.ext.JawkExtension;
-import org.metricshub.jawk.frontend.AwkSyntaxTree;
+import org.metricshub.jawk.frontend.AstNode;
 import org.metricshub.jawk.intermediate.Address;
 import org.metricshub.jawk.intermediate.AwkTuples;
 import org.metricshub.jawk.intermediate.Position;
@@ -1998,7 +1998,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 							settings.isAdditionalTypeFunctions(),
 							extensions);
 					try {
-						AwkSyntaxTree ast = ap.parse(scriptSources);
+						AstNode ast = ap.parse(scriptSources);
 						if (ast != null) {
 							ast.semanticAnalysis();
 							ast.semanticAnalysis();
