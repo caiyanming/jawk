@@ -96,7 +96,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  *
  * @author Danny Daglas
  */
-public class AVM implements AwkInterpreter, VariableManager {
+public class AVM implements VariableManager {
 
 	private static final Logger LOG = AwkLogger.getLogger(AVM.class);
 	private static final boolean IS_WINDOWS = System.getProperty("os.name").indexOf("Windows") >= 0;
@@ -339,13 +339,11 @@ public class AVM implements AwkInterpreter, VariableManager {
 	}
 
 	/**
-	 * {@inheritDoc}
 	 * Traverse the tuples, executing their associated opcodes to provide
 	 * an execution platform for Jawk scripts.
 	 *
 	 * @throws IOException in case of I/O problems (with getline typically)
 	 */
-	@Override
 	public void interpret(AwkTuples tuples) throws ExitException, IOException {
 		Map<String, Pattern> regexps = new HashMap<String, Pattern>();
 		Map<Integer, ConditionPair> conditionPairs = new HashMap<Integer, ConditionPair>();
