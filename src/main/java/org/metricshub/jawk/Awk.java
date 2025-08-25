@@ -531,26 +531,31 @@ public class Awk {
 			throws IOException,
 			ClassNotFoundException,
 			ExitException {
+
 		AwkSettings settings = new AwkSettings();
 		if (inputStream != null) {
 			settings.setInput(inputStream);
 		}
+
 		if (textInput) {
 			settings.setDefaultRS("\n");
 			settings.setDefaultORS("\n");
 		}
+
 		settings
 				.setOutputStream(
 						new PrintStream(
 								outputStream,
 								false,
 								StandardCharsets.UTF_8.name()));
+
 		settings
 				.addScriptSource(
 						new ScriptSource(
 								ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
 								scriptReader,
 								false));
+
 		Awk awk = new Awk();
 		try {
 			awk.invoke(settings);
@@ -559,6 +564,166 @@ public class Awk {
 				throw e;
 			}
 		}
+	}
+
+	/**
+	 * Compile an expression to evaluate (not a full script)
+	 * <p>
+	 *
+	 * @param expression AWK expression to compile to AwkTuples
+	 * @param extensions Extensions that can be used in the expression
+	 * @return AwkTuples to be interpreted by AVM
+	 * @throws IOException if anything goes wrong with the compilation
+	 */
+	public static AwkTuples compileForEval(String expression, Map<String, JawkExtension> extensions) throws IOException {
+
+		// Create a ScriptSource
+		ScriptSource expressionSource = new ScriptSource(
+				ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
+				new StringReader(expression),
+				false);
+
+		// Parse the expression
+		AwkParser parser = new AwkParser(false, false, extensions);
+		AwkSyntaxTree ast = parser.parseExpression(expressionSource);
+
+		// Create the tuples that we will return
+		AwkTuples tuples = new AwkTuples();
+
+		// Attempt to traverse the syntax tree and build
+		// the intermediate code
+		if (ast != null) {
+			// 1st pass to tie actual parameters to back-referenced formal parameters
+			ast.semanticAnalysis();
+			// 2nd pass to tie actual parameters to forward-referenced formal parameters
+			ast.semanticAnalysis();
+			// build tuples
+			ast.populateTuples(tuples);
+			// Calls touch(...) per Tuple so that addresses can be normalized/assigned/allocated
+			tuples.postProcess();
+			// record global_var -> offset mapping into the tuples
+			// so that the interpreter can assign variables
+			parser.populateGlobalVariableNameToOffsetMappings(tuples);
+		}
+
+		return tuples;
+	}
+
+	/**
+	 * Evaluates the specified AWK expression (not a full script, just an expression)
+	 * and returns the value of this expression.
+	 * <p>
+	 *
+	 * @param expression Expression to evaluate (e.g. <code>2+3</code>)
+	 * @return the value of the specified expression
+	 * @throws IOException if anything goes wrong with the evaluation
+	 */
+	public static Object eval(String expression) throws IOException {
+		return eval(expression, null, null, Collections.emptyMap());
+	}
+
+	/**
+	 * Evaluates the specified AWK expression (not a full script, just an expression)
+	 * and returns the value of this expression.
+	 * <p>
+	 *
+	 * @param expression Expression to evaluate (e.g. <code>2+3</code> or <code>$2 "-" $3</code>
+	 * @param input Optional text input (that will be available as $0, and tokenized as $1, $2, etc.)
+	 * @return the value of the specified expression
+	 * @throws IOException if anything goes wrong with the evaluation
+	 */
+	public static Object eval(String expression, String input) throws IOException {
+		return eval(expression, input, null, Collections.emptyMap());
+	}
+
+	/**
+	 * Evaluates the specified AWK expression (not a full script, just an expression)
+	 * and returns the value of this expression.
+	 * <p>
+	 *
+	 * @param expression Expression to evaluate (e.g. <code>2+3</code> or <code>$2 "-" $3</code>
+	 * @param input Optional text input (that will be available as $0, and tokenized as $1, $2, etc.)
+	 * @param fieldSeparator Value of the FS global variable used for parsing the input
+	 * @return the value of the specified expression
+	 * @throws IOException if anything goes wrong with the evaluation
+	 */
+	public static Object eval(String expression, String input, String fieldSeparator) throws IOException {
+		return eval(expression, input, fieldSeparator, Collections.emptyMap());
+	}
+
+	/**
+	 * Evaluates the specified AWK expression (not a full script, just an expression)
+	 * and returns the value of this expression.
+	 * <p>
+	 *
+	 * @param expression Expression to evaluate (e.g. <code>2+3</code> or <code>$2 "-" $3</code>
+	 * @param input Optional text input (that will be available as $0, and tokenized as $1, $2, etc.)
+	 * @param extensions Extensions that can be used in the expression
+	 * @return the value of the specified expression
+	 * @throws IOException if anything goes wrong with the evaluation
+	 */
+	public static Object eval(String expression, String input, Map<String, JawkExtension> extensions)
+			throws IOException {
+		return eval(expression, input, null, extensions);
+	}
+
+	/**
+	 * Evaluates the specified AWK expression (not a full script, just an expression)
+	 * and returns the value of this expression.
+	 * <p>
+	 *
+	 * @param expression Expression to evaluate (e.g. <code>2+3</code> or <code>$2 "-" $3</code>
+	 * @param input Optional text input (that will be available as $0, and tokenized as $1, $2, etc.)
+	 * @param fieldSeparator Value of the FS global variable used for parsing the input
+	 * @param extensions Extensions that can be used in the expression
+	 * @return the value of the specified expression
+	 * @throws IOException if anything goes wrong with the evaluation
+	 */
+	public static Object eval(
+			String expression,
+			String input,
+			String fieldSeparator,
+			Map<String, JawkExtension> extensions)
+			throws IOException {
+		return eval(compileForEval(expression, Collections.emptyMap()), input, fieldSeparator, extensions);
+	}
+
+	/**
+	 * Evaluates the specified AWK tuples, i.e. the result of the execution of the
+	 * TERNARY_EXPRESSION AST (the value that has been pushed in the stack).
+	 * <p>
+	 *
+	 * @param tuples Tuples returned by {@link Awk#compileForEval(String, Map)}
+	 * @param input Optional text input (that will be available as $0, and tokenized as $1, $2, etc.)
+	 * @param fieldSeparator Value of the FS global variable used for parsing the input
+	 * @param extensions Extensions that can be used in the expression
+	 * @return the value of the specified expression
+	 * @throws IOException if anything goes wrong with the evaluation
+	 */
+	public static Object eval(
+			AwkTuples tuples,
+			String input,
+			String fieldSeparator,
+			Map<String, JawkExtension> extensions)
+			throws IOException {
+
+		AwkSettings settings = new AwkSettings();
+		if (input != null) {
+			settings.setInput(toInputStream(input));
+		} else {
+			settings.setInput(toInputStream(""));
+		}
+
+		settings.setDefaultRS("\n");
+		settings.setDefaultORS("\n");
+		settings.setFieldSeparator(fieldSeparator);
+
+		settings
+				.setOutputStream(
+						new PrintStream(new ByteArrayOutputStream(), false, StandardCharsets.UTF_8.name()));
+
+		AVM avm = new AVM(settings, extensions);
+		return avm.eval(tuples, input);
 	}
 
 	/**
@@ -621,7 +786,7 @@ public class Awk {
 			LOG.trace("cls = {}", cls);
 			try {
 				Class<?> c = Class.forName(cls);
-				// check if it's a JawkException
+				// check if it's a JawkExtension
 				if (!JawkExtension.class.isAssignableFrom(c)) {
 					throw new ClassNotFoundException(cls + " does not implement JawkExtension");
 				}

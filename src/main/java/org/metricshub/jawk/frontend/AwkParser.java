@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.metricshub.jawk.NotImplementedError;
 import org.metricshub.jawk.backend.AVM;
 import org.metricshub.jawk.ext.JawkExtension;
@@ -370,6 +371,33 @@ public class AwkParser {
 		read();
 		lexer();
 		return SCRIPT();
+	}
+
+	/**
+	 * Parse a single AWK expression and return the corresponding AST.
+	 *
+	 * @param expression The expression to parse (not a statement or rule, just an expression)
+	 * @return tuples representing the expression
+	 * @throws IOException upon an IO error or parsing error
+	 */
+	public AwkSyntaxTree parseExpression(ScriptSource expressionSource) throws IOException {
+
+		// Sanity check
+		if (expressionSource == null) {
+			throw new IOException("No source supplied");
+		}
+
+		// Reader of the expression
+		this.scriptSources = Collections.singletonList(expressionSource);
+		scriptSourcesCurrentIndex = 0;
+		reader = new LineNumberReader(this.scriptSources.get(scriptSourcesCurrentIndex).getReader());
+
+		// Initialize the lexer
+		read();
+		lexer();
+
+		// An expression is a TERNARY_EXPRESSION
+		return EXPRESSION_TO_EVALUATE();
 	}
 
 	/**
@@ -958,6 +986,14 @@ public class AwkParser {
 		return rl;
 	}
 
+	// EXPRESSION_TO_EVALUATE: [TERNARY_EXPRESSION] EOF
+	// Used to parse simple expressions to evaluate instead of full scripts
+	AST EXPRESSION_TO_EVALUATE() throws IOException {
+		AST exprAst = token != EOF ? TERNARY_EXPRESSION(true, false, true) : null;
+		lexer(EOF);
+		return new ExpressionToEvaluateAst(exprAst);
+	}
+
 	// RULE_LIST : \n [ ( RULE | FUNCTION terminator ) optTerminator RULE_LIST ]
 	AST RULE_LIST() throws IOException {
 		optNewline();
@@ -973,6 +1009,7 @@ public class AwkParser {
 		return new RuleListAst(ruleOrFunction, RULE_LIST());
 	}
 
+	// FUNCTION: function functionName( [FORMAL_PARAM_LIST] ) STATEMENT_LIST
 	AST FUNCTION() throws IOException {
 		expectKeyword("function");
 		String functionName;
@@ -1000,6 +1037,7 @@ public class AwkParser {
 		return symbolTable.addFunctionDef(functionName, formalParamList, functionBlock);
 	}
 
+	// FORMAT_PARAM_LIST:
 	AST FORMAL_PARAM_LIST(String functionName) throws IOException {
 		if (token == ID) {
 			String id = text.toString();
@@ -2201,6 +2239,7 @@ public class AwkParser {
 			return parent;
 		}
 
+		@SuppressWarnings("unused")
 		protected final void setParent(AST p) {
 			parent = p;
 		}
@@ -2209,6 +2248,7 @@ public class AwkParser {
 			return ast1;
 		}
 
+		@SuppressWarnings("unused")
 		protected final void setAst1(AST a1) {
 			ast1 = a1;
 		}
@@ -2217,6 +2257,7 @@ public class AwkParser {
 			return ast2;
 		}
 
+		@SuppressWarnings("unused")
 		protected final void setAst2(AST a2) {
 			ast2 = a2;
 		}
@@ -2225,6 +2266,7 @@ public class AwkParser {
 			return ast3;
 		}
 
+		@SuppressWarnings("unused")
 		protected final void setAst3(AST a3) {
 			ast3 = a3;
 		}
@@ -2233,6 +2275,7 @@ public class AwkParser {
 			return ast4;
 		}
 
+		@SuppressWarnings("unused")
 		protected final void setAst4(AST a4) {
 			ast4 = a4;
 		}
@@ -2393,6 +2436,7 @@ public class AwkParser {
 
 		private boolean isBegin = isBegin();
 
+		@SuppressWarnings("unused")
 		protected final boolean isBeginFlag() {
 			return isBegin;
 		}
@@ -2420,6 +2464,7 @@ public class AwkParser {
 
 		private boolean isEnd = isEnd();
 
+		@SuppressWarnings("unused")
 		protected final boolean isEndFlag() {
 			return isEnd;
 		}
@@ -2447,6 +2492,7 @@ public class AwkParser {
 
 		private boolean isFunction = isFunction();
 
+		@SuppressWarnings("unused")
 		protected final boolean isFunctionFlag() {
 			return isFunction;
 		}
@@ -2597,23 +2643,18 @@ public class AwkParser {
 
 		@Override
 		public int populateTuples(AwkTuples tuples) {
+
 			pushSourceLineNumber(tuples);
 
 			nextAddress = tuples.createAddress("nextAddress");
 
-			Address exitAddr = tuples.createAddress("end blocks start address");
-
 			// goto start address
 			Address startAddress = tuples.createAddress("start address");
-
-			tuples.setExitAddress(exitAddr);
-
 			tuples.gotoAddress(startAddress);
 
 			AST ptr;
 
 			// compile functions
-
 			ptr = this;
 			while (ptr != null) {
 				if (ptr.getAst1() != null && ptr.getAst1().isFunction()) {
@@ -2626,10 +2667,9 @@ public class AwkParser {
 			}
 
 			// START OF MAIN BLOCK
-
 			tuples.address(startAddress);
 
-			// initialze special variables
+			// initialize special variables
 			IDAst nrAst = symbolTable.getID("NR");
 			IDAst fnrAst = symbolTable.getID("FNR");
 			IDAst nfAst = symbolTable.getID("NF");
@@ -2668,6 +2708,9 @@ public class AwkParser {
 			tuples.environOffset(environAst.offset);
 			tuples.argcOffset(argcAst.offset);
 			tuples.argvOffset(argvAst.offset);
+
+			Address exitAddr = tuples.createAddress("end blocks start address");
+			tuples.setExitAddress(exitAddr);
 
 			// grab all BEGINs
 			ptr = this;
@@ -2749,6 +2792,61 @@ public class AwkParser {
 
 			// force a nop here to resolve any addresses that haven't been resolved yet
 			// (i.e., no_more_input wouldn't be resolved if there are no END{} blocks)
+			tuples.nop();
+
+			popSourceLineNumber(tuples);
+			return 0;
+		}
+	}
+
+	private final class ExpressionToEvaluateAst extends AST {
+
+		private ExpressionToEvaluateAst(AST expr) {
+			super(expr);
+		}
+
+		@Override
+		public int populateTuples(AwkTuples tuples) {
+
+			pushSourceLineNumber(tuples);
+			nextAddress = tuples.createAddress("nextAddress");
+
+			// goto start address
+			Address startAddress = tuples.createAddress("start address");
+			tuples.gotoAddress(startAddress);
+
+			// START OF MAIN BLOCK
+			tuples.address(startAddress);
+
+			// initialize special variables
+			IDAst nrAst = symbolTable.getID("NR");
+			IDAst fnrAst = symbolTable.getID("FNR");
+			IDAst nfAst = symbolTable.getID("NF");
+			IDAst fsAst = symbolTable.getID("FS");
+			IDAst rsAst = symbolTable.getID("RS");
+			IDAst subsepAst = symbolTable.getID("SUBSEP");
+			IDAst convfmtAst = symbolTable.getID("CONVFMT");
+			IDAst environAst = symbolTable.getID("ENVIRON");
+
+			// MUST BE DONE AFTER FUNCTIONS ARE COMPILED,
+			// and after special variables are made known to the symbol table
+			// (see above)!
+			tuples.setNumGlobals(symbolTable.numGlobals());
+
+			tuples.nfOffset(nfAst.offset);
+			tuples.nrOffset(nrAst.offset);
+			tuples.fnrOffset(fnrAst.offset);
+			tuples.fsOffset(fsAst.offset);
+			tuples.rsOffset(rsAst.offset);
+			tuples.subsepOffset(subsepAst.offset);
+			tuples.convfmtOffset(convfmtAst.offset);
+			tuples.environOffset(environAst.offset);
+
+			tuples.setInputForEval();
+
+			if (getAst1() != null) {
+				getAst1().populateTuples(tuples);
+			}
 			tuples.nop();
 
 			popSourceLineNumber(tuples);
