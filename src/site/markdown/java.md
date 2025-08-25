@@ -21,18 +21,50 @@ Jawk artifacts are published on Maven Central, so the dependency can be resolved
 
 ## Examples
 
-### Quick execution with `Awk.run()`
+### Evaluate expressions with `Awk.eval()`
 
-The `Awk` class offers static `run(...)` methods for the most common cases:
+```java
+Object value = Awk.eval("2 + 3");
+```
+
+### Quick execution with `Awk.run()`
 
 ```java
 String result = Awk.run("{ print toupper($0) }", "hello world");
 ```
 
+### Compile and invoke scripts
+
+```java
+String script = "{ print $0 }";
+AwkTuples tuples = Awk.compile(script);
+
+AwkSettings settings = new AwkSettings();
+settings.setInput(new ByteArrayInputStream("foo\nbar\n".getBytes(StandardCharsets.UTF_8)));
+settings.setDefaultRS("\n");
+settings.setDefaultORS("\n");
+ByteArrayOutputStream out = new ByteArrayOutputStream();
+settings.setOutputStream(new PrintStream(out, false, StandardCharsets.UTF_8.name()));
+
+new Awk().invoke(tuples, settings);
+
+System.out.println(out.toString(StandardCharsets.UTF_8.name()));
+```
+
+To supply custom extensions, use `invoke(AwkTuples, AwkSettings, Map<String, JawkExtension>)`.
+
+### Precompile expressions
+
+```java
+AwkTuples expr = Awk.compileForEval("$1 - $2", Collections.emptyMap());
+Object value = Awk.eval(expr, "5 3", " ");
+```
+
 ### Advanced examples
 
 The examples below show how to configure `AwkSettings` directly to customize
-input sources, output handling or to register `JawkExtension`s.
+input sources, output handling or to register `JawkExtension`s. The
+`invoke(AwkSettings)` helper compiles and runs the script in one step.
 
 #### Invoke AWK script files on input files
 
@@ -86,6 +118,8 @@ private String runAwk(File scriptFile, List<String> inputFileList) throws IOExce
  */
 private String runAwk(String script, String input) throws IOException, ExitException {
 
+    AwkTuples tuples = Awk.compile(new StringReader(script));
+
     AwkSettings settings = new AwkSettings();
 
     // Set the input files
@@ -99,12 +133,9 @@ private String runAwk(String script, String input) throws IOException, ExitExcep
     ByteArrayOutputStream resultBytesStream = new ByteArrayOutputStream();
     settings.setOutputStream(new PrintStream(resultBytesStream));
 
-    // Sets the AWK script to execute
-    settings.addScriptSource(new ScriptSource("Body", new StringReader(script), false));
-
     // Execute the awk script against the specified input
     Awk awk = new Awk();
-    awk.invoke(settings);
+    awk.invoke(tuples, settings);
 
     // Return the result as a string
     return resultBytesStream.toString(StandardCharsets.UTF_8);
