@@ -1690,6 +1690,14 @@ public class AwkTuples implements Serializable {
 	 * Stack after: x ... or 0 if uninitialized
 	 */
 	public static final int POSTDEC = 389; // 0 -> x
+
+	/**
+	 * Read stdin for simple AWK expression evaluation.
+	 * <p>
+	 * Stack before: ...<br/>
+	 * Stack after: ...
+	 */
+	public static final int SET_INPUT_FOR_EVAL = 390; // 0 -> 0
 	// CHECKSTYLE:ON
 
 	/**
@@ -1994,6 +2002,13 @@ public class AwkTuples implements Serializable {
 	 */
 	public void assignAsInput() {
 		queue.add(new Tuple(ASSIGN_AS_INPUT));
+	}
+
+	/**
+	 * Use this only in initialization for simple evaluation
+	 */
+	public void setInputForEval() {
+		queue.add(new Tuple(SET_INPUT_FOR_EVAL));
 	}
 
 	/**

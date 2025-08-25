@@ -250,20 +250,6 @@ public class AwkTestHelper {
 	}
 
 	/**
-	 * Evaluates the specified AWK expression
-	 * <p>
-	 *
-	 * @param expression AWK expression to evaluate (e.g. <code>2 + "3.0"</code>)
-	 * @return result as a String
-	 * @throws ExitException when the AWK script forces its exit with a specified code
-	 * @throws IOException on I/O problems
-	 * @throws ClassNotFoundException
-	 */
-	static String evalAwk(String expression) throws IOException, ExitException, ClassNotFoundException {
-		return runAwk("BEGIN { printf " + expression + "}", null);
-	}
-
-	/**
 	 * Reads the specified file and returns its content as a String
 	 *
 	 * @param textFile File reference to read

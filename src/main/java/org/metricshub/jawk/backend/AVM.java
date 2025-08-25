@@ -257,75 +257,22 @@ public class AVM implements AwkInterpreter, VariableManager {
 	 * @param tuples Tuples representing the expression
 	 * @param input Optional input line used to populate $0 and related fields
 	 * @return The resulting value of the expression
-	 * @throws ExitException if the evaluation triggers an exit
 	 * @throws IOException if an IO error occurs during evaluation
 	 */
-	public Object eval(AwkTuples tuples, String input) throws ExitException, IOException {
-		globalVariableOffsets = tuples.getGlobalVariableOffsetMap();
-		globalVariableArrays = tuples.getGlobalVariableAarrayMap();
-		functionNames = tuples.getFunctionNameSet();
-
-		runtimeStack.setNumGlobals(globalVariableOffsets.size());
-
-		nfOffset = getOffset("NF");
-		nrOffset = getOffset("NR");
-		fnrOffset = getOffset("FNR");
-		fsOffset = getOffset("FS");
-		rsOffset = getOffset("RS");
-		ofsOffset = getOffset("OFS");
-		orsOffset = getOffset("ORS");
-		rstartOffset = getOffset("RSTART");
-		rlengthOffset = getOffset("RLENGTH");
-		filenameOffset = getOffset("FILENAME");
-		subsepOffset = getOffset("SUBSEP");
-		convfmtOffset = getOffset("CONVFMT");
-		ofmtOffset = getOffset("OFMT");
-		environOffset = getOffset("ENVIRON");
-		argcOffset = getOffset("ARGC");
-		argvOffset = getOffset("ARGV");
-
-		if (fsOffset != NULL_OFFSET) {
-			runtimeStack.setVariable(fsOffset, initialFsValue == null ? " " : initialFsValue, true);
-		}
-		if (rsOffset != NULL_OFFSET) {
-			runtimeStack.setVariable(rsOffset, settings.getDefaultRS(), true);
-		}
-		if (ofsOffset != NULL_OFFSET) {
-			runtimeStack.setVariable(ofsOffset, " ", true);
-		}
-		if (orsOffset != NULL_OFFSET) {
-			runtimeStack.setVariable(orsOffset, settings.getDefaultORS(), true);
-		}
-		if (nfOffset != NULL_OFFSET) {
-			runtimeStack.setVariable(nfOffset, ZERO, true);
-		}
-		if (nrOffset != NULL_OFFSET) {
-			runtimeStack.setVariable(nrOffset, ZERO, true);
-		}
-		if (fnrOffset != NULL_OFFSET) {
-			runtimeStack.setVariable(fnrOffset, ZERO, true);
-		}
-
+	public Object eval(AwkTuples tuples, String input) throws IOException {
 		jrt.assignInitialVariables(initialVariables);
 
-		if (input != null) {
-			jrt.setInputLine(input);
-			jrt.jrtParseFields();
-			if (nrOffset != NULL_OFFSET) {
-				runtimeStack.setVariable(nrOffset, ONE, true);
-			}
-			if (fnrOffset != NULL_OFFSET) {
-				runtimeStack.setVariable(fnrOffset, ONE, true);
-			}
+		// Now execute the tuples
+		try {
+			interpret(tuples);
+		} catch (ExitException e) {
+			// Special case (which should never happen):
+			// return the value of the "exit" statement if any
+			return e.getCode();
 		}
 
-		interpret(tuples);
+		// Return the top of the stack, which is the value of the specified expression
 		return operandStack.size() == 0 ? null : pop();
-	}
-
-	private int getOffset(String name) {
-		Integer i = globalVariableOffsets.get(name);
-		return i == null ? NULL_OFFSET : i.intValue();
 	}
 
 	private static int parseIntField(Object obj, PositionForInterpretation position) {
@@ -753,6 +700,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
+
 				case AwkTuples.ASSIGN_AS_INPUT: {
 					// stack[0] = value
 					jrt.setInputLine(pop().toString());
@@ -761,6 +709,7 @@ public class AVM implements AwkInterpreter, VariableManager {
 					position.next();
 					break;
 				}
+
 				case AwkTuples.ASSIGN_AS_INPUT_FIELD: {
 					// stack[0] = field number
 					// stack[1] = value
@@ -1609,6 +1558,13 @@ public class AVM implements AwkInterpreter, VariableManager {
 					}
 					break;
 				}
+
+				case AwkTuples.SET_INPUT_FOR_EVAL: {
+					jrt.setInputLineforEval(settings.getInput());
+					position.next();
+					break;
+				}
+
 				case AwkTuples.GETLINE_INPUT: {
 					avmConsumeInputForGetline();
 					position.next();

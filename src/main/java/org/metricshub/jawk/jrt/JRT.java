@@ -761,6 +761,24 @@ public class JRT {
 		}
 	}
 
+	/**
+	 * Read input from stdin, only once, and just for simple AWK expression evaluation
+	 * <p>
+	 *
+	 * @param input Stdin
+	 * @throws IOException if couldn't read stdin (should never happen, as it's based on a String)
+	 */
+	public void setInputLineforEval(InputStream input) throws IOException {
+		partitioningReader = new PartitioningReader(
+				new InputStreamReader(input, StandardCharsets.UTF_8),
+				vm.getRS().toString());
+		inputLine = partitioningReader.readRecord();
+		if (inputLine != null) {
+			jrtParseFields();
+			vm.incNR();
+		}
+	}
+
 	private void setFilelistVariable(String nameValue) {
 		int eqIdx = nameValue.indexOf('=');
 		// variable name should be non-blank
