@@ -861,15 +861,15 @@ public class AwkTuples implements Serializable {
 
 	// for (x in y) {keyset} support
 	/**
-	 * Retrieves and pushes a Set of keys from an associative array onto the stack.
-	 * The Set is tagged with a KeyList interface.
+	 * Retrieves and pushes a set of keys from an associative array onto the stack.
+	 * The set is stored in a {@link java.util.Deque} for iteration.
 	 * <p>
 	 * Stack before: associative-array ...<br/>
 	 * Stack after: key-list-set ...
 	 */
 	public static final int KEYLIST = 339; // 0 -> {keylist}
 	/**
-	 * Tests whether the KeyList (set) is empty; jumps to the argument
+	 * Tests whether the key list (deque) is empty; jumps to the argument
 	 * address if empty, steps to the next instruction if not.
 	 * <p>
 	 * Argument: jump-address-if-empty
@@ -879,7 +879,7 @@ public class AwkTuples implements Serializable {
 	 */
 	public static final int IS_EMPTY_KEYLIST = 340; // {keylist} -> 0
 	/**
-	 * Removes an item from the KeyList (set) and pushes it onto the operand stack.
+	 * Removes an item from the key list (deque) and pushes it onto the operand stack.
 	 * <p>
 	 * Stack before: key-list ...<br/>
 	 * Stack after: 1st-item ...
@@ -892,7 +892,7 @@ public class AwkTuples implements Serializable {
 	 * if not, an AwkRuntimeException is thrown.
 	 * The stack remains unchanged upon a successful check.
 	 * <p>
-	 * Argument: class-type (i.e., KeyList.class)
+	 * Argument: class-type (i.e., java.util.Deque.class)
 	 * <p>
 	 * Stack before: obj ...<br/>
 	 * Stack after: obj ...
@@ -2304,7 +2304,7 @@ public class AwkTuples implements Serializable {
 
 	/**
 	 * <p>
-	 * keylist.
+	 * key list.
 	 * </p>
 	 */
 	public void keylist() {

@@ -29,6 +29,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,7 +43,6 @@ import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.intermediate.Address;
 import org.metricshub.jawk.intermediate.AwkTuples;
 import java.util.function.Supplier;
-import org.metricshub.jawk.jrt.KeyList;
 import org.metricshub.jawk.util.AwkLogger;
 import org.metricshub.jawk.util.ScriptSource;
 import org.slf4j.Logger;
@@ -3229,13 +3229,13 @@ public class AwkParser {
 			// for for-in loops, the continue jump address is the start-of-loop address
 			continueAddress = loop;
 
-			assert tuples.checkClass(KeyList.class);
+			assert tuples.checkClass(Deque.class);
 
 			// condition
 			tuples.dup();
 			tuples.isEmptyList(breakAddress);
 
-			assert tuples.checkClass(KeyList.class);
+			assert tuples.checkClass(Deque.class);
 
 			// take an element off the set
 			tuples.dup();
@@ -3251,7 +3251,7 @@ public class AwkParser {
 			}
 			// otherwise, there is no block to execute
 
-			assert tuples.checkClass(KeyList.class);
+			assert tuples.checkClass(Deque.class);
 
 			tuples.gotoAddress(loop);
 
