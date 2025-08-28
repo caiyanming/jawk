@@ -22,14 +22,14 @@ package org.metricshub.jawk.backend;
  * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
  */
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Deque;
+import java.util.LinkedList;
 
-import org.metricshub.jawk.jrt.AssocArray;
 import org.metricshub.jawk.intermediate.UninitializedObject;
-import org.metricshub.jawk.util.ArrayStackImpl;
+import org.metricshub.jawk.jrt.AssocArray;
 import org.metricshub.jawk.util.AwkLogger;
-import org.metricshub.jawk.util.LinkedListStackImpl;
-import org.metricshub.jawk.util.MyStack;
 import org.slf4j.Logger;
 
 /**
@@ -42,8 +42,8 @@ class RuntimeStack {
 
 	private Object[] globals = null;
 	private Object[] locals = null;
-	private MyStack<Object[]> localsStack = new ArrayStackImpl<Object[]>();
-	private MyStack<Integer> returnIndexes = new LinkedListStackImpl<Integer>();
+	private Deque<Object[]> localsStack = new LinkedList<Object[]>();
+	private Deque<Integer> returnIndexes = new ArrayDeque<Integer>();
 
 	@SuppressWarnings("unused")
 	public void dump() {

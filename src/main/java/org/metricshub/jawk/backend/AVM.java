@@ -32,12 +32,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import org.metricshub.jawk.jrt.BSDRandom;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.Deque;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.metricshub.jawk.ExitException;
@@ -59,11 +60,10 @@ import org.metricshub.jawk.jrt.KeyListImpl;
 import org.metricshub.jawk.jrt.RegexTokenizer;
 import org.metricshub.jawk.jrt.SingleCharacterTokenizer;
 import org.metricshub.jawk.jrt.VariableManager;
-import org.metricshub.jawk.util.ArrayStackImpl;
 import org.metricshub.jawk.util.AwkLogger;
 import org.metricshub.jawk.util.AwkSettings;
-import org.metricshub.jawk.util.MyStack;
 import org.metricshub.jawk.util.ScriptSource;
+import org.metricshub.jawk.jrt.BSDRandom;
 import org.metricshub.printf4j.Printf4J;
 import org.slf4j.Logger;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -102,11 +102,8 @@ public class AVM implements VariableManager {
 
 	private RuntimeStack runtimeStack = new RuntimeStack();
 
-	// 16 slots by default
-	// (could be a parameter)
-	// private Deque<Object> operandStack = new ArrayDeque<Object>(16);
-	// private MyStack<Object> operandStack = new LinkedListStackImpl<Object>();
-	private MyStack<Object> operandStack = new ArrayStackImpl<Object>();
+	// operand stack
+	private Deque<Object> operandStack = new LinkedList<Object>();
 	private List<String> arguments;
 	private boolean sortedArrayKeys;
 	private Map<String, Object> initialVariables;
