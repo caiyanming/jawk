@@ -40,24 +40,38 @@ package org.metricshub.jawk.intermediate;
  *
  * @author Danny Daglas
  */
-public interface Address {
+public class Address implements java.io.Serializable {
+
+	private static final long serialVersionUID = 109610985341478678L;
+
+	private final String lbl;
+	private int idx = -1;
+
+	public Address(String lbl) {
+		this.lbl = lbl;
+	}
+
 	/**
 	 * The label of the address.
 	 * It is particularly useful when dumping tuples to an output stream.
 	 *
 	 * @return The label of the tuple.
 	 */
-	String label();
+	public String label() {
+		return lbl;
+	}
 
 	/**
 	 * Set the tuple index of this address.
 	 * This can be deferred anytime after creation of the address,
 	 * but the index must be assigned prior to traversing the tuples.
 	 *
-	 * @param idx The tuple location within the tuple list (queue)
+	 * @param index The tuple location within the tuple list (queue)
 	 *        for this address.
 	 */
-	void assignIndex(int idx);
+	public void assignIndex(int index) {
+		this.idx = index;
+	}
 
 	/**
 	 * <p>
@@ -66,5 +80,12 @@ public interface Address {
 	 *
 	 * @return The index into the tuple queue/array.
 	 */
-	int index();
+	public int index() {
+		return idx;
+	}
+
+	@Override
+	public String toString() {
+		return label();
+	}
 }

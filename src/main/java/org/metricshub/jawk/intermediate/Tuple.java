@@ -1,0 +1,249 @@
+package org.metricshub.jawk.intermediate;
+
+/*-
+ * ╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲
+ * Jawk
+ * ჻჻჻჻჻჻
+ * Copyright (C) 2006 - 2025 MetricsHub
+ * ჻჻჻჻჻჻
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Lesser Public License for more details.
+ *
+ * You should have received a copy of the GNU General Lesser Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/lgpl-3.0.html>.
+ * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
+ */
+
+import java.io.Serializable;
+import java.util.function.Supplier;
+
+/**
+ * Represents a single opcode and its arguments within the tuple stream produced
+ * by {@link AwkTuples}. While {@code AwkTuples} manages the list of tuples, this
+ * class models one instruction and up to four typed operands.
+ * <p>
+ * Some tuples defer resolution of a function address until the tuple list is
+ * finalized; such tuples hold a {@link Supplier} that provides the
+ * {@link Address} when needed.
+ *
+ * @author Danny Daglas
+ * @see AwkTuples
+ */
+class Tuple implements Serializable {
+
+	private static final long serialVersionUID = 8105941219003992817L;
+	private int opcode;
+	private long[] ints = new long[4];
+	private boolean[] bools = new boolean[4];
+	private double[] doubles = new double[4];
+	private String[] strings = new String[4];
+	private Class<?>[] types = new Class[4];
+	private Address address = null;
+	private Class<?> cls = null;
+	private transient Supplier<Address> addressSupplier = null;
+	private int lineno = -1;
+	private Tuple next = null;
+
+	Tuple(int opcode) {
+		this.opcode = opcode;
+	}
+
+	Tuple(int opcode, long i1) {
+		this(opcode);
+		ints[0] = i1;
+		types[0] = Long.class;
+	}
+
+	Tuple(int opcode, long i1, long i2) {
+		this(opcode, i1);
+		ints[1] = i2;
+		types[1] = Long.class;
+	}
+
+	Tuple(int opcode, long i1, boolean b2) {
+		this(opcode, i1);
+		bools[1] = b2;
+		types[1] = Boolean.class;
+	}
+
+	Tuple(int opcode, long i1, boolean b2, boolean b3) {
+		this(opcode, i1, b2);
+		bools[2] = b3;
+		types[2] = Boolean.class;
+	}
+
+	Tuple(int opcode, double d1) {
+		this(opcode);
+		doubles[0] = d1;
+		types[0] = Double.class;
+	}
+
+	Tuple(int opcode, String s1) {
+		this(opcode);
+		strings[0] = s1;
+		types[0] = String.class;
+	}
+
+	Tuple(int opcode, boolean b1) {
+		this(opcode);
+		bools[0] = b1;
+		types[0] = Boolean.class;
+	}
+
+	Tuple(int opcode, String s1, long i2) {
+		this(opcode, s1);
+		ints[1] = i2;
+		types[1] = Long.class;
+	}
+
+	Tuple(int opcode, Address address) {
+		this(opcode);
+		this.address = address;
+		types[0] = Address.class;
+	}
+
+	Tuple(int opcode, String strarg, long intarg, boolean boolarg) {
+		this(opcode, strarg, intarg);
+		bools[2] = boolarg;
+		types[2] = Boolean.class;
+	}
+
+	Tuple(int opcode, Supplier<Address> addressSupplier, String s2, long i3, long i4) {
+		this(opcode);
+		this.addressSupplier = addressSupplier;
+		strings[1] = s2;
+		types[1] = String.class;
+		ints[2] = i3;
+		types[2] = Long.class;
+		ints[3] = i4;
+		types[3] = Long.class;
+	}
+
+	Tuple(int opcode, Class<?> cls) {
+		this(opcode);
+		this.cls = cls;
+		types[0] = Class.class;
+	}
+
+	Tuple(int opcode, String s1, String s2) {
+		this(opcode, s1);
+		strings[1] = s2;
+		types[1] = String.class;
+	}
+
+	boolean hasNext() {
+		return next != null;
+	}
+
+	Tuple getNext() {
+		return next;
+	}
+
+	void setNext(Tuple next) {
+		this.next = next;
+	}
+
+	void setLineNumber(int lineNumber) {
+		assert this.lineno == -1 : "The line number was already set to " + this.lineno + ". Later lineno = "
+				+ lineNumber + ".";
+		this.lineno = lineNumber;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(AwkTuples.toOpcodeString(opcode));
+		int idx = 0;
+		while ((idx < types.length) && (types[idx] != null)) {
+			sb.append(", ");
+			Class<?> type = types[idx];
+			if (type == Long.class) {
+				sb.append(ints[idx]);
+			} else if (type == Boolean.class) {
+				sb.append(bools[idx]);
+			} else if (type == Double.class) {
+				sb.append(doubles[idx]);
+			} else if (type == String.class) {
+				sb.append('"').append(strings[idx]).append('"');
+			} else if (type == Address.class) {
+				assert idx == 0;
+				sb.append(address);
+			} else if (type == Class.class) {
+				assert idx == 0;
+				sb.append(cls);
+			} else {
+				throw new Error("Unknown param type (" + idx + "): " + type);
+			}
+			++idx;
+		}
+		return sb.toString();
+	}
+
+	public void touch(java.util.List<Tuple> queue) {
+		assert lineno != -1 : "The line number should have been set by queue.add(), but was not.";
+		if (addressSupplier != null) {
+			address = addressSupplier.get();
+			types[0] = Address.class;
+		}
+		if (address != null) {
+			if (address.index() == -1) {
+				throw new Error("address " + address + " is unresolved");
+			}
+			if (address.index() >= queue.size()) {
+				throw new Error("address " + address + " doesn't resolve to an actual list element");
+			}
+		}
+	}
+
+	int getOpcode() {
+		return opcode;
+	}
+
+	long[] getInts() {
+		return ints;
+	}
+
+	boolean[] getBools() {
+		return bools;
+	}
+
+	double[] getDoubles() {
+		return doubles;
+	}
+
+	String[] getStrings() {
+		return strings;
+	}
+
+	Class<?>[] getTypes() {
+		return types;
+	}
+
+	Address getAddress() {
+		return address;
+	}
+
+	Class<?> getCls() {
+		return cls;
+	}
+
+	Supplier<Address> getAddressSupplier() {
+		return addressSupplier;
+	}
+
+	void setAddress(Address address) {
+		this.address = address;
+	}
+
+	int getLineno() {
+		return lineno;
+	}
+}
