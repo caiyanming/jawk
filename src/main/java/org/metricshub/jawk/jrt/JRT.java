@@ -237,7 +237,7 @@ public class JRT {
 			try {
 				o = new BigDecimal(o.toString()).doubleValue();
 			} catch (NumberFormatException e) {
-				LOG.debug("Failed to parse number", e);
+				LOG.trace("Failed to parse number", e);
 			}
 		}
 
