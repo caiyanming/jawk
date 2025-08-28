@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 import static org.metricshub.jawk.AwkTestHelper.runAwk;
 
 import org.junit.Test;
-import org.metricshub.jawk.frontend.AwkParser;
+import org.metricshub.jawk.frontend.ast.LexerException;
 
 public class AwkParserTest {
 
@@ -33,27 +33,27 @@ public class AwkParserTest {
 		assertEquals("'\\x!' must become x!", "x!", Awk.eval("\"\\x!\" "));
 		assertThrows(
 				"Unfinished string by EOF must throw",
-				AwkParser.LexerException.class,
+				LexerException.class,
 				() -> runAwk("BEGIN { printf \"unfinished", null));
 		assertThrows(
 				"Unfinished string by EOL must throw",
-				AwkParser.LexerException.class,
+				LexerException.class,
 				() -> Awk.eval("\"unfinished\n\""));
 		assertThrows(
 				"Interrupted octal number in string by EOF must throw",
-				AwkParser.LexerException.class,
+				LexerException.class,
 				() -> runAwk("BEGIN { printf \"unfinished\\0", null));
 		assertThrows(
 				"Interrupted octal number in string by EOL must throw",
-				AwkParser.LexerException.class,
+				LexerException.class,
 				() -> Awk.eval("\"unfinished\\0\n\""));
 		assertThrows(
 				"Interrupted hex number in string by EOF must throw",
-				AwkParser.LexerException.class,
+				LexerException.class,
 				() -> runAwk("BEGIN { printf \"unfinished\\xF", null));
 		assertThrows(
 				"Interrupted hex number in string by EOL must throw",
-				AwkParser.LexerException.class,
+				LexerException.class,
 				() -> Awk.eval("\"unfinished\\xf\n\""));
 	}
 
@@ -156,11 +156,11 @@ public class AwkParserTest {
 		assertEquals("/\\057/ must be supported", "success", runAwk("/\\057/ { printf \"success\" }", "a/b"));
 		assertThrows(
 				"Unfinished regexp by EOF must throw",
-				AwkParser.LexerException.class,
+				LexerException.class,
 				() -> runAwk("/unfinished { print $0 }", null));
 		assertThrows(
 				"Unfinished regexp by EOL must throw",
-				AwkParser.LexerException.class,
+				LexerException.class,
 				() -> Awk.eval("/unfinished\n/"));
 	}
 }
