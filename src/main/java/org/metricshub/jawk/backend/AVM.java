@@ -55,8 +55,7 @@ import org.metricshub.jawk.jrt.BlockObject;
 import org.metricshub.jawk.jrt.CharacterTokenizer;
 import org.metricshub.jawk.jrt.ConditionPair;
 import org.metricshub.jawk.jrt.JRT;
-import org.metricshub.jawk.jrt.KeyList;
-import org.metricshub.jawk.jrt.KeyListImpl;
+import java.util.ArrayDeque;
 import org.metricshub.jawk.jrt.RegexTokenizer;
 import org.metricshub.jawk.jrt.SingleCharacterTokenizer;
 import org.metricshub.jawk.jrt.VariableManager;
@@ -1489,24 +1488,24 @@ public class AVM implements VariableManager {
 					if (!(o instanceof AssocArray)) {
 						throw new AwkRuntimeException(
 								position.lineNumber(),
-								"Cannot get a keylist (via 'in') of a non associative array. arg = " + o.getClass() + ", " + o);
+								"Cannot get a key list (via 'in') of a non associative array. arg = " + o.getClass() + ", " + o);
 					}
 					AssocArray aa = (AssocArray) o;
-					push(new KeyListImpl(aa.keySet()));
+					push(new ArrayDeque<>(aa.keySet()));
 					position.next();
 					break;
 				}
 				case AwkTuples.IS_EMPTY_KEYLIST: {
 					// arg[0] = address
-					// stack[0] = KeyList
+					// stack[0] = Deque
 					Object o = pop();
-					if (o == null || !(o instanceof KeyList)) {
+					if (o == null || !(o instanceof Deque)) {
 						throw new AwkRuntimeException(
 								position.lineNumber(),
-								"Cannot get a keylist (via 'in') of a non associative array. arg = " + o.getClass() + ", " + o);
+								"Cannot get a key list (via 'in') of a non associative array. arg = " + o.getClass() + ", " + o);
 					}
-					KeyList keylist = (KeyList) o;
-					if (keylist.size() == 0) {
+					Deque<?> keylist = (Deque<?>) o;
+					if (keylist.isEmpty()) {
 						position.jump(position.addressArg());
 					} else {
 						position.next();
@@ -1514,17 +1513,17 @@ public class AVM implements VariableManager {
 					break;
 				}
 				case AwkTuples.GET_FIRST_AND_REMOVE_FROM_KEYLIST: {
-					// stack[0] = KeyList
+					// stack[0] = Deque
 					Object o = pop();
-					if (o == null || !(o instanceof KeyList)) {
+					if (o == null || !(o instanceof Deque)) {
 						throw new AwkRuntimeException(
 								position.lineNumber(),
-								"Cannot get a keylist (via 'in') of a non associative array. arg = " + o.getClass() + ", " + o);
+								"Cannot get a key list (via 'in') of a non associative array. arg = " + o.getClass() + ", " + o);
 					}
 					// pop off and return the head of the key set
-					KeyList keylist = (KeyList) o;
-					assert keylist.size() > 0;
-					push(keylist.getFirstAndRemove());
+					Deque<?> keylist = (Deque<?>) o;
+					assert !keylist.isEmpty();
+					push(keylist.removeFirst());
 					position.next();
 					break;
 				}
