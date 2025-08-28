@@ -26,16 +26,16 @@ import java.io.PrintStream;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.Deque;
 import org.metricshub.jawk.util.AwkLogger;
-import org.metricshub.jawk.util.LinkedListStackImpl;
-import org.metricshub.jawk.util.MyStack;
 import org.slf4j.Logger;
 
 /**
@@ -2933,7 +2933,7 @@ public class AwkTuples implements Serializable {
 	}
 
 	/** linenumber stack ... */
-	private MyStack<Integer> linenoStack = new LinkedListStackImpl<Integer>();
+	private Deque<Integer> linenoStack = new ArrayDeque<Integer>();
 
 	/**
 	 * Push the current line number onto the line number stack.
