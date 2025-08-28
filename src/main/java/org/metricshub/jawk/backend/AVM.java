@@ -46,7 +46,6 @@ import org.metricshub.jawk.frontend.AstNode;
 import org.metricshub.jawk.intermediate.Address;
 import org.metricshub.jawk.intermediate.AwkTuples;
 import org.metricshub.jawk.intermediate.Position;
-import org.metricshub.jawk.intermediate.PositionForInterpretation;
 import org.metricshub.jawk.intermediate.UninitializedObject;
 import org.metricshub.jawk.jrt.AssocArray;
 import org.metricshub.jawk.jrt.AwkRuntimeException;
@@ -275,7 +274,7 @@ public class AVM implements VariableManager {
 		return operandStack.size() == 0 ? null : pop();
 	}
 
-	private static int parseIntField(Object obj, PositionForInterpretation position) {
+	private static int parseIntField(Object obj, Position position) {
 		if (obj instanceof Number) {
 			double num = ((Number) obj).doubleValue();
 			if (num < 0) {
@@ -317,7 +316,7 @@ public class AVM implements VariableManager {
 		}
 	}
 
-	private String execSubOrGSub(PositionForInterpretation position, int gsubArgPos) {
+	private String execSubOrGSub(Position position, int gsubArgPos) {
 		String newString;
 
 		// arg[gsubArgPos] = isGsub
@@ -352,7 +351,7 @@ public class AVM implements VariableManager {
 		globalVariableArrays = tuples.getGlobalVariableAarrayMap();
 		functionNames = tuples.getFunctionNameSet();
 
-		PositionForInterpretation position = (PositionForInterpretation) tuples.top();
+		Position position = (Position) tuples.top();
 
 		try {
 			while (!position.isEOF()) {

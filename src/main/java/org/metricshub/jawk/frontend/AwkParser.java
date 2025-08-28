@@ -41,7 +41,7 @@ import org.metricshub.jawk.backend.AVM;
 import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.intermediate.Address;
 import org.metricshub.jawk.intermediate.AwkTuples;
-import org.metricshub.jawk.intermediate.HasFunctionAddress;
+import java.util.function.Supplier;
 import org.metricshub.jawk.jrt.KeyList;
 import org.metricshub.jawk.util.AwkLogger;
 import org.metricshub.jawk.util.ScriptSource;
@@ -366,7 +366,7 @@ public class AwkParser {
 	/**
 	 * Parse a single AWK expression and return the corresponding AST.
 	 *
-	 * @param expression The expression to parse (not a statement or rule, just an expression)
+	 * @param expressionSource The expression to parse (not a statement or rule, just an expression)
 	 * @return tuples representing the expression
 	 * @throws IOException upon an IO error or parsing error
 	 */
@@ -5212,7 +5212,7 @@ public class AwkParser {
 
 	// this was static...
 	// made non-static to throw a meaningful ParserException when necessary
-	private final class FunctionProxy implements HasFunctionAddress {
+	private final class FunctionProxy implements Supplier<Address> {
 
 		private FunctionDefAst functionDefAst;
 		private String id;
@@ -5234,7 +5234,7 @@ public class AwkParser {
 		}
 
 		@Override
-		public Address getFunctionAddress() {
+		public Address get() {
 			return functionDefAst.getAddress();
 		}
 
