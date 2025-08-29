@@ -29,14 +29,14 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  *
  * @author Danny Daglas
  */
-public class Position {
+public class PositionTracker {
 
 	private int idx = 0;
 	private final java.util.List<Tuple> queue;
 	private Tuple tuple;
 
-	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Position must iterate over the shared tuple list")
-	public Position(java.util.List<Tuple> queue) {
+	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "PositionTracker must iterate over the shared tuple list")
+	public PositionTracker(java.util.List<Tuple> queue) {
 		this.queue = queue;
 		this.tuple = queue.isEmpty() ? null : queue.get(idx);
 	}
