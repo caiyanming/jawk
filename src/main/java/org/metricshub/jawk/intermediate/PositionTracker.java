@@ -62,7 +62,7 @@ public class PositionTracker {
 		return "[" + idx + "]-->" + tuple.toString();
 	}
 
-	public int opcode() {
+	public Opcode opcode() {
 		return tuple.getOpcode();
 	}
 
