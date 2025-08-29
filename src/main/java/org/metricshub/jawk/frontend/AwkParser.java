@@ -29,6 +29,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,11 +42,12 @@ import org.metricshub.jawk.backend.AVM;
 import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.intermediate.Address;
 import org.metricshub.jawk.intermediate.AwkTuples;
-import org.metricshub.jawk.intermediate.HasFunctionAddress;
-import org.metricshub.jawk.jrt.KeyList;
+import java.util.function.Supplier;
 import org.metricshub.jawk.util.AwkLogger;
 import org.metricshub.jawk.util.ScriptSource;
 import org.slf4j.Logger;
+import org.metricshub.jawk.frontend.ast.LexerException;
+import org.metricshub.jawk.frontend.ast.ParserException;
 
 /**
  * Converts the AWK script into a syntax tree,
@@ -366,7 +368,7 @@ public class AwkParser {
 	/**
 	 * Parse a single AWK expression and return the corresponding AST.
 	 *
-	 * @param expression The expression to parse (not a statement or rule, just an expression)
+	 * @param expressionSource The expression to parse (not a statement or rule, just an expression)
 	 * @return tuples representing the expression
 	 * @throws IOException upon an IO error or parsing error
 	 */
@@ -390,27 +392,11 @@ public class AwkParser {
 		return EXPRESSION_TO_EVALUATE();
 	}
 
-	/**
-	 * Exception indicating a syntax problem in the AWK script
-	 */
-	public class LexerException extends IOException {
-
-		private static final long serialVersionUID = 1L;
-
-		/**
-		 * Create a new LexerException
-		 *
-		 * @param msg Problem description (without the position, which will be added)
-		 */
-		LexerException(String msg) {
-			super(
-					msg
-							+ " ("
-							+ scriptSources.get(scriptSourcesCurrentIndex).getDescription()
-							+ ":"
-							+ reader.getLineNumber()
-							+ ")");
-		}
+	private LexerException lexerException(String msg) {
+		return new LexerException(
+				msg,
+				scriptSources.get(scriptSourcesCurrentIndex).getDescription(),
+				reader.getLineNumber());
 	}
 
 	/**
@@ -509,7 +495,7 @@ public class AwkParser {
 			read();
 		}
 		if (token == EOF || c == '\n' || c <= 0) {
-			throw new LexerException("Unterminated string: " + text);
+			throw lexerException("Unterminated string: " + text);
 		}
 		read();
 	}
@@ -533,7 +519,7 @@ public class AwkParser {
 			read();
 		}
 		if (token == EOF || c == '\n' || c <= 0) {
-			throw new LexerException("Unterminated string: " + text);
+			throw lexerException("Unterminated string: " + text);
 		}
 		read();
 	}
@@ -558,7 +544,7 @@ public class AwkParser {
 
 	private int lexer(int expectedToken) throws IOException {
 		if (token != expectedToken) {
-			throw new ParserException(
+			throw parserException(
 					"Expecting " + toTokenString(expectedToken) + ". Found: " + toTokenString(token) + " (" + text + ")");
 		}
 		return lexer();
@@ -655,7 +641,7 @@ public class AwkParser {
 				token = AND;
 				return token;
 			}
-			throw new LexerException("use && for logical and");
+			throw lexerException("use && for logical and");
 		}
 		if (c == '|') {
 			read();
@@ -803,7 +789,7 @@ public class AwkParser {
 				read();
 			}
 			if (!hit) {
-				throw new LexerException("Decimal point encountered with no values on either side.");
+				throw lexerException("Decimal point encountered with no values on either side.");
 			}
 			token = DOUBLE;
 			return token;
@@ -929,14 +915,14 @@ public class AwkParser {
 		 * }
 		 */
 
-		throw new LexerException("Invalid character (" + c + "): " + ((char) c));
+		throw lexerException("Invalid character (" + c + "): " + ((char) c));
 	}
 
 	// SUPPORTING FUNCTIONS/METHODS
 	private void terminator() throws IOException {
 		// like optTerminator, except error if no terminator was found
 		if (!optTerminator()) {
-			throw new ParserException("Expecting statement terminator. Got " + toTokenString(token) + ": " + text);
+			throw parserException("Expecting statement terminator. Got " + toTokenString(token) + ": " + text);
 		}
 	}
 
@@ -1008,7 +994,7 @@ public class AwkParser {
 			functionName = text.toString();
 			lexer();
 		} else {
-			throw new ParserException("Expecting function name. Got " + toTokenString(token) + ": " + text);
+			throw parserException("Expecting function name. Got " + toTokenString(token) + ": " + text);
 		}
 		symbolTable.setFunctionName(functionName);
 		lexer(OPEN_PAREN);
@@ -1039,7 +1025,7 @@ public class AwkParser {
 				optNewline();
 				AST rest = FORMAL_PARAM_LIST(functionName);
 				if (rest == null) {
-					throw new ParserException("Cannot terminate a formal parameter list with a comma.");
+					throw parserException("Cannot terminate a formal parameter list with a comma.");
 				} else {
 					return new FunctionDefParamListAst(id, rest);
 				}
@@ -1445,7 +1431,7 @@ public class AwkParser {
 		AST factorAst = FACTOR(allowComparison, allowInKeyword, allowMultidimIndices);
 
 		if ((preInc || preDec) && !isLvalue(factorAst)) {
-			throw new ParserException("Cannot pre inc/dec a non-lvalue");
+			throw parserException("Cannot pre inc/dec a non-lvalue");
 		}
 
 		// only do post ops if:
@@ -1462,7 +1448,7 @@ public class AwkParser {
 		}
 
 		if ((preInc || preDec) && (postInc || postDec)) {
-			throw new ParserException("Cannot do pre inc/dec AND post inc/dec.");
+			throw parserException("Cannot do pre inc/dec AND post inc/dec.");
 		}
 
 		if (preInc) {
@@ -1487,7 +1473,7 @@ public class AwkParser {
 			// true = allow multi-dimensional array indices (i.e., commas for 1,2,3,4)
 			AST assignmentExpression = ASSIGNMENT_EXPRESSION(true, allowInKeyword, true);
 			if (allowMultidimIndices && (assignmentExpression instanceof ArrayIndexAst)) {
-				throw new ParserException("Cannot nest multi-dimensional array index expressions.");
+				throw parserException("Cannot nest multi-dimensional array index expressions.");
 			}
 			lexer(CLOSE_PAREN);
 			return assignmentExpression;
@@ -1540,7 +1526,7 @@ public class AwkParser {
 		boolean parens = c == '(';
 		expectKeyword("_INTEGER");
 		if (token == SEMICOLON || token == NEWLINE || token == CLOSE_BRACE) {
-			throw new ParserException("expression expected");
+			throw parserException("expression expected");
 		} else {
 			// do NOT allow for a blank param list: "()" using the parens boolean below
 			// otherwise, the parser will complain because assignmentExpression cannot be ()
@@ -1549,7 +1535,7 @@ public class AwkParser {
 			}
 			AST intExprAst;
 			if (token == CLOSE_PAREN) {
-				throw new ParserException("expression expected");
+				throw parserException("expression expected");
 			} else {
 				intExprAst = new IntegerExpressionAst(
 						ASSIGNMENT_EXPRESSION(allowComparison || parens, allowInKeyword, allowMultidimIndices));
@@ -1566,7 +1552,7 @@ public class AwkParser {
 		boolean parens = c == '(';
 		expectKeyword("_DOUBLE");
 		if (token == SEMICOLON || token == NEWLINE || token == CLOSE_BRACE) {
-			throw new ParserException("expression expected");
+			throw parserException("expression expected");
 		} else {
 			// do NOT allow for a blank param list: "()" using the parens boolean below
 			// otherwise, the parser will complain because assignmentExpression cannot be ()
@@ -1575,7 +1561,7 @@ public class AwkParser {
 			}
 			AST doubleExprAst;
 			if (token == CLOSE_PAREN) {
-				throw new ParserException("expression expected");
+				throw parserException("expression expected");
 			} else {
 				doubleExprAst = new DoubleExpressionAst(
 						ASSIGNMENT_EXPRESSION(allowComparison || parens, allowInKeyword, allowMultidimIndices));
@@ -1592,7 +1578,7 @@ public class AwkParser {
 		boolean parens = c == '(';
 		expectKeyword("_STRING");
 		if (token == SEMICOLON || token == NEWLINE || token == CLOSE_BRACE) {
-			throw new ParserException("expression expected");
+			throw parserException("expression expected");
 		} else {
 			// do NOT allow for a blank param list: "()" using the parens boolean below
 			// otherwise, the parser will complain because assignmentExpression cannot be ()
@@ -1601,7 +1587,7 @@ public class AwkParser {
 			}
 			AST stringExprAst;
 			if (token == CLOSE_PAREN) {
-				throw new ParserException("expression expected");
+				throw parserException("expression expected");
 			} else {
 				stringExprAst = new StringExpressionAst(
 						ASSIGNMENT_EXPRESSION(allowComparison || parens, allowInKeyword, allowMultidimIndices));
@@ -1616,7 +1602,7 @@ public class AwkParser {
 	// SYMBOL : ID [ '(' params ')' | '[' ASSIGNMENT_EXPRESSION ']' ]
 	AST SYMBOL(boolean allowComparison, boolean allowInKeyword) throws IOException {
 		if (token != ID && token != FUNC_ID && token != BUILTIN_FUNC_NAME && token != EXTENSION) {
-			throw new ParserException("Expecting an ID. Got " + toTokenString(token) + ": " + text);
+			throw parserException("Expecting an ID. Got " + toTokenString(token) + ": " + text);
 		}
 		int idToken = token;
 		String id = text.toString();
@@ -1706,7 +1692,7 @@ public class AwkParser {
 			AST idxAst = ARRAY_INDEX(true, allowInKeyword);
 			lexer(CLOSE_BRACKET);
 			if (token == OPEN_BRACKET) {
-				throw new ParserException("Use [a,b,c,...] instead of [a][b][c]... for multi-dimensional arrays.");
+				throw parserException("Use [a,b,c,...] instead of [a][b][c]... for multi-dimensional arrays.");
 			}
 			return symbolTable.addArrayReference(id, idxAst);
 		}
@@ -1787,7 +1773,7 @@ public class AwkParser {
 
 		AST exprAst = ASSIGNMENT_EXPRESSION(true, allowInKeyword, false);
 		if (!allowNonStatementAsts && exprAst.hasFlag(AstFlag.NON_STATEMENT)) {
-			throw new ParserException("Not a valid statement.");
+			throw parserException("Not a valid statement.");
 		}
 		return new ExpressionStatementAst(exprAst);
 	}
@@ -1889,18 +1875,18 @@ public class AwkParser {
 		// branch here if we expect a for(... in ...) statement
 		if (token == KEYWORDS.get("in")) {
 			if (expr1.ast1 == null || expr1.ast2 != null) {
-				throw new ParserException("Invalid expression prior to 'in' statement. Got : " + expr1);
+				throw parserException("Invalid expression prior to 'in' statement. Got : " + expr1);
 			}
 			expr1 = expr1.ast1;
 			// analyze expr1 to make sure it's a singleton IDAst
 			if (!(expr1 instanceof IDAst)) {
-				throw new ParserException("Expecting an ID for 'in' statement. Got : " + expr1);
+				throw parserException("Expecting an ID for 'in' statement. Got : " + expr1);
 			}
 			// in
 			lexer();
 			// id
 			if (token != ID) {
-				throw new ParserException(
+				throw parserException(
 						"Expecting an ARRAY ID for 'in' statement. Got " + toTokenString(token) + ": " + text);
 			}
 			String arrId = text.toString();
@@ -1919,7 +1905,7 @@ public class AwkParser {
 			lexer();
 			optNewline();
 		} else {
-			throw new ParserException("Expecting ;. Got " + toTokenString(token) + ": " + text);
+			throw parserException("Expecting ;. Got " + toTokenString(token) + ": " + text);
 		}
 		if (token != SEMICOLON) {
 			expr2 = ASSIGNMENT_EXPRESSION(true, true, false); // allow comparators, allow IN keyword, do NOT allow multidim
@@ -1929,7 +1915,7 @@ public class AwkParser {
 			lexer();
 			optNewline();
 		} else {
-			throw new ParserException("Expecting ;. Got " + toTokenString(token) + ": " + text);
+			throw parserException("Expecting ;. Got " + toTokenString(token) + ": " + text);
 		}
 		if (token != CLOSE_PAREN) {
 			expr3 = OPT_SIMPLE_STATEMENT(true); // true = "allow the in keyword"
@@ -2212,7 +2198,7 @@ public class AwkParser {
 		if (token == KEYWORDS.get(keyword)) {
 			lexer();
 		} else {
-			throw new ParserException("Expecting " + keyword + ". Got " + toTokenString(token) + ": " + text);
+			throw parserException("Expecting " + keyword + ". Got " + toTokenString(token) + ": " + text);
 		}
 	}
 
@@ -3229,13 +3215,13 @@ public class AwkParser {
 			// for for-in loops, the continue jump address is the start-of-loop address
 			continueAddress = loop;
 
-			assert tuples.checkClass(KeyList.class);
+			assert tuples.checkClass(Deque.class);
 
 			// condition
 			tuples.dup();
 			tuples.isEmptyList(breakAddress);
 
-			assert tuples.checkClass(KeyList.class);
+			assert tuples.checkClass(Deque.class);
 
 			// take an element off the set
 			tuples.dup();
@@ -3251,7 +3237,7 @@ public class AwkParser {
 			}
 			// otherwise, there is no block to execute
 
-			assert tuples.checkClass(KeyList.class);
+			assert tuples.checkClass(Deque.class);
 
 			tuples.gotoAddress(loop);
 
@@ -5212,7 +5198,7 @@ public class AwkParser {
 
 	// this was static...
 	// made non-static to throw a meaningful ParserException when necessary
-	private final class FunctionProxy implements HasFunctionAddress {
+	private final class FunctionProxy implements Supplier<Address> {
 
 		private FunctionDefAst functionDefAst;
 		private String id;
@@ -5223,7 +5209,7 @@ public class AwkParser {
 
 		private void setFunctionDefinition(FunctionDefAst functionDef) {
 			if (functionDefAst != null) {
-				throw new ParserException("function " + functionDef + " already defined");
+				throw parserException("function " + functionDef + " already defined");
 			} else {
 				functionDefAst = functionDef;
 			}
@@ -5234,7 +5220,7 @@ public class AwkParser {
 		}
 
 		@Override
-		public Address getFunctionAddress() {
+		public Address get() {
 			return functionDefAst.getAddress();
 		}
 
@@ -5327,7 +5313,7 @@ public class AwkParser {
 
 		private IDAst getID(String id) {
 			if (functionProxies.get(id) != null) {
-				throw new ParserException("cannot use " + id + " as a variable; it is a function");
+				throw parserException("cannot use " + id + " as a variable; it is a function");
 			}
 
 			// put in the pool of ids to guard against using it as a function name
@@ -5369,7 +5355,7 @@ public class AwkParser {
 			/// here, because we can use an array as a function parameter (passed by reference).
 			/// ***
 			// if (retVal.isArray)
-			// throw new ParserException("Cannot use "+retVal+" as a scalar.");
+			// throw parserException("Cannot use "+retVal+" as a scalar.");
 			// retVal.isScalar = true;
 			return retVal;
 		}
@@ -5381,7 +5367,7 @@ public class AwkParser {
 				functionParameters.put(functionName, set);
 			}
 			if (set.contains(id)) {
-				throw new ParserException("multiply defined parameter " + id + " in function " + functionName);
+				throw parserException("multiply defined parameter " + id + " in function " + functionName);
 			}
 			int retval = set.size();
 			set.add(id);
@@ -5409,7 +5395,7 @@ public class AwkParser {
 		AST addArrayID(String id) throws ParserException {
 			IDAst retVal = getID(id);
 			if (retVal.isScalar()) {
-				throw new ParserException("Cannot use " + retVal + " as an array.");
+				throw parserException("Cannot use " + retVal + " as an array.");
 			}
 			retVal.setArray(true);
 			return retVal;
@@ -5417,7 +5403,7 @@ public class AwkParser {
 
 		AST addFunctionDef(String functionName, AST paramList, AST block) {
 			if (ids.contains(functionName)) {
-				throw new ParserException("cannot use " + functionName + " as a function; it is a variable");
+				throw parserException("cannot use " + functionName + " as a function; it is a variable");
 			}
 			FunctionProxy functionProxy = functionProxies.get(functionName);
 			if (functionProxy == null) {
@@ -5462,18 +5448,10 @@ public class AwkParser {
 		}
 	}
 
-	public class ParserException extends RuntimeException {
-
-		private static final long serialVersionUID = 1L;
-
-		ParserException(String msg) {
-			super(
-					msg
-							+ " ("
-							+ scriptSources.get(scriptSourcesCurrentIndex).getDescription()
-							+ ":"
-							+ reader.getLineNumber()
-							+ ")");
-		}
+	private ParserException parserException(String msg) {
+		return new ParserException(
+				msg,
+				scriptSources.get(scriptSourcesCurrentIndex).getDescription(),
+				reader.getLineNumber());
 	}
 }

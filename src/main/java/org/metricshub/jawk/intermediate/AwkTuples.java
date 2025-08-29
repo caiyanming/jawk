@@ -22,23 +22,20 @@ package org.metricshub.jawk.intermediate;
  * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
  */
 
-import java.io.IOException;
-import java.io.InvalidClassException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
+import java.util.Deque;
 import org.metricshub.jawk.util.AwkLogger;
-import org.metricshub.jawk.util.LinkedListStackImpl;
-import org.metricshub.jawk.util.MyStack;
 import org.slf4j.Logger;
 
 /**
@@ -58,396 +55,7 @@ public class AwkTuples implements Serializable {
 	/** Version Manager */
 	private VersionManager versionManager = new VersionManager();
 
-	private static final class AddressImpl implements Address, Serializable {
-
-		/**
-		 *
-		 */
-		private static final long serialVersionUID = 109610985341478678L;
-		private String lbl;
-		private int idx = -1;
-
-		private AddressImpl(String lbl) {
-			this.lbl = lbl;
-		}
-
-		@Override
-		public String label() {
-			return lbl;
-		}
-
-		@Override
-		public String toString() {
-			return label();
-		}
-
-		@Override
-		public void assignIndex(int index) {
-			this.idx = index;
-		}
-
-		@Override
-		public int index() {
-			assert idx >= 0 : toString();
-			return idx;
-		}
-	}
-
-	private class PositionImpl implements PositionForInterpretation, PositionForCompilation {
-
-		// index within the queue
-
-		private int idx = 0;
-		private Tuple tuple = queue.isEmpty() ? null : queue.get(idx); // current tuple
-
-		@Override
-		public int index() {
-			return idx;
-		}
-
-		@Override
-		public boolean isEOF() {
-			return idx >= queue.size();
-		}
-
-		@Override
-		public void next() {
-			assert tuple != null;
-			++idx;
-			tuple = tuple.getNext();
-			assert queue.size() == idx || queue.get(idx) == tuple;
-		}
-
-		@Override
-		public void jump(Address address) {
-			idx = address.index();
-			tuple = queue.get(idx);
-		}
-
-		@Override
-		public String toString() {
-			return "[" + idx + "]-->" + tuple.toString();
-		}
-
-		@Override
-		public int opcode() {
-			return tuple.getOpcode();
-		}
-
-		@Override
-		public long intArg(int argIdx) {
-			Class<?> c = tuple.getTypes()[argIdx];
-			if (c == Long.class) {
-				return tuple.getInts()[argIdx];
-			}
-			throw new Error("Invalid arg type: " + c + ", arg_idx = " + argIdx + ", tuple = " + tuple);
-		}
-
-		@Override
-		public boolean boolArg(int argIdx) {
-			Class<?> c = tuple.getTypes()[argIdx];
-			if (c == Boolean.class) {
-				return tuple.getBools()[argIdx];
-			}
-			throw new Error("Invalid arg type: " + c + ", arg_idx = " + argIdx + ", tuple = " + tuple);
-		}
-
-		@Override
-		public Object arg(int argIdx) {
-			Class<?> c = tuple.getTypes()[argIdx];
-			if (c == Long.class) {
-				return tuple.getInts()[argIdx];
-			}
-			if (c == Double.class) {
-				return tuple.getDoubles()[argIdx];
-			}
-			if (c == String.class) {
-				return tuple.getStrings()[argIdx];
-			}
-			if (c == Address.class) {
-				assert argIdx == 0;
-				return tuple.getAddress();
-			}
-			throw new Error("Invalid arg type: " + c + ", arg_idx = " + argIdx + ", tuple = " + tuple);
-		}
-
-		@Override
-		public Address addressArg() {
-			assert tuple.getAddress() != null || tuple.getHasFuncAddr() != null : "tuple.address = "
-					+
-					tuple.getAddress()
-					+
-					", tuple.has_func_addr = "
-					+
-					tuple.getHasFuncAddr();
-			if (tuple.getAddress() == null) {
-				tuple.setAddress(tuple.getHasFuncAddr().getFunctionAddress());
-			}
-			return tuple.getAddress();
-		}
-
-		@Override
-		public Class<?> classArg() {
-			// Tuple tuple = queue.get(idx);
-			assert tuple.getCls() != null;
-			return tuple.getCls();
-		}
-
-		@Override
-		public int lineNumber() {
-			assert tuple.getLineno() != -1 : "The line number should have been set by queue.add(), but was not.";
-			return tuple.getLineno();
-		}
-
-		@Override
-		public int current() {
-			return idx;
-		}
-
-		@Override
-		public void jump(int index) {
-			this.idx = index;
-			tuple = queue.get(this.idx);
-		}
-	}
-
 	// made public to access static members of AwkTuples via Java Reflection
-	private static final class Tuple implements Serializable {
-
-		/**
-		 *
-		 */
-		private static final long serialVersionUID = 8105941219003992817L;
-		private int opcode;
-		private long[] ints = new long[4];
-		private boolean[] bools = new boolean[4];
-		private double[] doubles = new double[4];
-		private String[] strings = new String[4];
-		private Class<?>[] types = new Class[4];
-		private Address address = null;
-		private Class<?> cls = null;
-		private transient HasFunctionAddress hasFuncAddr = null;
-		// to avoid polluting the constructors,
-		// setLineNumber(int) populates this field
-		// (called by an anonymous inner subclass of ArrayList,
-		// assigned to queue - see above)
-		private int lineno = -1;
-		private Tuple next = null;
-
-		private Tuple(int opcode) {
-			this.opcode = opcode;
-		}
-
-		private Tuple(int opcode, long i1) {
-			this(opcode);
-			ints[0] = i1;
-			types[0] = Long.class;
-		}
-
-		private Tuple(int opcode, long i1, long i2) {
-			this(opcode, i1);
-			ints[1] = i2;
-			types[1] = Long.class;
-		}
-
-		private Tuple(int opcode, long i1, boolean b2) {
-			this(opcode, i1);
-			bools[1] = b2;
-			types[1] = Boolean.class;
-		}
-
-		private Tuple(int opcode, long i1, boolean b2, boolean b3) {
-			this(opcode, i1, b2);
-			bools[2] = b3;
-			types[2] = Boolean.class;
-		}
-
-		private Tuple(int opcode, double d1) {
-			this(opcode);
-			doubles[0] = d1;
-			types[0] = Double.class;
-		}
-
-		private Tuple(int opcode, String s1) {
-			this(opcode);
-			strings[0] = s1;
-			types[0] = String.class;
-		}
-
-		private Tuple(int opcode, boolean b1) {
-			this(opcode);
-			bools[0] = b1;
-			types[0] = Boolean.class;
-		}
-
-		private Tuple(int opcode, String s1, long i2) {
-			this(opcode, s1);
-			ints[1] = i2;
-			types[1] = Long.class;
-		}
-
-		private Tuple(int opcode, Address address) {
-			this(opcode);
-			this.address = address;
-			types[0] = Address.class;
-		}
-
-		private Tuple(int opcode, String strarg, long intarg, boolean boolarg) {
-			this(opcode, strarg, intarg);
-			bools[2] = boolarg;
-			types[2] = Boolean.class;
-		}
-
-		private Tuple(int opcode, HasFunctionAddress hasFuncAddr, String s2, long i3, long i4) {
-			this(opcode);
-			this.hasFuncAddr = hasFuncAddr;
-			strings[1] = s2;
-			types[1] = String.class;
-			ints[2] = i3;
-			types[2] = Long.class;
-			ints[3] = i4;
-			types[3] = Long.class;
-		}
-
-		private Tuple(int opcode, Class<?> cls) {
-			this(opcode);
-			this.cls = cls;
-			types[0] = Class.class;
-		}
-
-		private Tuple(int opcode, String s1, String s2) {
-			this(opcode, s1);
-			strings[1] = s2;
-			types[1] = String.class;
-		}
-
-		private boolean hasNext() {
-			return next != null;
-		}
-
-		private Tuple getNext() {
-			return next;
-		}
-
-		private void setNext(Tuple next) {
-			this.next = next;
-		}
-
-		private void setLineNumber(int lineNumber) {
-			assert this.lineno == -1
-					: "The line number was already set to " + this.lineno + ". Later lineno = " + lineNumber + ".";
-			this.lineno = lineNumber;
-		}
-
-		@Override
-		public String toString() {
-			StringBuilder sb = new StringBuilder();
-			sb.append(toOpcodeString(opcode));
-			int idx = 0;
-			while ((idx < types.length) && (types[idx] != null)) {
-				sb.append(", ");
-				Class<?> type = types[idx];
-				if (type == Long.class) {
-					sb.append(ints[idx]);
-				} else if (type == Boolean.class) {
-					sb.append(bools[idx]);
-				} else if (type == Double.class) {
-					sb.append(doubles[idx]);
-				} else if (type == String.class) {
-					sb.append('"').append(strings[idx]).append('"');
-				} else if (type == Address.class) {
-					assert idx == 0;
-					sb.append(address);
-				} else if (type == Class.class) {
-					assert idx == 0;
-					sb.append(cls);
-				} else if (type == HasFunctionAddress.class) {
-					assert idx == 0;
-					sb.append(hasFuncAddr);
-				} else {
-					throw new Error("Unknown param type (" + idx + "): " + type);
-				}
-				++idx;
-			}
-			return sb.toString();
-		}
-
-		/**
-		 * Update this tuple to populate the address argument value if necessary;
-		 * and, check if address points to a proper element in the tuple queue.
-		 * <p>
-		 * The address will be updated only if there exists a HasFunctionAddress
-		 * argument for this tuple.
-		 * <p>
-		 * This is executed after the tuples are constructed so that function address
-		 * references can be resolved. Otherwise, forward declared functions will
-		 * not be resolved in the Tuple list.
-		 */
-		public void touch(java.util.List<Tuple> queue) {
-			assert lineno != -1 : "The line number should have been set by queue.add(), but was not.";
-			if (hasFuncAddr != null) {
-				address = hasFuncAddr.getFunctionAddress();
-				types[0] = Address.class;
-			}
-			if (address != null) {
-				if (address.index() == -1) {
-					throw new Error("address " + address + " is unresolved");
-				}
-				if (address.index() >= queue.size()) {
-					throw new Error("address " + address + " doesn't resolve to an actual list element");
-				}
-			}
-		}
-
-		private int getOpcode() {
-			return opcode;
-		}
-
-		private long[] getInts() {
-			return ints;
-		}
-
-		private boolean[] getBools() {
-			return bools;
-		}
-
-		private double[] getDoubles() {
-			return doubles;
-		}
-
-		private String[] getStrings() {
-			return strings;
-		}
-
-		private Class<?>[] getTypes() {
-			return types;
-		}
-
-		private void setAddress(Address address) {
-			this.address = address;
-		}
-
-		private Address getAddress() {
-			return address;
-		}
-
-		private int getLineno() {
-			return lineno;
-		}
-
-		@SuppressWarnings("unused")
-		private void setOpcode(int opcode) {
-			this.opcode = opcode;
-		}
-
-		private Class<?> getCls() {
-			return cls;
-		}
-
-		private HasFunctionAddress getHasFuncAddr() {
-			return hasFuncAddr;
-		}
-	}
 
 	// made public to be accessable via Java Reflection
 	// (see toOpcodeString() method below)
@@ -1253,15 +861,15 @@ public class AwkTuples implements Serializable {
 
 	// for (x in y) {keyset} support
 	/**
-	 * Retrieves and pushes a Set of keys from an associative array onto the stack.
-	 * The Set is tagged with a KeyList interface.
+	 * Retrieves and pushes a set of keys from an associative array onto the stack.
+	 * The set is stored in a {@link java.util.Deque} for iteration.
 	 * <p>
 	 * Stack before: associative-array ...<br/>
 	 * Stack after: key-list-set ...
 	 */
 	public static final int KEYLIST = 339; // 0 -> {keylist}
 	/**
-	 * Tests whether the KeyList (set) is empty; jumps to the argument
+	 * Tests whether the key list (deque) is empty; jumps to the argument
 	 * address if empty, steps to the next instruction if not.
 	 * <p>
 	 * Argument: jump-address-if-empty
@@ -1271,7 +879,7 @@ public class AwkTuples implements Serializable {
 	 */
 	public static final int IS_EMPTY_KEYLIST = 340; // {keylist} -> 0
 	/**
-	 * Removes an item from the KeyList (set) and pushes it onto the operand stack.
+	 * Removes an item from the key list (deque) and pushes it onto the operand stack.
 	 * <p>
 	 * Stack before: key-list ...<br/>
 	 * Stack after: 1st-item ...
@@ -1284,7 +892,7 @@ public class AwkTuples implements Serializable {
 	 * if not, an AwkRuntimeException is thrown.
 	 * The stack remains unchanged upon a successful check.
 	 * <p>
-	 * Argument: class-type (i.e., KeyList.class)
+	 * Argument: class-type (i.e., java.util.Deque.class)
 	 * <p>
 	 * Stack before: obj ...<br/>
 	 * Stack after: obj ...
@@ -1840,7 +1448,7 @@ public class AwkTuples implements Serializable {
 			count = count + 1;
 		}
 		addressLabelCounts.put(label, count);
-		Address address = new AddressImpl(label + "_" + count);
+		Address address = new Address(label + "_" + count);
 		unresolvedAddresses.add(address);
 		return address;
 	}
@@ -2696,7 +2304,7 @@ public class AwkTuples implements Serializable {
 
 	/**
 	 * <p>
-	 * keylist.
+	 * key list.
 	 * </p>
 	 */
 	public void keylist() {
@@ -2988,17 +2596,17 @@ public class AwkTuples implements Serializable {
 	 * callFunction.
 	 * </p>
 	 *
-	 * @param hasFuncAddr a {@link org.metricshub.jawk.intermediate.HasFunctionAddress} object
+	 * @param addressSupplier supplier resolving the function's entry point
 	 * @param funcName a {@link java.lang.String} object
 	 * @param numFormalParams a int
 	 * @param numActualParams a int
 	 */
 	public void callFunction(
-			HasFunctionAddress hasFuncAddr,
+			Supplier<Address> addressSupplier,
 			String funcName,
 			int numFormalParams,
 			int numActualParams) {
-		queue.add(new Tuple(CALL_FUNCTION, hasFuncAddr, funcName, numFormalParams, numActualParams));
+		queue.add(new Tuple(CALL_FUNCTION, addressSupplier, funcName, numFormalParams, numActualParams));
 	}
 
 	/**
@@ -3220,7 +2828,7 @@ public class AwkTuples implements Serializable {
 	 * @return a {@link org.metricshub.jawk.intermediate.Position} object
 	 */
 	public Position top() {
-		return new PositionImpl();
+		return new Position(queue);
 	}
 
 	/**
@@ -3325,7 +2933,7 @@ public class AwkTuples implements Serializable {
 	}
 
 	/** linenumber stack ... */
-	private MyStack<Integer> linenoStack = new LinkedListStackImpl<Integer>();
+	private Deque<Integer> linenoStack = new ArrayDeque<Integer>();
 
 	/**
 	 * Push the current line number onto the line number stack.
@@ -3353,65 +2961,4 @@ public class AwkTuples implements Serializable {
 		assert lineno == tos;
 	}
 
-	/**
-	 * Intermediate file version manager. Ensures the AwkTuples
-	 * class version matches the version supported by the interpreter/compiler.
-	 */
-	private static class VersionManager implements Serializable {
-
-		private static final long serialVersionUID = -2015316238483923915L;
-
-		/**
-		 * Class version number.
-		 * This number is modified by the developer.
-		 * It should be modified only if modifications
-		 * to pre-existing tuple arguments are modified,
-		 * or if instruction codes are removed.
-		 * <p>
-		 * <ul>
-		 * <li>Version 1 - Initial release.
-		 * <li>Version 2 - Changes to support compilation to JVM.
-		 * </ul>
-		 */
-		private static final int CLASS_VERSION = 2;
-
-		/**
-		 * Instance version number.
-		 * The only way it could be different from the
-		 * class version is only during deserialization.
-		 */
-		private int instanceVersion = CLASS_VERSION;
-
-		/**
-		 * Upon deserialization, ensures the instance
-		 * version matches the class version.
-		 *
-		 * @throws IOException upon an IO error
-		 * @throws ClassNotFoundException if the class
-		 *         that is deserialized cannot be found
-		 * @throws InvalidClassException if the
-		 *         instance version does not match
-		 *         the class version
-		 */
-		private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
-			instanceVersion = ois.readInt();
-			if (instanceVersion != CLASS_VERSION) {
-				throw new InvalidClassException(
-						"Invalid intermeidate file format (instance version "
-								+ instanceVersion
-								+ " != class version "
-								+ CLASS_VERSION
-								+ ")");
-			}
-		}
-
-		private void writeObject(ObjectOutputStream oos) throws IOException {
-			oos.writeInt(instanceVersion);
-		}
-
-		@Override
-		public String toString() {
-			return "intermediate file format version = " + instanceVersion;
-		}
-	}
 }

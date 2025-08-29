@@ -1,5 +1,7 @@
 package org.metricshub.jawk.intermediate;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /*-
  * ╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲
  * Jawk
@@ -27,84 +29,102 @@ package org.metricshub.jawk.intermediate;
  *
  * @author Danny Daglas
  */
-public interface Position {
-	/**
-	 * <p>
-	 * isEOF.
-	 * </p>
-	 *
-	 * @return true whether we are at the end
-	 *         of the tuple list, false otherwise
-	 */
-	boolean isEOF();
+public class Position {
 
-	/**
-	 * Advances the position to the next tuple,
-	 * as ordered within the tuple list (queue).
-	 */
-	void next();
+	private int idx = 0;
+	private final java.util.List<Tuple> queue;
+	private Tuple tuple;
 
-	/**
-	 * <p>
-	 * opcode.
-	 * </p>
-	 *
-	 * @return the opcode for the tuple at this
-	 *         position
-	 */
-	int opcode();
+	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Position must iterate over the shared tuple list")
+	public Position(java.util.List<Tuple> queue) {
+		this.queue = queue;
+		this.tuple = queue.isEmpty() ? null : queue.get(idx);
+	}
 
-	/**
-	 * Get the integer representation for a particular
-	 * element within the tuple.
-	 *
-	 * @param idx The item to retrieve from the tuple.
-	 * @return the integer representation of the item.
-	 */
-	long intArg(int idx);
+	public boolean isEOF() {
+		return idx >= queue.size();
+	}
 
-	/**
-	 * Get the boolean representation for a particular
-	 * element within the tuple.
-	 *
-	 * @param idx The item to retrieve from the tuple.
-	 * @return the boolean representation of the item.
-	 */
-	boolean boolArg(int idx);
+	public void next() {
+		assert tuple != null;
+		++idx;
+		tuple = tuple.getNext();
+		assert queue.size() == idx || queue.get(idx) == tuple;
+	}
 
-	/**
-	 * Get a reference to a particular element
-	 * within the tuple.
-	 *
-	 * @param idx The item to retrieve from the tuple.
-	 * @return a reference to the item.
-	 */
-	Object arg(int idx);
+	public void jump(Address address) {
+		idx = address.index();
+		tuple = queue.get(idx);
+	}
 
-	/**
-	 * Obtain the address argument for this tuple.
-	 * <p>
-	 * This is a special form in that the tuple
-	 * has only the address argument, and nothing else.
-	 *
-	 * @return a {@link org.metricshub.jawk.intermediate.Address} object
-	 */
-	Address addressArg();
+	@Override
+	public String toString() {
+		return "[" + idx + "]-->" + tuple.toString();
+	}
 
-	/**
-	 * Obtain the class argument for this tuple.
-	 * <p>
-	 * This is a special form in that the tuple
-	 * has only the class argument, and nothing else.
-	 *
-	 * @return a {@link java.lang.Class} object
-	 */
-	Class<?> classArg();
+	public int opcode() {
+		return tuple.getOpcode();
+	}
 
-	/**
-	 * Get the source line number for this position.
-	 *
-	 * @return a int
-	 */
-	int lineNumber();
+	public long intArg(int argIdx) {
+		Class<?> c = tuple.getTypes()[argIdx];
+		if (c == Long.class) {
+			return tuple.getInts()[argIdx];
+		}
+		throw new Error("Invalid arg type: " + c + ", arg_idx = " + argIdx + ", tuple = " + tuple);
+	}
+
+	public boolean boolArg(int argIdx) {
+		Class<?> c = tuple.getTypes()[argIdx];
+		if (c == Boolean.class) {
+			return tuple.getBools()[argIdx];
+		}
+		throw new Error("Invalid arg type: " + c + ", arg_idx = " + argIdx + ", tuple = " + tuple);
+	}
+
+	public Object arg(int argIdx) {
+		Class<?> c = tuple.getTypes()[argIdx];
+		if (c == Long.class) {
+			return tuple.getInts()[argIdx];
+		}
+		if (c == Double.class) {
+			return tuple.getDoubles()[argIdx];
+		}
+		if (c == String.class) {
+			return tuple.getStrings()[argIdx];
+		}
+		if (c == Address.class) {
+			assert argIdx == 0;
+			return tuple.getAddress();
+		}
+		throw new Error("Invalid arg type: " + c + ", arg_idx = " + argIdx + ", tuple = " + tuple);
+	}
+
+	public Address addressArg() {
+		assert tuple.getAddress() != null || tuple.getAddressSupplier() != null : "tuple.address = "
+				+ tuple.getAddress() + ", tuple.address_supplier = " + tuple.getAddressSupplier();
+		if (tuple.getAddress() == null) {
+			tuple.setAddress(tuple.getAddressSupplier().get());
+		}
+		return tuple.getAddress();
+	}
+
+	public Class<?> classArg() {
+		assert tuple.getCls() != null;
+		return tuple.getCls();
+	}
+
+	public int lineNumber() {
+		assert tuple.getLineno() != -1 : "The line number should have been set by queue.add(), but was not.";
+		return tuple.getLineno();
+	}
+
+	public int current() {
+		return idx;
+	}
+
+	public void jump(int index) {
+		this.idx = index;
+		tuple = queue.get(this.idx);
+	}
 }

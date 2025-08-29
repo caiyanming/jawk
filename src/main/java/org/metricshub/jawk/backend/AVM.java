@@ -32,12 +32,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import org.metricshub.jawk.jrt.BSDRandom;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.Deque;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.metricshub.jawk.ExitException;
@@ -46,7 +47,6 @@ import org.metricshub.jawk.frontend.AstNode;
 import org.metricshub.jawk.intermediate.Address;
 import org.metricshub.jawk.intermediate.AwkTuples;
 import org.metricshub.jawk.intermediate.Position;
-import org.metricshub.jawk.intermediate.PositionForInterpretation;
 import org.metricshub.jawk.intermediate.UninitializedObject;
 import org.metricshub.jawk.jrt.AssocArray;
 import org.metricshub.jawk.jrt.AwkRuntimeException;
@@ -55,16 +55,14 @@ import org.metricshub.jawk.jrt.BlockObject;
 import org.metricshub.jawk.jrt.CharacterTokenizer;
 import org.metricshub.jawk.jrt.ConditionPair;
 import org.metricshub.jawk.jrt.JRT;
-import org.metricshub.jawk.jrt.KeyList;
-import org.metricshub.jawk.jrt.KeyListImpl;
+import java.util.ArrayDeque;
 import org.metricshub.jawk.jrt.RegexTokenizer;
 import org.metricshub.jawk.jrt.SingleCharacterTokenizer;
 import org.metricshub.jawk.jrt.VariableManager;
-import org.metricshub.jawk.util.ArrayStackImpl;
 import org.metricshub.jawk.util.AwkLogger;
 import org.metricshub.jawk.util.AwkSettings;
-import org.metricshub.jawk.util.MyStack;
 import org.metricshub.jawk.util.ScriptSource;
+import org.metricshub.jawk.jrt.BSDRandom;
 import org.metricshub.printf4j.Printf4J;
 import org.slf4j.Logger;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -103,11 +101,8 @@ public class AVM implements VariableManager {
 
 	private RuntimeStack runtimeStack = new RuntimeStack();
 
-	// 16 slots by default
-	// (could be a parameter)
-	// private Deque<Object> operandStack = new ArrayDeque<Object>(16);
-	// private MyStack<Object> operandStack = new LinkedListStackImpl<Object>();
-	private MyStack<Object> operandStack = new ArrayStackImpl<Object>();
+	// operand stack
+	private Deque<Object> operandStack = new LinkedList<Object>();
 	private List<String> arguments;
 	private boolean sortedArrayKeys;
 	private Map<String, Object> initialVariables;
@@ -275,7 +270,7 @@ public class AVM implements VariableManager {
 		return operandStack.size() == 0 ? null : pop();
 	}
 
-	private static int parseIntField(Object obj, PositionForInterpretation position) {
+	private static int parseIntField(Object obj, Position position) {
 		if (obj instanceof Number) {
 			double num = ((Number) obj).doubleValue();
 			if (num < 0) {
@@ -317,7 +312,7 @@ public class AVM implements VariableManager {
 		}
 	}
 
-	private String execSubOrGSub(PositionForInterpretation position, int gsubArgPos) {
+	private String execSubOrGSub(Position position, int gsubArgPos) {
 		String newString;
 
 		// arg[gsubArgPos] = isGsub
@@ -352,7 +347,7 @@ public class AVM implements VariableManager {
 		globalVariableArrays = tuples.getGlobalVariableAarrayMap();
 		functionNames = tuples.getFunctionNameSet();
 
-		PositionForInterpretation position = (PositionForInterpretation) tuples.top();
+		Position position = (Position) tuples.top();
 
 		try {
 			while (!position.isEOF()) {
@@ -1493,24 +1488,24 @@ public class AVM implements VariableManager {
 					if (!(o instanceof AssocArray)) {
 						throw new AwkRuntimeException(
 								position.lineNumber(),
-								"Cannot get a keylist (via 'in') of a non associative array. arg = " + o.getClass() + ", " + o);
+								"Cannot get a key list (via 'in') of a non associative array. arg = " + o.getClass() + ", " + o);
 					}
 					AssocArray aa = (AssocArray) o;
-					push(new KeyListImpl(aa.keySet()));
+					push(new ArrayDeque<>(aa.keySet()));
 					position.next();
 					break;
 				}
 				case AwkTuples.IS_EMPTY_KEYLIST: {
 					// arg[0] = address
-					// stack[0] = KeyList
+					// stack[0] = Deque
 					Object o = pop();
-					if (o == null || !(o instanceof KeyList)) {
+					if (o == null || !(o instanceof Deque)) {
 						throw new AwkRuntimeException(
 								position.lineNumber(),
-								"Cannot get a keylist (via 'in') of a non associative array. arg = " + o.getClass() + ", " + o);
+								"Cannot get a key list (via 'in') of a non associative array. arg = " + o.getClass() + ", " + o);
 					}
-					KeyList keylist = (KeyList) o;
-					if (keylist.size() == 0) {
+					Deque<?> keylist = (Deque<?>) o;
+					if (keylist.isEmpty()) {
 						position.jump(position.addressArg());
 					} else {
 						position.next();
@@ -1518,17 +1513,17 @@ public class AVM implements VariableManager {
 					break;
 				}
 				case AwkTuples.GET_FIRST_AND_REMOVE_FROM_KEYLIST: {
-					// stack[0] = KeyList
+					// stack[0] = Deque
 					Object o = pop();
-					if (o == null || !(o instanceof KeyList)) {
+					if (o == null || !(o instanceof Deque)) {
 						throw new AwkRuntimeException(
 								position.lineNumber(),
-								"Cannot get a keylist (via 'in') of a non associative array. arg = " + o.getClass() + ", " + o);
+								"Cannot get a key list (via 'in') of a non associative array. arg = " + o.getClass() + ", " + o);
 					}
 					// pop off and return the head of the key set
-					KeyList keylist = (KeyList) o;
-					assert keylist.size() > 0;
-					push(keylist.getFirstAndRemove());
+					Deque<?> keylist = (Deque<?>) o;
+					assert !keylist.isEmpty();
+					push(keylist.removeFirst());
 					position.next();
 					break;
 				}

@@ -22,7 +22,7 @@ import java.util.Collections;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.SystemOutRule;
-import org.metricshub.jawk.frontend.AwkParser;
+import org.metricshub.jawk.frontend.ast.ParserException;
 import org.metricshub.jawk.intermediate.AwkTuples;
 import org.metricshub.jawk.util.AwkSettings;
 
@@ -277,7 +277,7 @@ public class AwkTest {
 		assertEquals("Range of mixed conditions must work", "bb\ncc\ndd\n", runAwk("NR == 2, /d/", input));
 		assertThrows(
 				"Invalid range (3 args) must throw",
-				AwkParser.ParserException.class,
+				ParserException.class,
 				() -> runAwk("/a/, /b/, NR == 4", input));
 		assertEquals("Entering and leaving the range matches 1 record", "bb\nbb\n", runAwk("/b/, /b/", input));
 		assertEquals("Range comma is lowest precedence", "bb\ncc\nbb\ncc\n", runAwk("/b/, /d/ || /c/", input));
@@ -576,10 +576,10 @@ public class AwkTest {
 
 	@Test
 	public void testEvalFailsStatement() throws Exception {
-		assertThrows(AwkParser.ParserException.class, () -> Awk.eval("print 3.14", null));
-		assertThrows(AwkParser.ParserException.class, () -> Awk.eval("1 + 2, 3", null));
-		assertThrows(AwkParser.ParserException.class, () -> Awk.eval("1 + 2 ; 3 + 4", null));
-		assertThrows(AwkParser.ParserException.class, () -> Awk.eval("BEGIN { print 5 }", null));
+		assertThrows(ParserException.class, () -> Awk.eval("print 3.14", null));
+		assertThrows(ParserException.class, () -> Awk.eval("1 + 2, 3", null));
+		assertThrows(ParserException.class, () -> Awk.eval("1 + 2 ; 3 + 4", null));
+		assertThrows(ParserException.class, () -> Awk.eval("BEGIN { print 5 }", null));
 	}
 
 	@Test

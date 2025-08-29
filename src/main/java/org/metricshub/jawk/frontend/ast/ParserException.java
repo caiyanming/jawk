@@ -1,4 +1,4 @@
-package org.metricshub.jawk.jrt;
+package org.metricshub.jawk.frontend.ast;
 
 /*-
  * ╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲
@@ -22,42 +22,11 @@ package org.metricshub.jawk.jrt;
  * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
  */
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+public class ParserException extends RuntimeException {
 
-/**
- * Implement the KeyList interface with an ArrayList.
- *
- * @author Danny Daglas
- */
-//public class KeyListImpl extends ArrayList<Object> implements KeyList
-public class KeyListImpl implements KeyList {
+	private static final long serialVersionUID = 1L;
 
-	private List<Object> list;
-
-	/**
-	 * Convert the set to a KeyList.
-	 * We could have used an ArrayList directly. However, tagging
-	 * the implementation with a KeyList interface improves type
-	 * checking within the parsing / semantic analysis phase.
-	 *
-	 * @param set a {@link java.util.Set} object
-	 */
-	public KeyListImpl(Set<Object> set) {
-		// super(set);
-		list = new ArrayList<Object>(set);
-	}
-
-	/** {@inheritDoc} */
-	@Override
-	public final Object getFirstAndRemove() {
-		return list.remove(0);
-	}
-
-	/** {@inheritDoc} */
-	@Override
-	public int size() {
-		return list.size();
+	public ParserException(String msg, String sourceDescription, int lineNumber) {
+		super(msg + " (" + sourceDescription + ":" + lineNumber + ")");
 	}
 }
