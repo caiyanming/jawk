@@ -55,6 +55,9 @@ public class AwkTuples implements Serializable {
 	/** Version Manager */
 	private VersionManager versionManager = new VersionManager();
 
+	/** Address manager */
+	private final AddressManager addressManager = new AddressManager();
+
 	// made public to access static members of AwkTuples via Java Reflection
 
 	// made public to be accessable via Java Reflection
@@ -1322,14 +1325,6 @@ public class AwkTuples implements Serializable {
 		}
 	};
 
-	/** Unresolved addresses */
-	private Set<Address> unresolvedAddresses = new HashSet<Address>();
-
-	/** Needed only for dumping intermediate code to text such that address labels are provided. */
-	private Map<Integer, Address> addressIndexes = new HashMap<Integer, Address>();
-	/** Needed only for dumping intermediate code to text such that address labels are provided. */
-	private Map<String, Integer> addressLabelCounts = new HashMap<String, Integer>();
-
 	/**
 	 * <p>
 	 * toOpcodeString.
@@ -1440,17 +1435,7 @@ public class AwkTuples implements Serializable {
 	 * @return a {@link org.metricshub.jawk.intermediate.Address} object
 	 */
 	public Address createAddress(String label) {
-		Integer count = addressLabelCounts.get(label);
-		if (count == null) {
-			count = 0;
-		} else {
-			// I = new Integer(I.intValue()+1);
-			count = count + 1;
-		}
-		addressLabelCounts.put(label, count);
-		Address address = new Address(label + "_" + count);
-		unresolvedAddresses.add(address);
-		return address;
+		return addressManager.createAddress(label);
 	}
 
 	/**
@@ -1462,13 +1447,8 @@ public class AwkTuples implements Serializable {
 	 * @return a {@link org.metricshub.jawk.intermediate.AwkTuples} object
 	 */
 	public AwkTuples address(Address address) {
-		if (unresolvedAddresses.contains(address)) {
-			unresolvedAddresses.remove(address);
-			address.assignIndex(queue.size());
-			addressIndexes.put(queue.size(), address);
-			return this;
-		}
-		throw new Error(address.toString() + " is already resolved, or unresolved from another scope.");
+		addressManager.resolveAddress(address, queue.size());
+		return this;
 	}
 
 	/**
@@ -2811,7 +2791,7 @@ public class AwkTuples implements Serializable {
 		ps.println("(" + versionManager + ")");
 		ps.println();
 		for (int i = 0; i < queue.size(); i++) {
-			Address address = addressIndexes.get(i);
+			Address address = addressManager.getAddress(i);
 			if (address == null) {
 				ps.println(i + " : " + queue.get(i));
 			} else {
@@ -2825,10 +2805,10 @@ public class AwkTuples implements Serializable {
 	 * top.
 	 * </p>
 	 *
-	 * @return a {@link org.metricshub.jawk.intermediate.Position} object
+	 * @return a {@link org.metricshub.jawk.intermediate.PositionTracker} object
 	 */
-	public Position top() {
-		return new Position(queue);
+	public PositionTracker top() {
+		return new PositionTracker(queue);
 	}
 
 	/**

@@ -46,7 +46,7 @@ import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.frontend.AstNode;
 import org.metricshub.jawk.intermediate.Address;
 import org.metricshub.jawk.intermediate.AwkTuples;
-import org.metricshub.jawk.intermediate.Position;
+import org.metricshub.jawk.intermediate.PositionTracker;
 import org.metricshub.jawk.intermediate.UninitializedObject;
 import org.metricshub.jawk.jrt.AssocArray;
 import org.metricshub.jawk.jrt.AwkRuntimeException;
@@ -270,7 +270,7 @@ public class AVM implements VariableManager {
 		return operandStack.size() == 0 ? null : pop();
 	}
 
-	private static int parseIntField(Object obj, Position position) {
+	private static int parseIntField(Object obj, PositionTracker position) {
 		if (obj instanceof Number) {
 			double num = ((Number) obj).doubleValue();
 			if (num < 0) {
@@ -312,7 +312,7 @@ public class AVM implements VariableManager {
 		}
 	}
 
-	private String execSubOrGSub(Position position, int gsubArgPos) {
+	private String execSubOrGSub(PositionTracker position, int gsubArgPos) {
 		String newString;
 
 		// arg[gsubArgPos] = isGsub
@@ -347,7 +347,7 @@ public class AVM implements VariableManager {
 		globalVariableArrays = tuples.getGlobalVariableAarrayMap();
 		functionNames = tuples.getFunctionNameSet();
 
-		Position position = (Position) tuples.top();
+		PositionTracker position = tuples.top();
 
 		try {
 			while (!position.isEOF()) {
@@ -2238,7 +2238,7 @@ public class AVM implements VariableManager {
 	/**
 	 * Awk variable assignment functionality.
 	 */
-	private void assign(long l, Object value, boolean isGlobal, Position position) {
+	private void assign(long l, Object value, boolean isGlobal, PositionTracker position) {
 		// check if curr value already refers to an array
 		if (runtimeStack.getVariable(l, isGlobal) instanceof AssocArray) {
 			throw new AwkRuntimeException(position.lineNumber(), "cannot assign anything to an unindexed associative array");
