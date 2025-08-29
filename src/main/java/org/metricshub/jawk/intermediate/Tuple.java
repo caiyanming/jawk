@@ -40,7 +40,7 @@ import java.util.function.Supplier;
 class Tuple implements Serializable {
 
 	private static final long serialVersionUID = 8105941219003992817L;
-	private int opcode;
+	private Opcode opcode;
 	private long[] ints = new long[4];
 	private boolean[] bools = new boolean[4];
 	private double[] doubles = new double[4];
@@ -52,71 +52,71 @@ class Tuple implements Serializable {
 	private int lineno = -1;
 	private Tuple next = null;
 
-	Tuple(int opcode) {
+	Tuple(Opcode opcode) {
 		this.opcode = opcode;
 	}
 
-	Tuple(int opcode, long i1) {
+	Tuple(Opcode opcode, long i1) {
 		this(opcode);
 		ints[0] = i1;
 		types[0] = Long.class;
 	}
 
-	Tuple(int opcode, long i1, long i2) {
+	Tuple(Opcode opcode, long i1, long i2) {
 		this(opcode, i1);
 		ints[1] = i2;
 		types[1] = Long.class;
 	}
 
-	Tuple(int opcode, long i1, boolean b2) {
+	Tuple(Opcode opcode, long i1, boolean b2) {
 		this(opcode, i1);
 		bools[1] = b2;
 		types[1] = Boolean.class;
 	}
 
-	Tuple(int opcode, long i1, boolean b2, boolean b3) {
+	Tuple(Opcode opcode, long i1, boolean b2, boolean b3) {
 		this(opcode, i1, b2);
 		bools[2] = b3;
 		types[2] = Boolean.class;
 	}
 
-	Tuple(int opcode, double d1) {
+	Tuple(Opcode opcode, double d1) {
 		this(opcode);
 		doubles[0] = d1;
 		types[0] = Double.class;
 	}
 
-	Tuple(int opcode, String s1) {
+	Tuple(Opcode opcode, String s1) {
 		this(opcode);
 		strings[0] = s1;
 		types[0] = String.class;
 	}
 
-	Tuple(int opcode, boolean b1) {
+	Tuple(Opcode opcode, boolean b1) {
 		this(opcode);
 		bools[0] = b1;
 		types[0] = Boolean.class;
 	}
 
-	Tuple(int opcode, String s1, long i2) {
+	Tuple(Opcode opcode, String s1, long i2) {
 		this(opcode, s1);
 		ints[1] = i2;
 		types[1] = Long.class;
 	}
 
-	Tuple(int opcode, Address address) {
+	Tuple(Opcode opcode, Address address) {
 		this(opcode);
 		this.address = address;
 		types[0] = Address.class;
 	}
 
-	Tuple(int opcode, String strarg, long intarg, boolean boolarg) {
+	Tuple(Opcode opcode, String strarg, long intarg, boolean boolarg) {
 		this(opcode, strarg, intarg);
 		bools[2] = boolarg;
 		types[2] = Boolean.class;
 	}
 
-	Tuple(int opcode, Supplier<Address> addressSupplier, String s2, long i3, long i4) {
+	Tuple(Opcode opcode, Supplier<Address> addressSupplier, String s2, long i3, long i4) {
 		this(opcode);
 		this.addressSupplier = addressSupplier;
 		strings[1] = s2;
@@ -127,13 +127,13 @@ class Tuple implements Serializable {
 		types[3] = Long.class;
 	}
 
-	Tuple(int opcode, Class<?> cls) {
+	Tuple(Opcode opcode, Class<?> cls) {
 		this(opcode);
 		this.cls = cls;
 		types[0] = Class.class;
 	}
 
-	Tuple(int opcode, String s1, String s2) {
+	Tuple(Opcode opcode, String s1, String s2) {
 		this(opcode, s1);
 		strings[1] = s2;
 		types[1] = String.class;
@@ -160,7 +160,7 @@ class Tuple implements Serializable {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(AwkTuples.toOpcodeString(opcode));
+		sb.append(opcode.name());
 		int idx = 0;
 		while ((idx < types.length) && (types[idx] != null)) {
 			sb.append(", ");
@@ -203,7 +203,7 @@ class Tuple implements Serializable {
 		}
 	}
 
-	int getOpcode() {
+	Opcode getOpcode() {
 		return opcode;
 	}
 

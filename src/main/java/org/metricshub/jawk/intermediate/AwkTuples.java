@@ -24,8 +24,6 @@ package org.metricshub.jawk.intermediate;
 
 import java.io.PrintStream;
 import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,8 +33,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.Deque;
-import org.metricshub.jawk.util.AwkLogger;
-import org.slf4j.Logger;
 
 /**
  * <p>
@@ -49,9 +45,6 @@ public class AwkTuples implements Serializable {
 
 	private static final long serialVersionUID = 2L;
 
-	/** Our logger */
-	private static final Logger LOGGER = AwkLogger.getLogger(AwkTuples.class);
-
 	/** Version Manager */
 	private VersionManager versionManager = new VersionManager();
 
@@ -62,1254 +55,6 @@ public class AwkTuples implements Serializable {
 
 	// made public to be accessable via Java Reflection
 	// (see toOpcodeString() method below)
-	// CHECKSTYLE:OFF
-
-	/**
-	 * Pops an item off the operand stack.
-	 * <p>
-	 * Stack before: x ...<br/>
-	 * Stack after: ...
-	 */
-	public static final int POP = 257; // x -> 0
-	/**
-	 * Pushes an item onto the operand stack.
-	 * <p>
-	 * Stack before: ...<br/>
-	 * Stack after: x ...
-	 */
-	public static final int PUSH = 258; // 0 -> x
-	/**
-	 * Pops and evaluates the top-of-stack; if
-	 * false, it jumps to a specified address.
-	 * <p>
-	 * Argument: address
-	 * <p>
-	 * Stack before: x ...<br/>
-	 * Stack after: ...
-	 */
-	public static final int IFFALSE = 259; // x -> 0
-	/**
-	 * Converts the top-of-stack to a number.
-	 * <p>
-	 * Stack before: x ...<br/>
-	 * Stack after: x (as a number)
-	 */
-	public static final int TO_NUMBER = 260; // x1 -> x2
-	/**
-	 * Pops and evaluates the top-of-stack; if
-	 * true, it jumps to a specified address.
-	 * <p>
-	 * Argument: address
-	 * <p>
-	 * Stack before: x ...<br/>
-	 * Stack after: ...
-	 */
-	public static final int IFTRUE = 261; // x -> 0
-	/**
-	 * Jumps to a specified address. The operand stack contents
-	 * are unaffected.
-	 */
-	public static final int GOTO = 262; // 0 -> 0
-	/**
-	 * A no-operation. The operand stack contents are
-	 * unaffected.
-	 */
-	public static final int NOP = 263; // 0 -> 0
-	/**
-	 * Prints N number of items that are on the operand stack.
-	 * The number of items are passed in as a tuple argument.
-	 * <p>
-	 * Argument: # of items (N)
-	 * <p>
-	 * Stack before: x1 x2 x3 .. xN ...<br/>
-	 * Stack after: ...
-	 */
-	public static final int PRINT = 264; // x1, x2, ... xn -> 0
-	/**
-	 * Prints N number of items that are on the operand stack to
-	 * a specified file. The file is passed in on the stack.
-	 * The number of items are passed in as a tuple argument,
-	 * as well as whether to overwrite the file or not (append mode).
-	 * <p>
-	 * Argument 1: # of items (N)<br/>
-	 * Argument 2: true = append, false = overwrite
-	 * <p>
-	 * Stack before: x1 x2 x3 .. xN filename ...<br/>
-	 * Stack after: ...
-	 */
-	public static final int PRINT_TO_FILE = 265; // x1, x2, ... xn -> 0
-	/**
-	 * Prints N number of items that are on the operand stack to
-	 * a process executing a specified command (via a pipe).
-	 * The command string is passed in on the stack.
-	 * The number of items are passed in as a tuple argument.
-	 * <p>
-	 * Argument: # of items (N)
-	 * <p>
-	 * Stack before: x1 x2 x3 .. xN command-string ...<br/>
-	 * Stack after: ...
-	 */
-	public static final int PRINT_TO_PIPE = 266; // x1, x2, ... xn -> 0
-	/**
-	 * Performs a formatted print of N items that are on the operand stack.
-	 * The number of items are passed in as a tuple argument.
-	 * <p>
-	 * Argument: # of items (N)
-	 * <p>
-	 * Stack before: x1 x2 x3 .. xN ...<br/>
-	 * Stack after: ...
-	 */
-	public static final int PRINTF = 267; // x1, x2, ... xn -> 0
-	/**
-	 * Performs a formatted print of N items that are on the operand stack to
-	 * a specified file. The file is passed in on the stack.
-	 * The number of items are passed in as a tuple argument,
-	 * as well as whether to overwrite the file or not (append mode).
-	 * <p>
-	 * Argument 1: # of items (N)<br/>
-	 * Argument 2: true = append, false = overwrite
-	 * <p>
-	 * Stack before: x1 x2 x3 .. xN filename ...<br/>
-	 * Stack after: ...
-	 */
-	public static final int PRINTF_TO_FILE = 268; // x1, x2, ... xn -> 0
-	/**
-	 * Performs a formatted print of N items that are on the operand stack to
-	 * a process executing a specified command (via a pipe).
-	 * The command string is passed in on the stack.
-	 * The number of items are passed in as a tuple argument.
-	 * <p>
-	 * Argument: # of items (N)
-	 * <p>
-	 * Stack before: x1 x2 x3 .. xN command-string ...<br/>
-	 * Stack after: ...
-	 */
-	public static final int PRINTF_TO_PIPE = 269; // x1, x2, ... xn -> 0
-	/** Constant <code>SPRINTF=270</code> */
-	public static final int SPRINTF = 270; // x1, x2, ... xn -> 0
-	/**
-	 * Depending on the argument, pop and evaluate the string length of the top-of-stack
-	 * or evaluate the string length of $0; in either case, push the result onto
-	 * the stack.
-	 * <p>
-	 * The input field length evaluation mode is provided to support backward
-	 * compatibility with the deprecated usage of length (i.e., no arguments).
-	 * <p>
-	 * Argument: 0 to use $0, use top-of-stack otherwise
-	 * <p>
-	 * If argument is 0:
-	 * <blockquote>
-	 * Stack before: ...<br/>
-	 * Stack after: length-of-$0 ...
-	 * </blockquote>
-	 * else
-	 * <blockquote>
-	 * Stack before: x ...<br/>
-	 * Stack after: length-of-x ...
-	 * </blockquote>
-	 */
-	public static final int LENGTH = 271; // 0 -> x or x1 -> x2
-	/**
-	 * Pop and concatenate two strings from the top-of-stack; push the result onto
-	 * the stack.
-	 * <p>
-	 * Stack before: x y ...<br/>
-	 * Stack after: x-concatenated-with-y ...
-	 */
-	public static final int CONCAT = 272; // x2, x1 -> x1x2
-	/**
-	 * Assigns the top-of-stack to a variable. The contents of the stack
-	 * are unaffected.
-	 * <p>
-	 * Argument 1: offset of the particular variable into the variable manager<br/>
-	 * Argument 2: whether the variable is global or local
-	 * <p>
-	 * Stack before: x ...<br/>
-	 * Stack after: x ...
-	 */
-	public static final int ASSIGN = 273; // x -> 0
-	/**
-	 * Assigns an item to an array element. The item remains on the stack.
-	 * <p>
-	 * Argument 1: offset of the particular associative array into the variable manager<br/>
-	 * Argument 2: whether the associative array is global or local
-	 * <p>
-	 * Stack before: index-into-array item ...<br/>
-	 * Stack after: item ...
-	 */
-	public static final int ASSIGN_ARRAY = 274; // x2, x1 -> 0
-	/**
-	 * Assigns the top-of-stack to $0. The contents of the stack are unaffected.
-	 * Upon assignment, individual field variables are recalculated.
-	 * <p>
-	 * Stack before: x ...<br/>
-	 * Stack after: x ...
-	 */
-	public static final int ASSIGN_AS_INPUT = 275; // x -> 0
-	/**
-	 * Assigns an item as a particular input field; the field number can be 0.
-	 * Upon assignment, associating input fields are affected. For example, if
-	 * the following assignment were made:
-	 * <blockquote>
-	 *
-	 * <pre>
-	 * $3 = "hi"
-	 * </pre>
-	 *
-	 * </blockquote>
-	 * $0 would be recalculated. Likewise, if the following assignment were made:
-	 * <blockquote>
-	 *
-	 * <pre>
-	 * $0 = "hello there"
-	 * </pre>
-	 *
-	 * </blockquote>
-	 * $1, $2, ... would be recalculated.
-	 * <p>
-	 * Stack before: field-num x ...<br/>
-	 * Stack after: x ...
-	 */
-	public static final int ASSIGN_AS_INPUT_FIELD = 276; // x, y -> x
-	/**
-	 * Obtains an item from the variable manager and push it onto the stack.
-	 * <p>
-	 * Argument 1: offset of the particular variable into the variable manager<br/>
-	 * Argument 2: whether the variable is global or local
-	 * <p>
-	 * Stack before: ...<br/>
-	 * Stack after: x ...
-	 */
-	public static final int DEREFERENCE = 277; // 0 -> x
-	/**
-	 * Increase the contents of the variable by an adjustment value;
-	 * assigns the result to the variable and pushes the result onto the stack.
-	 * <p>
-	 * Argument 1: offset of the particular variable into the variable manager<br/>
-	 * Argument 2: whether the variable is global or local
-	 * <p>
-	 * Stack before: n ...<br/>
-	 * Stack after: x+n ...
-	 */
-	public static final int PLUS_EQ = 278; // x -> x
-	/**
-	 * Decreases the contents of the variable by an adjustment value;
-	 * assigns the result to the variable and pushes the result onto the stack.
-	 * <p>
-	 * Argument 1: offset of the particular variable into the variable manager<br/>
-	 * Argument 2: whether the variable is global or local
-	 * <p>
-	 * Stack before: n ...<br/>
-	 * Stack after: x-n ...
-	 */
-	public static final int MINUS_EQ = 279; // x -> x
-	/**
-	 * Multiplies the contents of the variable by an adjustment value;
-	 * assigns the result to the variable and pushes the result onto the stack.
-	 * <p>
-	 * Argument 1: offset of the particular variable into the variable manager<br/>
-	 * Argument 2: whether the variable is global or local
-	 * <p>
-	 * Stack before: n ...<br/>
-	 * Stack after: x*n ...
-	 */
-	public static final int MULT_EQ = 280; // x -> x
-	/**
-	 * Divides the contents of the variable by an adjustment value;
-	 * assigns the result to the variable and pushes the result onto the stack.
-	 * <p>
-	 * Argument 1: offset of the particular variable into the variable manager<br/>
-	 * Argument 2: whether the variable is global or local
-	 * <p>
-	 * Stack before: n ...<br/>
-	 * Stack after: x/n ...
-	 */
-	public static final int DIV_EQ = 281; // x -> x
-	/**
-	 * Takes the modules of the contents of the variable by an adjustment value;
-	 * assigns the result to the variable and pushes the result onto the stack.
-	 * <p>
-	 * Argument 1: offset of the particular variable into the variable manager<br/>
-	 * Argument 2: whether the variable is global or local
-	 * <p>
-	 * Stack before: n ...<br/>
-	 * Stack after: x%n ...
-	 */
-	public static final int MOD_EQ = 282; // x -> x
-	/**
-	 * Raises the contents of the variable to the power of the adjustment value;
-	 * assigns the result to the variable and pushes the result onto the stack.
-	 * <p>
-	 * Argument 1: offset of the particular variable into the variable manager<br/>
-	 * Argument 2: whether the variable is global or local
-	 * <p>
-	 * Stack before: n ...<br/>
-	 * Stack after: x^n ...
-	 */
-	public static final int POW_EQ = 283; // x -> x
-	/**
-	 * Increase the contents of an indexed array by an adjustment value;
-	 * assigns the result to the array and pushes the result onto the stack.
-	 * <p>
-	 * Argument 1: offset of the associative array into the variable manager<br/>
-	 * Argument 2: whether the associative array is global or local
-	 * <p>
-	 * Stack before: array-idx n ...<br/>
-	 * Stack after: x+n ...
-	 */
-	public static final int PLUS_EQ_ARRAY = 284; // x -> x
-	/**
-	 * Decreases the contents of an indexed array by an adjustment value;
-	 * assigns the result to the array and pushes the result onto the stack.
-	 * <p>
-	 * Argument 1: offset of the associative array into the variable manager<br/>
-	 * Argument 2: whether the associative array is global or local
-	 * <p>
-	 * Stack before: array-idx n ...<br/>
-	 * Stack after: x-n ...
-	 */
-	public static final int MINUS_EQ_ARRAY = 285; // x -> x
-	/**
-	 * Multiplies the contents of an indexed array by an adjustment value;
-	 * assigns the result to the array and pushes the result onto the stack.
-	 * <p>
-	 * Argument 1: offset of the associative array into the variable manager<br/>
-	 * Argument 2: whether the associative array is global or local
-	 * <p>
-	 * Stack before: array-idx n ...<br/>
-	 * Stack after: x*n ...
-	 */
-	public static final int MULT_EQ_ARRAY = 286; // x -> x
-	/**
-	 * Divides the contents of an indexed array by an adjustment value;
-	 * assigns the result to the array and pushes the result onto the stack.
-	 * <p>
-	 * Argument 1: offset of the associative array into the variable manager<br/>
-	 * Argument 2: whether the associative array is global or local
-	 * <p>
-	 * Stack before: array-idx n ...<br/>
-	 * Stack after: x/n ...
-	 */
-	public static final int DIV_EQ_ARRAY = 287; // x -> x
-	/**
-	 * Takes the modulus of the contents of an indexed array by an adjustment value;
-	 * assigns the result to the array and pushes the result onto the stack.
-	 * <p>
-	 * Argument 1: offset of the associative array into the variable manager<br/>
-	 * Argument 2: whether the associative array is global or local
-	 * <p>
-	 * Stack before: array-idx n ...<br/>
-	 * Stack after: x%n ...
-	 */
-	public static final int MOD_EQ_ARRAY = 288; // x -> x
-	/**
-	 * Raises the contents of an indexed array to the power of an adjustment value;
-	 * assigns the result to the array and pushes the result onto the stack.
-	 * <p>
-	 * Argument 1: offset of the associative array into the variable manager<br/>
-	 * Argument 2: whether the associative array is global or local
-	 * <p>
-	 * Stack before: array-idx n ...<br/>
-	 * Stack after: x^n ...
-	 */
-	public static final int POW_EQ_ARRAY = 289; // x -> x
-	/**
-	 * Increases the contents of an input field by an adjustment value;
-	 * assigns the result to the input field and pushes the result onto the stack.
-	 * <p>
-	 * Stack before: input-field_number n ...<br/>
-	 * Stack after: x+n ...
-	 */
-	public static final int PLUS_EQ_INPUT_FIELD = 290; // x1,x2 -> x
-	/**
-	 * Decreases the contents of an input field by an adjustment value;
-	 * assigns the result to the input field and pushes the result onto the stack.
-	 * <p>
-	 * Stack before: input-field_number n ...<br/>
-	 * Stack after: x-n ...
-	 */
-	public static final int MINUS_EQ_INPUT_FIELD = 291; // x1,x2 -> x
-	/**
-	 * Multiplies the contents of an input field by an adjustment value;
-	 * assigns the result to the input field and pushes the result onto the stack.
-	 * <p>
-	 * Stack before: input-field_number n ...<br/>
-	 * Stack after: x*n ...
-	 */
-	public static final int MULT_EQ_INPUT_FIELD = 292; // x1,x2 -> x
-	/**
-	 * Divides the contents of an input field by an adjustment value;
-	 * assigns the result to the input field and pushes the result onto the stack.
-	 * <p>
-	 * Stack before: input-field_number n ...<br/>
-	 * Stack after: x/n ...
-	 */
-	public static final int DIV_EQ_INPUT_FIELD = 293; // x1,x2 -> x
-	/**
-	 * Takes the modulus of the contents of an input field by an adjustment value;
-	 * assigns the result to the input field and pushes the result onto the stack.
-	 * <p>
-	 * Stack before: input-field_number n ...<br/>
-	 * Stack after: x%n ...
-	 */
-	public static final int MOD_EQ_INPUT_FIELD = 294; // x1,x2 -> x
-	/**
-	 * Raises the contents of an input field to the power of an adjustment value;
-	 * assigns the result to the input field and pushes the result onto the stack.
-	 * <p>
-	 * Stack before: input-field_number n ...<br/>
-	 * Stack after: x^n ...
-	 */
-	public static final int POW_EQ_INPUT_FIELD = 295; // x1,x2 -> x
-
-	/**
-	 * Seeds the random number generator. If there are no arguments, the current
-	 * time (as a long value) is used as the seed. Otherwise, the top-of-stack is
-	 * popped and used as the seed value.
-	 * <p>
-	 * Argument: # of arguments
-	 * <p>
-	 * If # of arguments is 0:
-	 * <blockquote>
-	 * Stack before: ...<br/>
-	 * Stack after: old-seed ...
-	 * </blockquote>
-	 * else
-	 * <blockquote>
-	 * Stack before: x ...<br/>
-	 * Stack after: old-seed ...
-	 * </blockquote>
-	 */
-	public static final int SRAND = 296; // x2, x1 -> x1, x2
-	/**
-	 * Obtains the next random number from the random number generator
-	 * and push it onto the stack.
-	 * <p>
-	 * Stack before: ...<br/>
-	 * Stack after: random-number ...
-	 */
-	public static final int RAND = 297; // x2, x1 -> x1, x2
-	/**
-	 * Built-in function that pops the top-of-stack, removes its fractional part,
-	 * if any, and places the result onto the stack.
-	 * <p>
-	 * Stack before: x ...<br/>
-	 * Stack after: (int)x ...
-	 */
-	public static final int INTFUNC = 298; // x2, x1 -> x1, x2
-	/**
-	 * Built-in function that pops the top-of-stack, takes its square root,
-	 * and places the result onto the stack.
-	 * <p>
-	 * Stack before: x ...<br/>
-	 * Stack after: sqrt(x) ...
-	 */
-	public static final int SQRT = 299; // x2, x1 -> x1, x2
-	/**
-	 * Built-in function that pops the top-of-stack, calls the java.lang.Math.log method
-	 * with the top-of-stack as the argument, and places the result onto the stack.
-	 * <p>
-	 * Stack before: x ...<br/>
-	 * Stack after: log(x) ...
-	 */
-	public static final int LOG = 300; // x2, x1 -> x1, x2
-	/**
-	 * Built-in function that pops the top-of-stack, calls the java.lang.Math.exp method
-	 * with the top-of-stack as the argument, and places the result onto the stack.
-	 * <p>
-	 * Stack before: x ...<br/>
-	 * Stack after: exp(x) ...
-	 */
-	public static final int EXP = 301; // x2, x1 -> x1, x2
-	/**
-	 * Built-in function that pops the top-of-stack, calls the java.lang.Math.sin method
-	 * with the top-of-stack as the argument, and places the result onto the stack.
-	 * <p>
-	 * Stack before: x ...<br/>
-	 * Stack after: sin(x) ...
-	 */
-	public static final int SIN = 302; // x2, x1 -> x1, x2
-	/**
-	 * Built-in function that pops the top-of-stack, calls the java.lang.Math.cos method
-	 * with the top-of-stack as the argument, and places the result onto the stack.
-	 * <p>
-	 * Stack before: x ...<br/>
-	 * Stack after: cos(x) ...
-	 */
-	public static final int COS = 303; // x2, x1 -> x1, x2
-	/**
-	 * Built-in function that pops the first two items off the stack,
-	 * calls the java.lang.Math.atan2 method
-	 * with these as arguments, and places the result onto the stack.
-	 * <p>
-	 * Stack before: x1 x2 ...<br/>
-	 * Stack after: atan2(x1,x2) ...
-	 */
-	public static final int ATAN2 = 304; // x2, x1 -> x1, x2
-	/**
-	 * Built-in function that searches a string as input to a regular expression,
-	 * the location of the match is pushed onto the stack.
-	 * The RSTART and RLENGTH variables are set as a side effect.
-	 * If a match is found, RSTART and function return value are set
-	 * to the location of the match and RLENGTH is set to the length
-	 * of the substring matched against the regular expression.
-	 * If no match is found, RSTART (and return value) is set to
-	 * 0 and RLENGTH is set to -1.
-	 * <p>
-	 * Stack before: string regexp ...<br/>
-	 * Stack after: RSTART ...
-	 */
-	public static final int MATCH = 305; // x1, x2 -> x
-	/**
-	 * Built-in function that locates a substring within a source string
-	 * and pushes the location onto the stack. If the substring is
-	 * not found, 0 is pushed onto the stack.
-	 * <p>
-	 * Stack before: string substring ...<br/>
-	 * Stack after: location-index ...
-	 */
-	public static final int INDEX = 306; // x1, x2 -> x
-	/**
-	 * Built-in function that substitutes an occurrence (or all occurrences)
-	 * of a string in $0 and replaces it with another.
-	 * <p>
-	 * Argument: true if global sub, false otherwise.
-	 * <p>
-	 * Stack before: regexp replacement-string ...<br/>
-	 * Stack after: ...
-	 */
-	public static final int SUB_FOR_DOLLAR_0 = 307; // x -> 0
-	/**
-	 * Built-in function that substitutes an occurrence (or all occurrences)
-	 * of a string in a field reference and replaces it with another.
-	 * <p>
-	 * Argument: true if global sub, false otherwise.
-	 * <p>
-	 * Stack before: field-num regexp replacement-string ...<br/>
-	 * Stack after: ...
-	 */
-	public static final int SUB_FOR_DOLLAR_REFERENCE = 308; // x -> 0
-	/**
-	 * Built-in function that substitutes an occurrence (or all occurrences)
-	 * of a string in a particular variable and replaces it with another.
-	 * <p>
-	 * Argument 1: variable offset in variable manager<br/>
-	 * Argument 2: is global variable<br/>
-	 * Argument 3: is global sub
-	 * <p>
-	 * Stack before: regexp replacement-string orig-string ...<br/>
-	 * Stack after: ...
-	 */
-	public static final int SUB_FOR_VARIABLE = 309; // x -> 0
-	/**
-	 * Built-in function that substitutes an occurrence (or all occurrences)
-	 * of a string in a particular array cell and replaces it with another.
-	 * <p>
-	 * Argument 1: array map offset in variable manager<br/>
-	 * Argument 2: is global array map<br/>
-	 * Argument 3: is global sub
-	 * <p>
-	 * Stack before: array-index regexp replacement-string orig-string ...<br/>
-	 * Stack after: ...
-	 */
-	public static final int SUB_FOR_ARRAY_REFERENCE = 310; // x -> 0
-	/**
-	 * Built-in function to split a string by a regexp and put the
-	 * components into an array.
-	 * <p>
-	 * Argument: # of arguments (parameters on stack)
-	 * <p>
-	 * If # of arguments is 2:
-	 * <blockquote>
-	 * Stack before: string array ...<br/>
-	 * Stack after: n ...
-	 * </blockquote>
-	 * else
-	 * <blockquote>
-	 * Stack before: string array regexp ...<br/>
-	 * Stack after: n ...
-	 * </blockquote>
-	 */
-	public static final int SPLIT = 311; // x1 -> x2
-	/**
-	 * Built-in function that pushes a substring of the top-of-stack
-	 * onto the stack.
-	 * The tuple argument indicates whether to limit the substring
-	 * to a particular end position, or to take the substring
-	 * up to the end-of-string.
-	 * <p>
-	 * Argument: # of arguments
-	 * <p>
-	 * If # of arguments is 2:
-	 * <blockquote>
-	 * Stack before: string start-pos ...<br/>
-	 * Stack after: substring ...
-	 * </blockquote>
-	 * else
-	 * <blockquote>
-	 * Stack before: string start-pos end-pos ...<br/>
-	 * Stack after: substring ...
-	 * </blockquote>
-	 */
-	public static final int SUBSTR = 312; // x1 -> x2
-	/**
-	 * Built-in function that converts all the letters in the top-of-stack
-	 * to lower case and pushes the result onto the stack.
-	 * <p>
-	 * Stack before: STRING-ARGUMENT ...<br/>
-	 * Stack after: string-argument ...
-	 */
-	public static final int TOLOWER = 313; // x1 -> x2
-	/**
-	 * Built-in function that converts all the letters in the top-of-stack
-	 * to upper case and pushes the result onto the stack.
-	 * <p>
-	 * Stack before: string-argument ...<br/>
-	 * Stack after: STRING-ARGUMENT ...
-	 */
-	public static final int TOUPPER = 314; // x1 -> x2
-	/**
-	 * Built-in function that executes the top-of-stack as a system command
-	 * and pushes the return code onto the stack.
-	 * <p>
-	 * Stack before: cmd ...<br/>
-	 * Stack after: return-code ...
-	 */
-	public static final int SYSTEM = 315; // x1 -> x2
-
-	/**
-	 * Swaps the top two elements of the stack.
-	 * <p>
-	 * Stack before: x1 x2 ...<br/>
-	 * Stack after: x2 x1 ...
-	 */
-	public static final int SWAP = 316; // x2, x1 -> x1, x2
-
-	/**
-	 * Numerically adds the top two elements of the stack with the result
-	 * pushed onto the stack.
-	 * <p>
-	 * Stack before: x1 x2 ...<br/>
-	 * Stack after: x1+x2 ...
-	 */
-	public static final int ADD = 317; // x2, x1 -> x1+x2
-	/**
-	 * Numerically subtracts the top two elements of the stack with the result
-	 * pushed onto the stack.
-	 * <p>
-	 * Stack before: x1 x2 ...<br/>
-	 * Stack after: x1-x2 ...
-	 */
-	public static final int SUBTRACT = 318; // x2, x1 -> x1-x2
-	/**
-	 * Numerically multiplies the top two elements of the stack with the result
-	 * pushed onto the stack.
-	 * <p>
-	 * Stack before: x1 x2 ...<br/>
-	 * Stack after: x1*x2 ...
-	 */
-	public static final int MULTIPLY = 319; // x2, x1 -> x1*x2
-	/**
-	 * Numerically divides the top two elements of the stack with the result
-	 * pushed onto the stack.
-	 * <p>
-	 * Stack before: x1 x2 ...<br/>
-	 * Stack after: x1/x2 ...
-	 */
-	public static final int DIVIDE = 320; // x2, x1 -> x1/x2
-	/**
-	 * Numerically takes the modulus of the top two elements of the stack with the result
-	 * pushed onto the stack.
-	 * <p>
-	 * Stack before: x1 x2 ...<br/>
-	 * Stack after: x1%x2 ...
-	 */
-	public static final int MOD = 321; // x2, x1 -> x1/x2
-	/**
-	 * Numerically raises the top element to the power of the next element with the result
-	 * pushed onto the stack.
-	 * <p>
-	 * Stack before: x1 x2 ...<br/>
-	 * Stack after: x1^x2 ...
-	 */
-	public static final int POW = 322; // x2, x1 -> x1/x2
-
-	/**
-	 * Increases the variable reference by one; pushes the result
-	 * onto the stack.
-	 * <p>
-	 * Argument 1: offset of the particular variable into the variable manager<br/>
-	 * Argument 2: whether the variable is global or local
-	 * <p>
-	 * Stack before: ...<br/>
-	 * Stack after: x+1 ...
-	 */
-	public static final int INC = 323; // 0 -> x
-	/**
-	 * Decreases the variable reference by one; pushes the result
-	 * onto the stack.
-	 * <p>
-	 * Argument 1: offset of the particular variable into the variable manager<br/>
-	 * Argument 2: whether the variable is global or local
-	 * <p>
-	 * Stack before: ...<br/>
-	 * Stack after: x-1 ...
-	 */
-	public static final int DEC = 324; // 0 -> x
-	/**
-	 * Increases the array element reference by one; pushes the result
-	 * onto the stack.
-	 * <p>
-	 * Argument 1: offset of the associative array into the variable manager<br/>
-	 * Argument 2: whether the associative array is global or local
-	 * <p>
-	 * Stack before: array-idx ...<br/>
-	 * Stack after: x+1 ...
-	 */
-	public static final int INC_ARRAY_REF = 325; // x -> x
-	/**
-	 * Decreases the array element reference by one; pushes the result
-	 * onto the stack.
-	 * <p>
-	 * Argument 1: offset of the associative array into the variable manager<br/>
-	 * Argument 2: whether the associative array is global or local
-	 * <p>
-	 * Stack before: array-idx ...<br/>
-	 * Stack after: x-1 ...
-	 */
-	public static final int DEC_ARRAY_REF = 326; // x -> x
-	/**
-	 * Increases the input field variable by one; pushes the result
-	 * onto the stack.
-	 * <p>
-	 * Stack before: field-idx ...<br/>
-	 * Stack after: x+1
-	 */
-	public static final int INC_DOLLAR_REF = 327; // x -> x
-	/**
-	 * Decreases the input field variable by one; pushes the result
-	 * onto the stack.
-	 * <p>
-	 * Stack before: field-idx ...<br/>
-	 * Stack after: x-1
-	 */
-	public static final int DEC_DOLLAR_REF = 328; // x -> x
-
-	/**
-	 * Duplicates the top-of-stack on the stack.
-	 * <p>
-	 * Stack before: x ...<br/>
-	 * Stack after: x x ...
-	 */
-	public static final int DUP = 329; // x -> x, x
-	/**
-	 * Evaluates the logical NOT of the top stack element;
-	 * pushes the result onto the stack.
-	 * <p>
-	 * Stack before: x ...<br/>
-	 * Stack after: !x ...
-	 */
-	public static final int NOT = 330; // x -> !x
-	/**
-	 * Evaluates the numerical NEGATION of the top stack element;
-	 * pushes the result onto the stack.
-	 * <p>
-	 * Stack before: x ...<br/>
-	 * Stack after: -x ...
-	 */
-	public static final int NEGATE = 331; // x -> -x
-
-	/**
-	 * Compares the top two stack elements; pushes 1 onto the stack if equal, 0 if not equal.
-	 * <p>
-	 * Stack before: x1 x2 ...<br/>
-	 * Stack after: x1==x2
-	 */
-	public static final int CMP_EQ = 332; // x2, x1 -> x1 == x2
-	/**
-	 * Compares the top two stack elements; pushes 1 onto the stack if x1 &lt; x2, 0 if not equal.
-	 * <p>
-	 * Stack before: x1 x2 ...<br/>
-	 * Stack after: x1&lt;x2
-	 */
-	public static final int CMP_LT = 333; // x2, x1 -> x1 < x2
-	/**
-	 * Compares the top two stack elements; pushes 1 onto the stack if x1 &gt; x2, 0 if not equal.
-	 * <p>
-	 * Stack before: x1 x2 ...<br/>
-	 * Stack after: x1&gt;x2
-	 */
-	public static final int CMP_GT = 334; // x2, x1 -> x1 < x2
-	/**
-	 * Applies a regular expression to the top stack element; pushes 1 if it matches,
-	 * 0 if it does not match.
-	 * <p>
-	 * Stack before: x1 x2 ...<br/>
-	 * Stack after: (x1 ~ /x2/) ...
-	 */
-	public static final int MATCHES = 335; // x2, x1 -> x1 ~ x2
-
-	/**
-	 * <strong>Extension:</strong> Pauses the execution thread by N number of seconds.
-	 * <p>
-	 * Stack before: N ...<br/>
-	 * Stack after: ...
-	 */
-	public static final int SLEEP = 336; // x -> 0
-	/** Constant <code>DUMP=337</code> */
-	public static final int DUMP = 337; // x -> 0
-
-	/** Constant <code>DEREF_ARRAY=338</code> */
-	public static final int DEREF_ARRAY = 338; // x -> x
-
-	// for (x in y) {keyset} support
-	/**
-	 * Retrieves and pushes a set of keys from an associative array onto the stack.
-	 * The set is stored in a {@link java.util.Deque} for iteration.
-	 * <p>
-	 * Stack before: associative-array ...<br/>
-	 * Stack after: key-list-set ...
-	 */
-	public static final int KEYLIST = 339; // 0 -> {keylist}
-	/**
-	 * Tests whether the key list (deque) is empty; jumps to the argument
-	 * address if empty, steps to the next instruction if not.
-	 * <p>
-	 * Argument: jump-address-if-empty
-	 * <p>
-	 * Stack before: key-list ...<br/>
-	 * Stack after: ...
-	 */
-	public static final int IS_EMPTY_KEYLIST = 340; // {keylist} -> 0
-	/**
-	 * Removes an item from the key list (deque) and pushes it onto the operand stack.
-	 * <p>
-	 * Stack before: key-list ...<br/>
-	 * Stack after: 1st-item ...
-	 */
-	public static final int GET_FIRST_AND_REMOVE_FROM_KEYLIST = 341; // {keylist} -> x
-
-	// assertions
-	/**
-	 * Checks whether the top-of-stack is of a particular class type;
-	 * if not, an AwkRuntimeException is thrown.
-	 * The stack remains unchanged upon a successful check.
-	 * <p>
-	 * Argument: class-type (i.e., java.util.Deque.class)
-	 * <p>
-	 * Stack before: obj ...<br/>
-	 * Stack after: obj ...
-	 */
-	public static final int CHECK_CLASS = 342; // {class} -> 0
-
-	// input
-	// * Obtain an input string from stdin; push the result onto the stack.
-	/**
-	 * Push an input field onto the stack.
-	 * <p>
-	 * Stack before: field-id ...<br/>
-	 * Stack after: x ...
-	 */
-	public static final int GET_INPUT_FIELD = 343; // 0 -> x
-	/**
-	 * Consume next line of input; assigning $0 and recalculating $1, $2, etc.
-	 * The input can come from the following sources:
-	 * <ul>
-	 * <li>stdin
-	 * <li>filename arguments
-	 * </ul>
-	 * The operand stack is unaffected.
-	 */
-	public static final int CONSUME_INPUT = 344; // 0 -> 0
-	/**
-	 * Obtains input from stdin/filename-args and pushes
-	 * input line and status code onto the stack.
-	 * The input is partitioned into records based on the RS variable
-	 * assignment as a regular expression.
-	 * <p>
-	 * If there is input available, the input string and a return code
-	 * of 1 is pushed. If EOF is reached, a blank (null) string ("")
-	 * is pushed along with a 0 return code. Upon an IO error,
-	 * a blank string and a -1 is pushed onto the operand stack.
-	 * <p>
-	 * Stack before: ...<br/>
-	 * Stack after: input-string return-code ...
-	 */
-	public static final int GETLINE_INPUT = 345; // 0 -> x
-	/**
-	 * Obtains input from a file and pushes
-	 * input line and status code onto the stack.
-	 * The input is partitioned into records based on the RS variable
-	 * assignment as a regular expression.
-	 * <p>
-	 * Upon initial execution, the file is opened and the handle
-	 * is maintained until it is explicitly closed, or until
-	 * the VM exits. Subsequent calls will obtain subsequent
-	 * lines (records) of input until no more records are available.
-	 * <p>
-	 * If there is input available, the input string and a return code
-	 * of 1 is pushed. If EOF is reached, a blank (null) string ("")
-	 * is pushed along with a 0 return code. Upon an IO error,
-	 * a blank string and a -1 is pushed onto the operand stack.
-	 * <p>
-	 * Stack before: filename ...<br/>
-	 * Stack after: input-string return-code ...
-	 */
-	public static final int USE_AS_FILE_INPUT = 346; // x1 -> x2
-	/**
-	 * Obtains input from a command (process) and pushes
-	 * input line and status code onto the stack.
-	 * The input is partitioned into records based on the RS variable
-	 * assignment as a regular expression.
-	 * <p>
-	 * Upon initial execution, the a process is spawned to execute
-	 * the specified command and the process reference
-	 * is maintained until it is explicitly closed, or until
-	 * the VM exits. Subsequent calls will obtain subsequent
-	 * lines (records) of input until no more records are available.
-	 * <p>
-	 * If there is input available, the input string and a return code
-	 * of 1 is pushed. If EOF is reached, a blank (null) string ("")
-	 * is pushed along with a 0 return code. Upon an IO error,
-	 * a blank string and a -1 is pushed onto the operand stack.
-	 * <p>
-	 * Stack before: command-line ...<br/>
-	 * Stack after: input-string return-code ...
-	 */
-	public static final int USE_AS_COMMAND_INPUT = 347; // x1 -> x2
-
-	// variable housekeeping
-	/**
-	 * Assign the NF variable offset. This is important for the
-	 * AVM to set the variables as new input lines are processed.
-	 * <p>
-	 * The operand stack is unaffected.
-	 */
-	public static final int NF_OFFSET = 348; // 0 -> 0
-	/**
-	 * Assign the NR variable offset. This is important for the
-	 * AVM to increase the record number as new input lines received.
-	 * <p>
-	 * The operand stack is unaffected.
-	 */
-	public static final int NR_OFFSET = 349; // 0 -> 0
-	/**
-	 * Assign the FNR variable offset. This is important for the
-	 * AVM to increase the "file" record number as new input lines are received.
-	 * <p>
-	 * The operand stack is unaffected.
-	 */
-	public static final int FNR_OFFSET = 350; // 0 -> 0
-	/**
-	 * Assign the FS variable offset. This is important for the
-	 * AVM to know how to split fields upon incoming records of input.
-	 * <p>
-	 * The operand stack is unaffected.
-	 */
-	public static final int FS_OFFSET = 351; // 0 -> 0
-	/**
-	 * Assign the RS variable offset. This is important for the
-	 * AVM to know how to create records from the stream(s) of input.
-	 * <p>
-	 * The operand stack is unaffected.
-	 */
-	public static final int RS_OFFSET = 352; // 0 -> 0
-	/**
-	 * Assign the OFS variable offset. This is important for the
-	 * AVM to use when outputting expressions via PRINT.
-	 * <p>
-	 * The operand stack is unaffected.
-	 */
-	public static final int OFS_OFFSET = 353; // 0 -> 0
-	/**
-	 * Assign the RSTART variable offset. The AVM sets this variable while
-	 * executing the match() builtin function.
-	 * <p>
-	 * The operand stack is unaffected.
-	 */
-	public static final int RSTART_OFFSET = 354; // 0 -> 0
-	/**
-	 * Assign the RLENGTH variable offset. The AVM sets this variable while
-	 * executing the match() builtin function.
-	 * <p>
-	 * The operand stack is unaffected.
-	 */
-	public static final int RLENGTH_OFFSET = 355; // 0 -> 0
-	/**
-	 * Assign the FILENAME variable offset. The AVM sets this variable while
-	 * processing files from the command-line for input.
-	 * <p>
-	 * The operand stack is unaffected.
-	 */
-	public static final int FILENAME_OFFSET = 356; // 0 -> 0
-	/**
-	 * Assign the SUBSEP variable offset. The AVM uses this variable while
-	 * building an index of a multi-dimensional array.
-	 * <p>
-	 * The operand stack is unaffected.
-	 */
-	public static final int SUBSEP_OFFSET = 357; // 0 -> 0
-	/**
-	 * Assign the CONVFMT variable offset. The AVM uses this variable while
-	 * converting numbers to strings.
-	 * <p>
-	 * The operand stack is unaffected.
-	 */
-	public static final int CONVFMT_OFFSET = 358; // 0 -> 0
-	/**
-	 * Assign the OFMT variable offset. The AVM uses this variable while
-	 * converting numbers to strings for printing.
-	 * <p>
-	 * The operand stack is unaffected.
-	 */
-	public static final int OFMT_OFFSET = 359; // 0 -> 0
-	/**
-	 * Assign the ENVIRON variable offset. The AVM provides environment
-	 * variables through this array.
-	 * <p>
-	 * The operand stack is unaffected.
-	 */
-	public static final int ENVIRON_OFFSET = 360; // 0 -> 0
-	/**
-	 * Assign the ARGC variable offset. The AVM provides the number of
-	 * arguments via this variable.
-	 * <p>
-	 * The operand stack is unaffected.
-	 */
-	public static final int ARGC_OFFSET = 361; // 0 -> 0
-	/**
-	 * Assign the ARGV variable offset. The AVM provides command-line
-	 * arguments via this variable.
-	 * <p>
-	 * The operand stack is unaffected.
-	 */
-	public static final int ARGV_OFFSET = 362; // 0 -> 0
-
-	/**
-	 * Apply the RS variable by notifying the partitioning reader that
-	 * there is a new regular expression to use when partitioning input
-	 * records.
-	 * <p>
-	 * The stack remains unaffected.
-	 */
-	public static final int APPLY_RS = 363; // 0 -> 0
-
-	/**
-	 * Call a user function.
-	 * <p>
-	 * Stack before: x1, x2, ..., xn <br>
-	 * Stack after: f(x1, x2, ..., xn)
-	 */
-	public static final int CALL_FUNCTION = 364; // x1,x2,...,xn -> x
-
-	/**
-	 * Define a user function.
-	 * <p>
-	 * Stack remains unchanged
-	 */
-	public static final int FUNCTION = 365; // 0 -> 0
-
-	/**
-	 * Sets the return value of a user function.
-	 * <p>
-	 * Stack before: x <br>
-	 * Stack after: ...
-	 */
-	public static final int SET_RETURN_RESULT = 366; // x -> 0
-
-	/**
-	 * Get the return value of the user function that was called
-	 * <p>
-	 * Stack before: ... <br>
-	 * Stack after: x
-	 */
-	public static final int RETURN_FROM_FUNCTION = 367; // 0 -> x
-
-	/**
-	 * Internal: sets the number of global variables
-	 */
-	public static final int SET_NUM_GLOBALS = 368; // 0 -> 0
-
-	/**
-	 * Close the specified file.
-	 * <p>
-	 * Stack before: file name <br>
-	 * Stack after: result of the close operation
-	 */
-	public static final int CLOSE = 369; // x -> x
-
-	/**
-	 * Convert a list of array indices to a concatenated string with SUBSEP.
-	 * This is used for multidimensional arrays.
-	 * <p>
-	 * Stack before: i1, i2, ..., in <br>
-	 * Stack after: "i1SUBSEPi2SUBSEP...in"
-	 */
-	public static final int APPLY_SUBSEP = 370; // x -> 0
-
-	/**
-	 * Deletes an entry in an array.
-	 * <p>
-	 * Stack before: i <br>
-	 * Stack after: ...
-	 */
-	public static final int DELETE_ARRAY_ELEMENT = 371; // 0 -> 0
-
-	/**
-	 * Internal.
-	 * <p>
-	 * Stack remains unchanged.
-	 */
-	public static final int SET_EXIT_ADDRESS = 372; // 0 -> 0
-
-	/**
-	 * Internal.
-	 * <p>
-	 * Stack remains unchanged.
-	 */
-	public static final int SET_WITHIN_END_BLOCKS = 373; // 0 -> 0
-
-	/**
-	 * Terminates execution and returns specified exit code.
-	 * <p>
-	 * Stack before: integer <br>
-	 * Stack after: N/A
-	 */
-	public static final int EXIT_WITH_CODE = 374; // 0 -> 0
-
-	/**
-	 * Returns a regex pattern.
-	 * <p>
-	 * Stack before: ... <br>
-	 * Stack after: the regex pattern object
-	 */
-	public static final int REGEXP = 375; // 0 -> x
-
-	/**
-	 * Returns a pair of regex patterns.
-	 * <p>
-	 * Stack before: pattern1, pattern2 <br>
-	 * Stack after: regex pair object
-	 */
-	public static final int CONDITION_PAIR = 376; // x, y -> x
-
-	/**
-	 * Returns whether the specified key is in the array.
-	 * <p>
-	 * Stack before: key, array <br>
-	 * Stack after: true|false
-	 */
-	public static final int IS_IN = 377; // x,y -> x
-
-	/**
-	 * Cast to integer
-	 * <p>
-	 * Stack before: object <br>
-	 * Stack after: integer
-	 */
-	public static final int CAST_INT = 378; // x -> (int)x
-
-	/**
-	 * Cast to double
-	 * <p>
-	 * Stack before: object <br>
-	 * Stack after: double
-	 */
-	public static final int CAST_DOUBLE = 379; // x -> (double)x
-
-	/**
-	 * Cast to string
-	 * <p>
-	 * Stack before: object <br>
-	 * Stack after: string
-	 */
-	public static final int CAST_STRING = 380; // x -> (string)x
-
-	/**
-	 * Deprecated.
-	 */
-	public static final int THIS = 381; // 0 -> (this)
-
-	/**
-	 * Call a function from an extension
-	 * <p>
-	 * Stack before: x1, x2, ..., xn <br>
-	 * Stack after: f(x1, x2, ..., xn)
-	 */
-	public static final int EXTENSION = 382; // x1,x2,...,xn -> x
-
-	/**
-	 * Execute the specified AWK code
-	 * <p>
-	 * Stack before: script <br>
-	 * Stack after: exit code of the script, or zero when successful, -1 when failed
-	 */
-	public static final int EXEC = 383; // x1,x2,...,xn -> x
-
-	/**
-	 * Delete the specified array.
-	 * <p>
-	 * Stack remains unchanged.
-	 */
-	public static final int DELETE_ARRAY = 384; // 0 -> 0
-
-	/**
-	 * Converts the top stack element to a number;
-	 * pushes the result onto the stack.
-	 * <p>
-	 * Stack before: x ...<br/>
-	 * Stack after: x ... (as a number)
-	 */
-	public static final int UNARY_PLUS = 385; // x -> -x
-
-	/**
-	 * Terminates execution without specifying an exit code.
-	 * <p>
-	 * Stack before: N/A <br>
-	 * Stack after: N/A
-	 */
-	public static final int EXIT_WITHOUT_CODE = 386; // 0 -> 0
-
-	/**
-	 * Assign the ORS variable offset. This is important for the
-	 * AVM to use when outputting expressions via PRINT.
-	 * <p>
-	 * The operand stack is unaffected.
-	 */
-	public static final int ORS_OFFSET = 387; // 0 -> 0
-
-	/**
-	 * Increases the variable reference by one; pushes the original value
-	 * onto the stack.
-	 * <p>
-	 * Argument 1: offset of the particular variable into the variable manager<br/>
-	 * Argument 2: whether the variable is global or local
-	 * <p>
-	 * Stack before: ...<br/>
-	 * Stack after: x ... or 0 if uninitialized
-	 */
-	public static final int POSTINC = 388; // 0 -> x
-
-	/**
-	 * Decreases the variable reference by one; pushes the original value
-	 * onto the stack.
-	 * <p>
-	 * Argument 1: offset of the particular variable into the variable manager<br/>
-	 * Argument 2: whether the variable is global or local
-	 * <p>
-	 * Stack before: ...<br/>
-	 * Stack after: x ... or 0 if uninitialized
-	 */
-	public static final int POSTDEC = 389; // 0 -> x
-
-	/**
-	 * Read stdin for simple AWK expression evaluation.
-	 * <p>
-	 * Stack before: ...<br/>
-	 * Stack after: ...
-	 */
-	public static final int SET_INPUT_FOR_EVAL = 390; // 0 -> 0
-	// CHECKSTYLE:ON
 
 	/**
 	 * Override add() to populate the line number for each tuple,
@@ -1334,21 +79,7 @@ public class AwkTuples implements Serializable {
 	 * @return a {@link java.lang.String} object
 	 */
 	public static String toOpcodeString(int opcode) {
-		Class<?> c = AwkTuples.class;
-		Field[] fields = c.getDeclaredFields();
-		try {
-			for (Field field : fields) {
-				if ((field.getModifiers() & Modifier.STATIC) > 0
-						&& field.getType() == Long.TYPE
-						&& field.getLong(null) == opcode) {
-					return field.getName();
-				}
-			}
-		} catch (IllegalAccessException iac) {
-			LOGGER.error("Failed to create OP-Code string", iac);
-			return "[" + opcode + ": " + iac + "]";
-		}
-		return "{" + opcode + "}";
+		return Opcode.fromId(opcode).name();
 	}
 
 	/**
@@ -1357,7 +88,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void pop() {
-		queue.add(new Tuple(POP));
+		queue.add(new Tuple(Opcode.POP));
 	}
 
 	/**
@@ -1372,13 +103,13 @@ public class AwkTuples implements Serializable {
 																																																						// instanceof
 																																																						// Pattern);
 		if (o instanceof String) {
-			queue.add(new Tuple(PUSH, o.toString()));
+			queue.add(new Tuple(Opcode.PUSH, o.toString()));
 		} else if (o instanceof Integer) {
-			queue.add(new Tuple(PUSH, (Integer) o));
+			queue.add(new Tuple(Opcode.PUSH, (Integer) o));
 		} else if (o instanceof Long) {
-			queue.add(new Tuple(PUSH, (Long) o));
+			queue.add(new Tuple(Opcode.PUSH, (Long) o));
 		} else if (o instanceof Double) {
-			queue.add(new Tuple(PUSH, (Double) o));
+			queue.add(new Tuple(Opcode.PUSH, (Double) o));
 		} else {
 			assert false : "Invalid type for " + o + ", " + o.getClass();
 		}
@@ -1392,7 +123,7 @@ public class AwkTuples implements Serializable {
 	 * @param address a {@link org.metricshub.jawk.intermediate.Address} object
 	 */
 	public void ifFalse(Address address) {
-		queue.add(new Tuple(IFFALSE, address));
+		queue.add(new Tuple(Opcode.IFFALSE, address));
 	}
 
 	/**
@@ -1401,7 +132,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void toNumber() {
-		queue.add(new Tuple(TO_NUMBER));
+		queue.add(new Tuple(Opcode.TO_NUMBER));
 	}
 
 	/**
@@ -1412,7 +143,7 @@ public class AwkTuples implements Serializable {
 	 * @param address a {@link org.metricshub.jawk.intermediate.Address} object
 	 */
 	public void ifTrue(Address address) {
-		queue.add(new Tuple(IFTRUE, address));
+		queue.add(new Tuple(Opcode.IFTRUE, address));
 	}
 
 	/**
@@ -1423,7 +154,7 @@ public class AwkTuples implements Serializable {
 	 * @param address a {@link org.metricshub.jawk.intermediate.Address} object
 	 */
 	public void gotoAddress(Address address) {
-		queue.add(new Tuple(GOTO, address));
+		queue.add(new Tuple(Opcode.GOTO, address));
 	}
 
 	/**
@@ -1457,7 +188,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void nop() {
-		queue.add(new Tuple(NOP));
+		queue.add(new Tuple(Opcode.NOP));
 	}
 
 	/**
@@ -1468,7 +199,7 @@ public class AwkTuples implements Serializable {
 	 * @param numExprs a int
 	 */
 	public void print(int numExprs) {
-		queue.add(new Tuple(PRINT, numExprs));
+		queue.add(new Tuple(Opcode.PRINT, numExprs));
 	}
 
 	/**
@@ -1480,7 +211,7 @@ public class AwkTuples implements Serializable {
 	 * @param append a boolean
 	 */
 	public void printToFile(int numExprs, boolean append) {
-		queue.add(new Tuple(PRINT_TO_FILE, numExprs, append));
+		queue.add(new Tuple(Opcode.PRINT_TO_FILE, numExprs, append));
 	}
 
 	/**
@@ -1491,7 +222,7 @@ public class AwkTuples implements Serializable {
 	 * @param numExprs a int
 	 */
 	public void printToPipe(int numExprs) {
-		queue.add(new Tuple(PRINT_TO_PIPE, numExprs));
+		queue.add(new Tuple(Opcode.PRINT_TO_PIPE, numExprs));
 	}
 
 	/**
@@ -1502,7 +233,7 @@ public class AwkTuples implements Serializable {
 	 * @param numExprs a int
 	 */
 	public void printf(int numExprs) {
-		queue.add(new Tuple(PRINTF, numExprs));
+		queue.add(new Tuple(Opcode.PRINTF, numExprs));
 	}
 
 	/**
@@ -1514,7 +245,7 @@ public class AwkTuples implements Serializable {
 	 * @param append a boolean
 	 */
 	public void printfToFile(int numExprs, boolean append) {
-		queue.add(new Tuple(PRINTF_TO_FILE, numExprs, append));
+		queue.add(new Tuple(Opcode.PRINTF_TO_FILE, numExprs, append));
 	}
 
 	/**
@@ -1525,7 +256,7 @@ public class AwkTuples implements Serializable {
 	 * @param numExprs a int
 	 */
 	public void printfToPipe(int numExprs) {
-		queue.add(new Tuple(PRINTF_TO_PIPE, numExprs));
+		queue.add(new Tuple(Opcode.PRINTF_TO_PIPE, numExprs));
 	}
 
 	/**
@@ -1536,7 +267,7 @@ public class AwkTuples implements Serializable {
 	 * @param numExprs a int
 	 */
 	public void sprintf(int numExprs) {
-		queue.add(new Tuple(SPRINTF, numExprs));
+		queue.add(new Tuple(Opcode.SPRINTF, numExprs));
 	}
 
 	/**
@@ -1547,7 +278,7 @@ public class AwkTuples implements Serializable {
 	 * @param numExprs a int
 	 */
 	public void length(int numExprs) {
-		queue.add(new Tuple(LENGTH, numExprs));
+		queue.add(new Tuple(Opcode.LENGTH, numExprs));
 	}
 
 	/**
@@ -1556,7 +287,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void concat() {
-		queue.add(new Tuple(CONCAT));
+		queue.add(new Tuple(Opcode.CONCAT));
 	}
 
 	/**
@@ -1568,7 +299,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void assign(int offset, boolean isGlobal) {
-		queue.add(new Tuple(ASSIGN, offset, isGlobal));
+		queue.add(new Tuple(Opcode.ASSIGN, offset, isGlobal));
 	}
 
 	/**
@@ -1580,7 +311,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void assignArray(int offset, boolean isGlobal) {
-		queue.add(new Tuple(ASSIGN_ARRAY, offset, isGlobal));
+		queue.add(new Tuple(Opcode.ASSIGN_ARRAY, offset, isGlobal));
 	}
 
 	/**
@@ -1589,14 +320,14 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void assignAsInput() {
-		queue.add(new Tuple(ASSIGN_AS_INPUT));
+		queue.add(new Tuple(Opcode.ASSIGN_AS_INPUT));
 	}
 
 	/**
 	 * Use this only in initialization for simple evaluation
 	 */
 	public void setInputForEval() {
-		queue.add(new Tuple(SET_INPUT_FOR_EVAL));
+		queue.add(new Tuple(Opcode.SET_INPUT_FOR_EVAL));
 	}
 
 	/**
@@ -1605,7 +336,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void assignAsInputField() {
-		queue.add(new Tuple(ASSIGN_AS_INPUT_FIELD));
+		queue.add(new Tuple(Opcode.ASSIGN_AS_INPUT_FIELD));
 	}
 
 	/**
@@ -1618,7 +349,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void dereference(int offset, boolean isArray, boolean isGlobal) {
-		queue.add(new Tuple(DEREFERENCE, offset, isArray, isGlobal));
+		queue.add(new Tuple(Opcode.DEREFERENCE, offset, isArray, isGlobal));
 	}
 
 	/**
@@ -1630,7 +361,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void plusEq(int offset, boolean isGlobal) {
-		queue.add(new Tuple(PLUS_EQ, offset, isGlobal));
+		queue.add(new Tuple(Opcode.PLUS_EQ, offset, isGlobal));
 	}
 
 	/**
@@ -1642,7 +373,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void minusEq(int offset, boolean isGlobal) {
-		queue.add(new Tuple(MINUS_EQ, offset, isGlobal));
+		queue.add(new Tuple(Opcode.MINUS_EQ, offset, isGlobal));
 	}
 
 	/**
@@ -1654,7 +385,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void multEq(int offset, boolean isGlobal) {
-		queue.add(new Tuple(MULT_EQ, offset, isGlobal));
+		queue.add(new Tuple(Opcode.MULT_EQ, offset, isGlobal));
 	}
 
 	/**
@@ -1666,7 +397,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void divEq(int offset, boolean isGlobal) {
-		queue.add(new Tuple(DIV_EQ, offset, isGlobal));
+		queue.add(new Tuple(Opcode.DIV_EQ, offset, isGlobal));
 	}
 
 	/**
@@ -1678,7 +409,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void modEq(int offset, boolean isGlobal) {
-		queue.add(new Tuple(MOD_EQ, offset, isGlobal));
+		queue.add(new Tuple(Opcode.MOD_EQ, offset, isGlobal));
 	}
 
 	/**
@@ -1690,7 +421,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void powEq(int offset, boolean isGlobal) {
-		queue.add(new Tuple(POW_EQ, offset, isGlobal));
+		queue.add(new Tuple(Opcode.POW_EQ, offset, isGlobal));
 	}
 
 	/**
@@ -1702,7 +433,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void plusEqArray(int offset, boolean isGlobal) {
-		queue.add(new Tuple(PLUS_EQ_ARRAY, offset, isGlobal));
+		queue.add(new Tuple(Opcode.PLUS_EQ_ARRAY, offset, isGlobal));
 	}
 
 	/**
@@ -1714,7 +445,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void minusEqArray(int offset, boolean isGlobal) {
-		queue.add(new Tuple(MINUS_EQ_ARRAY, offset, isGlobal));
+		queue.add(new Tuple(Opcode.MINUS_EQ_ARRAY, offset, isGlobal));
 	}
 
 	/**
@@ -1726,7 +457,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void multEqArray(int offset, boolean isGlobal) {
-		queue.add(new Tuple(MULT_EQ_ARRAY, offset, isGlobal));
+		queue.add(new Tuple(Opcode.MULT_EQ_ARRAY, offset, isGlobal));
 	}
 
 	/**
@@ -1738,7 +469,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void divEqArray(int offset, boolean isGlobal) {
-		queue.add(new Tuple(DIV_EQ_ARRAY, offset, isGlobal));
+		queue.add(new Tuple(Opcode.DIV_EQ_ARRAY, offset, isGlobal));
 	}
 
 	/**
@@ -1750,7 +481,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void modEqArray(int offset, boolean isGlobal) {
-		queue.add(new Tuple(MOD_EQ_ARRAY, offset, isGlobal));
+		queue.add(new Tuple(Opcode.MOD_EQ_ARRAY, offset, isGlobal));
 	}
 
 	/**
@@ -1762,7 +493,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void powEqArray(int offset, boolean isGlobal) {
-		queue.add(new Tuple(POW_EQ_ARRAY, offset, isGlobal));
+		queue.add(new Tuple(Opcode.POW_EQ_ARRAY, offset, isGlobal));
 	}
 
 	/**
@@ -1771,7 +502,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void plusEqInputField() {
-		queue.add(new Tuple(PLUS_EQ_INPUT_FIELD));
+		queue.add(new Tuple(Opcode.PLUS_EQ_INPUT_FIELD));
 	}
 
 	/**
@@ -1780,7 +511,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void minusEqInputField() {
-		queue.add(new Tuple(MINUS_EQ_INPUT_FIELD));
+		queue.add(new Tuple(Opcode.MINUS_EQ_INPUT_FIELD));
 	}
 
 	/**
@@ -1789,7 +520,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void multEqInputField() {
-		queue.add(new Tuple(MULT_EQ_INPUT_FIELD));
+		queue.add(new Tuple(Opcode.MULT_EQ_INPUT_FIELD));
 	}
 
 	/**
@@ -1798,7 +529,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void divEqInputField() {
-		queue.add(new Tuple(DIV_EQ_INPUT_FIELD));
+		queue.add(new Tuple(Opcode.DIV_EQ_INPUT_FIELD));
 	}
 
 	/**
@@ -1807,7 +538,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void modEqInputField() {
-		queue.add(new Tuple(MOD_EQ_INPUT_FIELD));
+		queue.add(new Tuple(Opcode.MOD_EQ_INPUT_FIELD));
 	}
 
 	/**
@@ -1816,7 +547,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void powEqInputField() {
-		queue.add(new Tuple(POW_EQ_INPUT_FIELD));
+		queue.add(new Tuple(Opcode.POW_EQ_INPUT_FIELD));
 	}
 
 	/**
@@ -1827,7 +558,7 @@ public class AwkTuples implements Serializable {
 	 * @param num a int
 	 */
 	public void srand(int num) {
-		queue.add(new Tuple(SRAND, num));
+		queue.add(new Tuple(Opcode.SRAND, num));
 	}
 
 	/**
@@ -1836,7 +567,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void rand() {
-		queue.add(new Tuple(RAND));
+		queue.add(new Tuple(Opcode.RAND));
 	}
 
 	/**
@@ -1845,7 +576,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void intFunc() {
-		queue.add(new Tuple(INTFUNC));
+		queue.add(new Tuple(Opcode.INTFUNC));
 	}
 
 	/**
@@ -1854,7 +585,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void sqrt() {
-		queue.add(new Tuple(SQRT));
+		queue.add(new Tuple(Opcode.SQRT));
 	}
 
 	/**
@@ -1863,7 +594,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void log() {
-		queue.add(new Tuple(LOG));
+		queue.add(new Tuple(Opcode.LOG));
 	}
 
 	/**
@@ -1872,7 +603,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void exp() {
-		queue.add(new Tuple(EXP));
+		queue.add(new Tuple(Opcode.EXP));
 	}
 
 	/**
@@ -1881,7 +612,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void sin() {
-		queue.add(new Tuple(SIN));
+		queue.add(new Tuple(Opcode.SIN));
 	}
 
 	/**
@@ -1890,7 +621,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void cos() {
-		queue.add(new Tuple(COS));
+		queue.add(new Tuple(Opcode.COS));
 	}
 
 	/**
@@ -1899,7 +630,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void atan2() {
-		queue.add(new Tuple(ATAN2));
+		queue.add(new Tuple(Opcode.ATAN2));
 	}
 
 	/**
@@ -1908,7 +639,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void match() {
-		queue.add(new Tuple(MATCH));
+		queue.add(new Tuple(Opcode.MATCH));
 	}
 
 	/**
@@ -1917,7 +648,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void index() {
-		queue.add(new Tuple(INDEX));
+		queue.add(new Tuple(Opcode.INDEX));
 	}
 
 	/**
@@ -1928,7 +659,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGsub a boolean
 	 */
 	public void subForDollar0(boolean isGsub) {
-		queue.add(new Tuple(SUB_FOR_DOLLAR_0, isGsub));
+		queue.add(new Tuple(Opcode.SUB_FOR_DOLLAR_0, isGsub));
 	}
 
 	/**
@@ -1939,7 +670,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGsub a boolean
 	 */
 	public void subForDollarReference(boolean isGsub) {
-		queue.add(new Tuple(SUB_FOR_DOLLAR_REFERENCE, isGsub));
+		queue.add(new Tuple(Opcode.SUB_FOR_DOLLAR_REFERENCE, isGsub));
 	}
 
 	/**
@@ -1952,7 +683,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGsub a boolean
 	 */
 	public void subForVariable(int offset, boolean isGlobal, boolean isGsub) {
-		queue.add(new Tuple(SUB_FOR_VARIABLE, offset, isGlobal, isGsub));
+		queue.add(new Tuple(Opcode.SUB_FOR_VARIABLE, offset, isGlobal, isGsub));
 	}
 
 	/**
@@ -1965,7 +696,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGsub a boolean
 	 */
 	public void subForArrayReference(int offset, boolean isGlobal, boolean isGsub) {
-		queue.add(new Tuple(SUB_FOR_ARRAY_REFERENCE, offset, isGlobal, isGsub));
+		queue.add(new Tuple(Opcode.SUB_FOR_ARRAY_REFERENCE, offset, isGlobal, isGsub));
 	}
 
 	/**
@@ -1976,7 +707,7 @@ public class AwkTuples implements Serializable {
 	 * @param numargs a int
 	 */
 	public void split(int numargs) {
-		queue.add(new Tuple(SPLIT, numargs));
+		queue.add(new Tuple(Opcode.SPLIT, numargs));
 	}
 
 	/**
@@ -1987,7 +718,7 @@ public class AwkTuples implements Serializable {
 	 * @param numargs a int
 	 */
 	public void substr(int numargs) {
-		queue.add(new Tuple(SUBSTR, numargs));
+		queue.add(new Tuple(Opcode.SUBSTR, numargs));
 	}
 
 	/**
@@ -1996,7 +727,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void tolower() {
-		queue.add(new Tuple(TOLOWER));
+		queue.add(new Tuple(Opcode.TOLOWER));
 	}
 
 	/**
@@ -2005,7 +736,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void toupper() {
-		queue.add(new Tuple(TOUPPER));
+		queue.add(new Tuple(Opcode.TOUPPER));
 	}
 
 	/**
@@ -2014,7 +745,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void system() {
-		queue.add(new Tuple(SYSTEM));
+		queue.add(new Tuple(Opcode.SYSTEM));
 	}
 
 	/**
@@ -2023,7 +754,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void exec() {
-		queue.add(new Tuple(EXEC));
+		queue.add(new Tuple(Opcode.EXEC));
 	}
 
 	/**
@@ -2032,7 +763,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void swap() {
-		queue.add(new Tuple(SWAP));
+		queue.add(new Tuple(Opcode.SWAP));
 	}
 
 	/**
@@ -2041,7 +772,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void add() {
-		queue.add(new Tuple(ADD));
+		queue.add(new Tuple(Opcode.ADD));
 	}
 
 	/**
@@ -2050,7 +781,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void subtract() {
-		queue.add(new Tuple(SUBTRACT));
+		queue.add(new Tuple(Opcode.SUBTRACT));
 	}
 
 	/**
@@ -2059,7 +790,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void multiply() {
-		queue.add(new Tuple(MULTIPLY));
+		queue.add(new Tuple(Opcode.MULTIPLY));
 	}
 
 	/**
@@ -2068,7 +799,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void divide() {
-		queue.add(new Tuple(DIVIDE));
+		queue.add(new Tuple(Opcode.DIVIDE));
 	}
 
 	/**
@@ -2077,7 +808,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void mod() {
-		queue.add(new Tuple(MOD));
+		queue.add(new Tuple(Opcode.MOD));
 	}
 
 	/**
@@ -2086,7 +817,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void pow() {
-		queue.add(new Tuple(POW));
+		queue.add(new Tuple(Opcode.POW));
 	}
 
 	/**
@@ -2098,7 +829,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void inc(int offset, boolean isGlobal) {
-		queue.add(new Tuple(INC, offset, isGlobal));
+		queue.add(new Tuple(Opcode.INC, offset, isGlobal));
 	}
 
 	/**
@@ -2110,7 +841,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void dec(int offset, boolean isGlobal) {
-		queue.add(new Tuple(DEC, offset, isGlobal));
+		queue.add(new Tuple(Opcode.DEC, offset, isGlobal));
 	}
 
 	/**
@@ -2122,7 +853,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void postInc(int offset, boolean isGlobal) {
-		queue.add(new Tuple(POSTINC, offset, isGlobal));
+		queue.add(new Tuple(Opcode.POSTINC, offset, isGlobal));
 	}
 
 	/**
@@ -2134,7 +865,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void postDec(int offset, boolean isGlobal) {
-		queue.add(new Tuple(POSTDEC, offset, isGlobal));
+		queue.add(new Tuple(Opcode.POSTDEC, offset, isGlobal));
 	}
 
 	/**
@@ -2146,7 +877,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void incArrayRef(int offset, boolean isGlobal) {
-		queue.add(new Tuple(INC_ARRAY_REF, offset, isGlobal));
+		queue.add(new Tuple(Opcode.INC_ARRAY_REF, offset, isGlobal));
 	}
 
 	/**
@@ -2158,7 +889,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void decArrayRef(int offset, boolean isGlobal) {
-		queue.add(new Tuple(DEC_ARRAY_REF, offset, isGlobal));
+		queue.add(new Tuple(Opcode.DEC_ARRAY_REF, offset, isGlobal));
 	}
 
 	/**
@@ -2167,7 +898,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void incDollarRef() {
-		queue.add(new Tuple(INC_DOLLAR_REF));
+		queue.add(new Tuple(Opcode.INC_DOLLAR_REF));
 	}
 
 	/**
@@ -2176,7 +907,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void decDollarRef() {
-		queue.add(new Tuple(DEC_DOLLAR_REF));
+		queue.add(new Tuple(Opcode.DEC_DOLLAR_REF));
 	}
 
 	/**
@@ -2185,7 +916,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void dup() {
-		queue.add(new Tuple(DUP));
+		queue.add(new Tuple(Opcode.DUP));
 	}
 
 	/**
@@ -2194,7 +925,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void not() {
-		queue.add(new Tuple(NOT));
+		queue.add(new Tuple(Opcode.NOT));
 	}
 
 	/**
@@ -2203,7 +934,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void negate() {
-		queue.add(new Tuple(NEGATE));
+		queue.add(new Tuple(Opcode.NEGATE));
 	}
 
 	/**
@@ -2212,7 +943,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void unaryPlus() {
-		queue.add(new Tuple(UNARY_PLUS));
+		queue.add(new Tuple(Opcode.UNARY_PLUS));
 	}
 
 	/**
@@ -2221,7 +952,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void cmpEq() {
-		queue.add(new Tuple(CMP_EQ));
+		queue.add(new Tuple(Opcode.CMP_EQ));
 	}
 
 	/**
@@ -2230,7 +961,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void cmpLt() {
-		queue.add(new Tuple(CMP_LT));
+		queue.add(new Tuple(Opcode.CMP_LT));
 	}
 
 	/**
@@ -2239,7 +970,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void cmpGt() {
-		queue.add(new Tuple(CMP_GT));
+		queue.add(new Tuple(Opcode.CMP_GT));
 	}
 
 	/**
@@ -2248,7 +979,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void matches() {
-		queue.add(new Tuple(MATCHES));
+		queue.add(new Tuple(Opcode.MATCHES));
 	}
 
 	/**
@@ -2259,7 +990,7 @@ public class AwkTuples implements Serializable {
 	 * @param numArgs a int
 	 */
 	public void sleep(int numArgs) {
-		queue.add(new Tuple(SLEEP, numArgs));
+		queue.add(new Tuple(Opcode.SLEEP, numArgs));
 	}
 
 	/**
@@ -2270,7 +1001,7 @@ public class AwkTuples implements Serializable {
 	 * @param numArgs a int
 	 */
 	public void dump(int numArgs) {
-		queue.add(new Tuple(DUMP, numArgs));
+		queue.add(new Tuple(Opcode.DUMP, numArgs));
 	}
 
 	/**
@@ -2279,7 +1010,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void dereferenceArray() {
-		queue.add(new Tuple(DEREF_ARRAY));
+		queue.add(new Tuple(Opcode.DEREF_ARRAY));
 	}
 
 	/**
@@ -2288,7 +1019,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void keylist() {
-		queue.add(new Tuple(KEYLIST));
+		queue.add(new Tuple(Opcode.KEYLIST));
 	}
 
 	/**
@@ -2299,7 +1030,7 @@ public class AwkTuples implements Serializable {
 	 * @param address a {@link org.metricshub.jawk.intermediate.Address} object
 	 */
 	public void isEmptyList(Address address) {
-		queue.add(new Tuple(IS_EMPTY_KEYLIST, address));
+		queue.add(new Tuple(Opcode.IS_EMPTY_KEYLIST, address));
 	}
 
 	/**
@@ -2308,7 +1039,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void getFirstAndRemoveFromList() {
-		queue.add(new Tuple(GET_FIRST_AND_REMOVE_FROM_KEYLIST));
+		queue.add(new Tuple(Opcode.GET_FIRST_AND_REMOVE_FROM_KEYLIST));
 	}
 
 	/**
@@ -2320,7 +1051,7 @@ public class AwkTuples implements Serializable {
 	 * @return a boolean
 	 */
 	public boolean checkClass(Class<?> cls) {
-		queue.add(new Tuple(CHECK_CLASS, cls));
+		queue.add(new Tuple(Opcode.CHECK_CLASS, cls));
 		return true;
 	}
 
@@ -2330,7 +1061,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void getInputField() {
-		queue.add(new Tuple(GET_INPUT_FIELD));
+		queue.add(new Tuple(Opcode.GET_INPUT_FIELD));
 	}
 
 	/**
@@ -2341,7 +1072,7 @@ public class AwkTuples implements Serializable {
 	 * @param address a {@link org.metricshub.jawk.intermediate.Address} object
 	 */
 	public void consumeInput(Address address) {
-		queue.add(new Tuple(CONSUME_INPUT, address));
+		queue.add(new Tuple(Opcode.CONSUME_INPUT, address));
 	}
 
 	/**
@@ -2350,7 +1081,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void getlineInput() {
-		queue.add(new Tuple(GETLINE_INPUT));
+		queue.add(new Tuple(Opcode.GETLINE_INPUT));
 	}
 
 	/**
@@ -2359,7 +1090,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void useAsFileInput() {
-		queue.add(new Tuple(USE_AS_FILE_INPUT));
+		queue.add(new Tuple(Opcode.USE_AS_FILE_INPUT));
 	}
 
 	/**
@@ -2368,7 +1099,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void useAsCommandInput() {
-		queue.add(new Tuple(USE_AS_COMMAND_INPUT));
+		queue.add(new Tuple(Opcode.USE_AS_COMMAND_INPUT));
 	}
 
 	/**
@@ -2379,7 +1110,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void nfOffset(int offset) {
-		queue.add(new Tuple(NF_OFFSET, offset));
+		queue.add(new Tuple(Opcode.NF_OFFSET, offset));
 	}
 
 	/**
@@ -2390,7 +1121,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void nrOffset(int offset) {
-		queue.add(new Tuple(NR_OFFSET, offset));
+		queue.add(new Tuple(Opcode.NR_OFFSET, offset));
 	}
 
 	/**
@@ -2401,7 +1132,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void fnrOffset(int offset) {
-		queue.add(new Tuple(FNR_OFFSET, offset));
+		queue.add(new Tuple(Opcode.FNR_OFFSET, offset));
 	}
 
 	/**
@@ -2412,7 +1143,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void fsOffset(int offset) {
-		queue.add(new Tuple(FS_OFFSET, offset));
+		queue.add(new Tuple(Opcode.FS_OFFSET, offset));
 	}
 
 	/**
@@ -2423,7 +1154,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void rsOffset(int offset) {
-		queue.add(new Tuple(RS_OFFSET, offset));
+		queue.add(new Tuple(Opcode.RS_OFFSET, offset));
 	}
 
 	/**
@@ -2434,7 +1165,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void ofsOffset(int offset) {
-		queue.add(new Tuple(OFS_OFFSET, offset));
+		queue.add(new Tuple(Opcode.OFS_OFFSET, offset));
 	}
 
 	/**
@@ -2445,7 +1176,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void orsOffset(int offset) {
-		queue.add(new Tuple(ORS_OFFSET, offset));
+		queue.add(new Tuple(Opcode.ORS_OFFSET, offset));
 	}
 
 	/**
@@ -2456,7 +1187,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void rstartOffset(int offset) {
-		queue.add(new Tuple(RSTART_OFFSET, offset));
+		queue.add(new Tuple(Opcode.RSTART_OFFSET, offset));
 	}
 
 	/**
@@ -2467,7 +1198,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void rlengthOffset(int offset) {
-		queue.add(new Tuple(RLENGTH_OFFSET, offset));
+		queue.add(new Tuple(Opcode.RLENGTH_OFFSET, offset));
 	}
 
 	/**
@@ -2478,7 +1209,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void filenameOffset(int offset) {
-		queue.add(new Tuple(FILENAME_OFFSET, offset));
+		queue.add(new Tuple(Opcode.FILENAME_OFFSET, offset));
 	}
 
 	/**
@@ -2489,7 +1220,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void subsepOffset(int offset) {
-		queue.add(new Tuple(SUBSEP_OFFSET, offset));
+		queue.add(new Tuple(Opcode.SUBSEP_OFFSET, offset));
 	}
 
 	/**
@@ -2500,7 +1231,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void convfmtOffset(int offset) {
-		queue.add(new Tuple(CONVFMT_OFFSET, offset));
+		queue.add(new Tuple(Opcode.CONVFMT_OFFSET, offset));
 	}
 
 	/**
@@ -2511,7 +1242,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void ofmtOffset(int offset) {
-		queue.add(new Tuple(OFMT_OFFSET, offset));
+		queue.add(new Tuple(Opcode.OFMT_OFFSET, offset));
 	}
 
 	/**
@@ -2522,7 +1253,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void environOffset(int offset) {
-		queue.add(new Tuple(ENVIRON_OFFSET, offset));
+		queue.add(new Tuple(Opcode.ENVIRON_OFFSET, offset));
 	}
 
 	/**
@@ -2533,7 +1264,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void argcOffset(int offset) {
-		queue.add(new Tuple(ARGC_OFFSET, offset));
+		queue.add(new Tuple(Opcode.ARGC_OFFSET, offset));
 	}
 
 	/**
@@ -2544,7 +1275,7 @@ public class AwkTuples implements Serializable {
 	 * @param offset a int
 	 */
 	public void argvOffset(int offset) {
-		queue.add(new Tuple(ARGV_OFFSET, offset));
+		queue.add(new Tuple(Opcode.ARGV_OFFSET, offset));
 	}
 
 	/**
@@ -2553,7 +1284,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void applyRS() {
-		queue.add(new Tuple(APPLY_RS));
+		queue.add(new Tuple(Opcode.APPLY_RS));
 	}
 
 	/**
@@ -2565,11 +1296,11 @@ public class AwkTuples implements Serializable {
 	 * @param numFormalParams a int
 	 */
 	public void function(String funcName, int numFormalParams) {
-		queue.add(new Tuple(FUNCTION, funcName, numFormalParams));
+		queue.add(new Tuple(Opcode.FUNCTION, funcName, numFormalParams));
 	}
 
 	// public void callFunction(Address addr, String funcName, int numFormalParams, int numActualParams) {
-	// queue.add(new Tuple(CALL_FUNCTION, addr, funcName, numFormalParams, numActualParams)); }
+	// queue.add(new Tuple(Opcode.CALL_FUNCTION, addr, funcName, numFormalParams, numActualParams)); }
 
 	/**
 	 * <p>
@@ -2586,7 +1317,7 @@ public class AwkTuples implements Serializable {
 			String funcName,
 			int numFormalParams,
 			int numActualParams) {
-		queue.add(new Tuple(CALL_FUNCTION, addressSupplier, funcName, numFormalParams, numActualParams));
+		queue.add(new Tuple(Opcode.CALL_FUNCTION, addressSupplier, funcName, numFormalParams, numActualParams));
 	}
 
 	/**
@@ -2595,7 +1326,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void setReturnResult() {
-		queue.add(new Tuple(SET_RETURN_RESULT));
+		queue.add(new Tuple(Opcode.SET_RETURN_RESULT));
 	}
 
 	/**
@@ -2604,7 +1335,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void returnFromFunction() {
-		queue.add(new Tuple(RETURN_FROM_FUNCTION));
+		queue.add(new Tuple(Opcode.RETURN_FROM_FUNCTION));
 	}
 
 	/**
@@ -2615,7 +1346,7 @@ public class AwkTuples implements Serializable {
 	 * @param numGlobals a int
 	 */
 	public void setNumGlobals(int numGlobals) {
-		queue.add(new Tuple(SET_NUM_GLOBALS, numGlobals));
+		queue.add(new Tuple(Opcode.SET_NUM_GLOBALS, numGlobals));
 	}
 
 	/**
@@ -2624,7 +1355,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void close() {
-		queue.add(new Tuple(CLOSE));
+		queue.add(new Tuple(Opcode.CLOSE));
 	}
 
 	/**
@@ -2635,7 +1366,7 @@ public class AwkTuples implements Serializable {
 	 * @param count a int
 	 */
 	public void applySubsep(int count) {
-		queue.add(new Tuple(APPLY_SUBSEP, count));
+		queue.add(new Tuple(Opcode.APPLY_SUBSEP, count));
 	}
 
 	/**
@@ -2647,7 +1378,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void deleteArrayElement(int offset, boolean isGlobal) {
-		queue.add(new Tuple(DELETE_ARRAY_ELEMENT, offset, isGlobal));
+		queue.add(new Tuple(Opcode.DELETE_ARRAY_ELEMENT, offset, isGlobal));
 	}
 
 	/**
@@ -2659,7 +1390,7 @@ public class AwkTuples implements Serializable {
 	 * @param isGlobal a boolean
 	 */
 	public void deleteArray(int offset, boolean isGlobal) {
-		queue.add(new Tuple(DELETE_ARRAY, offset, isGlobal));
+		queue.add(new Tuple(Opcode.DELETE_ARRAY, offset, isGlobal));
 	}
 
 	/**
@@ -2670,7 +1401,7 @@ public class AwkTuples implements Serializable {
 	 * @param addr a {@link org.metricshub.jawk.intermediate.Address} object
 	 */
 	public void setExitAddress(Address addr) {
-		queue.add(new Tuple(SET_EXIT_ADDRESS, addr));
+		queue.add(new Tuple(Opcode.SET_EXIT_ADDRESS, addr));
 	}
 
 	/**
@@ -2681,7 +1412,7 @@ public class AwkTuples implements Serializable {
 	 * @param b a boolean
 	 */
 	public void setWithinEndBlocks(boolean b) {
-		queue.add(new Tuple(SET_WITHIN_END_BLOCKS, b));
+		queue.add(new Tuple(Opcode.SET_WITHIN_END_BLOCKS, b));
 	}
 
 	/**
@@ -2690,7 +1421,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void exitWithCode() {
-		queue.add(new Tuple(EXIT_WITH_CODE));
+		queue.add(new Tuple(Opcode.EXIT_WITH_CODE));
 	}
 
 	/**
@@ -2699,7 +1430,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void exitWithoutCode() {
-		queue.add(new Tuple(EXIT_WITHOUT_CODE));
+		queue.add(new Tuple(Opcode.EXIT_WITHOUT_CODE));
 	}
 
 	/**
@@ -2710,7 +1441,7 @@ public class AwkTuples implements Serializable {
 	 * @param regexpStr a {@link java.lang.String} object
 	 */
 	public void regexp(String regexpStr) {
-		queue.add(new Tuple(REGEXP, regexpStr));
+		queue.add(new Tuple(Opcode.REGEXP, regexpStr));
 	}
 
 	/**
@@ -2719,7 +1450,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void conditionPair() {
-		queue.add(new Tuple(CONDITION_PAIR));
+		queue.add(new Tuple(Opcode.CONDITION_PAIR));
 	}
 
 	/**
@@ -2728,7 +1459,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void isIn() {
-		queue.add(new Tuple(IS_IN));
+		queue.add(new Tuple(Opcode.IS_IN));
 	}
 
 	/**
@@ -2737,7 +1468,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void castInt() {
-		queue.add(new Tuple(CAST_INT));
+		queue.add(new Tuple(Opcode.CAST_INT));
 	}
 
 	/**
@@ -2746,7 +1477,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void castDouble() {
-		queue.add(new Tuple(CAST_DOUBLE));
+		queue.add(new Tuple(Opcode.CAST_DOUBLE));
 	}
 
 	/**
@@ -2755,7 +1486,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void castString() {
-		queue.add(new Tuple(CAST_STRING));
+		queue.add(new Tuple(Opcode.CAST_STRING));
 	}
 
 	/**
@@ -2764,7 +1495,7 @@ public class AwkTuples implements Serializable {
 	 * </p>
 	 */
 	public void scriptThis() {
-		queue.add(new Tuple(THIS));
+		queue.add(new Tuple(Opcode.THIS));
 	}
 
 	/**
@@ -2777,7 +1508,7 @@ public class AwkTuples implements Serializable {
 	 * @param isInitial a boolean
 	 */
 	public void extension(String extensionKeyword, int paramCount, boolean isInitial) {
-		queue.add(new Tuple(EXTENSION, extensionKeyword, paramCount, isInitial));
+		queue.add(new Tuple(Opcode.EXTENSION, extensionKeyword, paramCount, isInitial));
 	}
 
 	/**
@@ -2868,7 +1599,7 @@ public class AwkTuples implements Serializable {
 	 */
 	public void setFunctionNameSet(Set<String> names) {
 		// setFunctionNameSet is called with a keySet from
-		// a HashMap as a parameter, which is NOT
+		// a HashMap as a parameter, which is Opcode.NOT
 		// Serializable. Creating a new HashSet around
 		// the parameter resolves the issue.
 		// Otherwise, attempting to serialize this
