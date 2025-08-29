@@ -164,10 +164,12 @@ public class AssocArray implements Comparator<Object> {
 			return true;
 		}
 
-		String k = key.toString();
-		if (isNumericKey(k)) {
-			long iKey = Long.parseLong(k);
-			return map.containsKey(iKey);
+		try {
+			long iKey = Long.parseLong(key.toString());
+			if (map.containsKey(iKey)) {
+				return true;
+			}
+		} catch (Exception e) {// NOPMD - EmptyCatchBlock: intentionally ignored
 		}
 
 		return false;
@@ -195,13 +197,15 @@ public class AssocArray implements Comparator<Object> {
 			return result;
 		}
 
-		String k = key.toString();
-		if (isNumericKey(k)) {
-			long iKey = Long.parseLong(k);
-			result = map.get(iKey);
+		// Did not find it?
+		try {
+			// try a integer version key
+			key = Long.parseLong(key.toString());
+			result = map.get(key);
 			if (result != null) {
 				return result;
 			}
+		} catch (Exception e) {// NOPMD - EmptyCatchBlock: intentionally ignored
 		}
 
 		// based on the AWK specification:
@@ -224,12 +228,11 @@ public class AssocArray implements Comparator<Object> {
 		if (key == null || key instanceof UninitializedObject) {
 			key = "";
 		}
-
-		String k = key.toString();
-		if (isNumericKey(k)) {
+		try {
 			// Save a primitive version
-			long iKey = Long.parseLong(k);
+			long iKey = Long.parseLong(key.toString());
 			return map.put(iKey, value);
+		} catch (Exception e) {// NOPMD - EmptyCatchBlock: intentionally ignored
 		}
 
 		return map.put(key, value);
@@ -279,10 +282,10 @@ public class AssocArray implements Comparator<Object> {
 			return result;
 		}
 
-		String k = key.toString();
-		if (isNumericKey(k)) {
-			long iKey = Long.parseLong(k);
+		try {
+			long iKey = Long.parseLong(key.toString());
 			return map.remove(iKey);
+		} catch (Exception e) {// NOPMD - EmptyCatchBlock: intentionally ignored
 		}
 
 		return null;
@@ -339,19 +342,4 @@ public class AssocArray implements Comparator<Object> {
 	public String getMapVersion() {
 		return map.getClass().getPackage().getSpecificationVersion();
 	}
-
-	/**
-	 * Returns true if the given key represents a valid integer number.
-	 *
-	 * @param key the key to check
-	 * @return true if the key is numeric, false otherwise
-	 */
-	private static boolean isNumericKey(Object key) {
-		if (key == null) {
-			return false;
-		}
-		String k = key.toString();
-		return k.matches("-?\\d+");
-	}
-
 }
