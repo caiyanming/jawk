@@ -236,8 +236,7 @@ public class JRT {
 		if (!(o instanceof Number)) {
 			try {
 				o = new BigDecimal(o.toString()).doubleValue();
-			} catch (NumberFormatException e) {
-				LOG.debug("Failed to parse number", e);
+			} catch (NumberFormatException e) {// NOPMD - EmptyCatchBlock: intentionally ignored
 			}
 		}
 

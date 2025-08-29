@@ -29,8 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import org.metricshub.jawk.intermediate.UninitializedObject;
-import org.metricshub.jawk.util.AwkLogger;
-import org.slf4j.Logger;
 
 /**
  * An AWK associative array.
@@ -46,8 +44,6 @@ import org.slf4j.Logger;
  * @author Danny Daglas
  */
 public class AssocArray implements Comparator<Object> {
-
-	private static final Logger LOG = AwkLogger.getLogger(AssocArray.class);
 
 	private Map<Object, Object> map;
 
@@ -173,8 +169,7 @@ public class AssocArray implements Comparator<Object> {
 			if (map.containsKey(iKey)) {
 				return true;
 			}
-		} catch (Exception e) {
-			LOG.debug("Key parse failure", e);
+		} catch (Exception e) {// NOPMD - EmptyCatchBlock: intentionally ignored
 		}
 
 		return false;
@@ -210,8 +205,7 @@ public class AssocArray implements Comparator<Object> {
 			if (result != null) {
 				return result;
 			}
-		} catch (Exception e) {
-			LOG.debug("Key parse failure", e);
+		} catch (Exception e) {// NOPMD - EmptyCatchBlock: intentionally ignored
 		}
 
 		// based on the AWK specification:
@@ -238,8 +232,7 @@ public class AssocArray implements Comparator<Object> {
 			// Save a primitive version
 			long iKey = Long.parseLong(key.toString());
 			return map.put(iKey, value);
-		} catch (Exception e) {
-			LOG.debug("Key parse failure", e);
+		} catch (Exception e) {// NOPMD - EmptyCatchBlock: intentionally ignored
 		}
 
 		return map.put(key, value);
@@ -292,8 +285,7 @@ public class AssocArray implements Comparator<Object> {
 		try {
 			long iKey = Long.parseLong(key.toString());
 			return map.remove(iKey);
-		} catch (Exception e) {
-			LOG.debug("Key parse failure", e);
+		} catch (Exception e) {// NOPMD - EmptyCatchBlock: intentionally ignored
 		}
 
 		return null;
