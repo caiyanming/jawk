@@ -53,6 +53,8 @@ import org.metricshub.jawk.frontend.AstNode;
 import org.metricshub.jawk.intermediate.AwkTuples;
 import org.metricshub.jawk.util.AwkLogger;
 import org.metricshub.jawk.util.AwkSettings;
+import org.metricshub.jawk.util.AwkCompileSettings;
+import org.metricshub.jawk.util.AwkInterpreteSettings;
 import org.metricshub.jawk.util.ScriptSource;
 import org.slf4j.Logger;
 
@@ -99,10 +101,21 @@ public class Awk {
 
 	private static final Logger LOG = AwkLogger.getLogger(Awk.class);
 
+	private final Map<String, JawkExtension> extensions;
+
 	/**
-	 * Create a new instance of Awk
+	 * Create a new instance of Awk without extensions
 	 */
-	public Awk() {}
+	public Awk() {
+		this.extensions = Collections.emptyMap();
+	}
+
+	/**
+	 * Create a new instance of Awk with the specified extensions
+	 */
+	public Awk(Map<String, JawkExtension> extensions) {
+		this.extensions = new HashMap<String, JawkExtension>(extensions);
+	}
 
 	/**
 	 * <p>
@@ -119,70 +132,24 @@ public class Awk {
 	 *         and a specific exit code is requested.
 	 */
 	public void invoke(AwkSettings settings) throws IOException, ClassNotFoundException, ExitException {
-		// key = Keyword, value = JawkExtension
-		Map<String, JawkExtension> extensions;
-		if (settings.isUserExtensions()) {
-			extensions = getJawkExtensions();
-			LOG.trace("user extensions = {}", extensions.keySet());
-		} else {
-			extensions = Collections.emptyMap();
-			LOG.trace("user extensions not enabled");
-		}
-
-		AwkTuples tuples = compile(settings, extensions);
+		AwkTuples tuples = compile(settings);
 		if (tuples == null) {
 			return;
 		}
-
-		invoke(tuples, settings, extensions);
-	}
-
-	/**
-	 * <p>
-	 * invoke.
-	 * </p>
-	 *
-	 * @param tuples precompiled {@link AwkTuples} to interpret
-	 * @param settings runtime settings
-	 * @throws java.io.IOException upon an IO error.
-	 * @throws java.lang.ClassNotFoundException if intermediate code is specified
-	 *         but deserialization fails to load in the JVM
-	 * @throws org.metricshub.jawk.ExitException if interpretation is requested,
-	 *         and a specific exit code is requested.
-	 */
-	public void invoke(AwkTuples tuples, AwkSettings settings)
-			throws IOException,
-			ClassNotFoundException,
-			ExitException {
-		// key = Keyword, value = JawkExtension
-		Map<String, JawkExtension> extensions;
-		if (settings.isUserExtensions()) {
-			extensions = getJawkExtensions();
-			LOG.trace("user extensions = {}", extensions.keySet());
-		} else {
-			extensions = Collections.emptyMap();
-			LOG.trace("user extensions not enabled");
-		}
-
-		invoke(tuples, settings, extensions);
+		invoke(tuples, settings);
 	}
 
 	/**
 	 * Interprets the specified precompiled {@link AwkTuples} using the provided
-	 * {@link AwkSettings} and optional extension map.
+	 * {@link AwkInterpreteSettings}.
 	 *
 	 * @param tuples precompiled tuples to interpret
 	 * @param settings runtime settings
-	 * @param extensions extensions available to the script (key = keyword,
-	 *        value = {@link JawkExtension})
 	 * @throws IOException upon an IO error
 	 * @throws ExitException if interpretation is requested, and a specific exit
 	 *         code is requested
 	 */
-	public void invoke(
-			AwkTuples tuples,
-			AwkSettings settings,
-			Map<String, JawkExtension> extensions)
+	public void invoke(AwkTuples tuples, AwkInterpreteSettings settings)
 			throws IOException,
 			ExitException {
 		if (tuples == null) {
@@ -192,7 +159,7 @@ public class Awk {
 		AVM avm = null;
 		try {
 			// interpret!
-			avm = new AVM(settings, extensions);
+			avm = new AVM(settings, this.extensions);
 			avm.interpret(tuples);
 		} finally {
 			if (avm != null) {
@@ -583,10 +550,10 @@ public class Awk {
 		settings.addScriptSource(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, script, false));
 
 		Awk awk = new Awk();
-		return awk.compile(settings, Collections.emptyMap());
+		return awk.compile(settings);
 	}
 
-	private AwkTuples compile(AwkSettings settings, Map<String, JawkExtension> extensions)
+	public AwkTuples compile(AwkCompileSettings settings)
 			throws IOException,
 			ClassNotFoundException {
 
@@ -606,7 +573,7 @@ public class Awk {
 			AwkParser parser = new AwkParser(
 					settings.isAdditionalFunctions(),
 					settings.isAdditionalTypeFunctions(),
-					extensions);
+					this.extensions);
 			// parse the script
 			AstNode ast = parser.parse(notIntermediateScriptSources);
 
@@ -861,7 +828,7 @@ public class Awk {
 		oos.close();
 	}
 
-	private static Map<String, JawkExtension> getJawkExtensions() {
+	public static Map<String, JawkExtension> getDefaultExtensions() {
 		String extensionsStr = System.getProperty("jawk.extensions", null);
 		if (extensionsStr == null) {
 			// return Collections.emptyMap();

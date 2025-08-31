@@ -39,7 +39,7 @@ import java.util.Map;
  *
  * @author Danny Daglas
  */
-public class AwkSettings {
+public class AwkSettings implements AwkCompileSettings, AwkInterpreteSettings {
 
 	/**
 	 * Where input is read from.
@@ -119,8 +119,6 @@ public class AwkSettings {
 	 * Whether user extensions are enabled;
 	 * <code>false</code> by default.
 	 */
-	private boolean userExtensions = false;
-
 	/**
 	 * Write to intermediate file;
 	 * <code>false</code> by default.
@@ -484,26 +482,6 @@ public class AwkSettings {
 	 */
 	public void setUseSortedArrayKeys(boolean useSortedArrayKeys) {
 		this.useSortedArrayKeys = useSortedArrayKeys;
-	}
-
-	/**
-	 * Whether user extensions are enabled;
-	 * <code>false</code> by default.
-	 *
-	 * @return the userExtensions
-	 */
-	public boolean isUserExtensions() {
-		return userExtensions;
-	}
-
-	/**
-	 * Whether user extensions are enabled;
-	 * <code>false</code> by default.
-	 *
-	 * @param userExtensions the userExtensions to set
-	 */
-	public void setUserExtensions(boolean userExtensions) {
-		this.userExtensions = userExtensions;
 	}
 
 	/**

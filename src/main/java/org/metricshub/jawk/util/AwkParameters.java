@@ -176,8 +176,6 @@ public final class AwkParameters {
 					checkParameterHasArgument(args, argIdx);
 					++argIdx;
 					settings.setLocale(new Locale(args[argIdx]));
-				} else if (args[argIdx].equals("-ext")) {
-					settings.setUserExtensions(true);
 				} else if (args[argIdx].equals("-h") || args[argIdx].equals("-?")) {
 					if (args.length > 1) {
 						throw new IllegalArgumentException("When printing help/usage output, we do not accept other arguments.");

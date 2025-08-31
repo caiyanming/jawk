@@ -628,7 +628,7 @@ public class AwkTest {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		settings.setOutputStream(new PrintStream(out, false, StandardCharsets.UTF_8.name()));
 
-		new Awk().invoke(tuples, settings, Collections.emptyMap());
+		new Awk(Collections.emptyMap()).invoke(tuples, settings);
 
 		assertEquals("value\n", out.toString(StandardCharsets.UTF_8.name()));
 	}
