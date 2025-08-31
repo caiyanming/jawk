@@ -179,7 +179,7 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 * @throws ExitException if the script terminates with a non-zero exit code
 	 */
-	public static String run(String script, String input)
+	public String run(String script, String input)
 			throws IOException,
 			ClassNotFoundException,
 			ExitException {
@@ -199,7 +199,7 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 * @throws ExitException if the script terminates with a non-zero exit code
 	 */
-	public static void run(String script, String input, OutputStream output)
+	public void run(String script, String input, OutputStream output)
 			throws IOException,
 			ClassNotFoundException,
 			ExitException {
@@ -217,7 +217,7 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 * @throws ExitException if the script terminates with a non-zero exit code
 	 */
-	public static String run(Reader script, String input)
+	public String run(Reader script, String input)
 			throws IOException,
 			ClassNotFoundException,
 			ExitException {
@@ -237,7 +237,7 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 * @throws ExitException if the script terminates with a non-zero exit code
 	 */
-	public static void run(Reader script, String input, OutputStream output)
+	public void run(Reader script, String input, OutputStream output)
 			throws IOException,
 			ClassNotFoundException,
 			ExitException {
@@ -255,7 +255,7 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 * @throws ExitException if the script terminates with a non-zero exit code
 	 */
-	public static String run(String script, Reader input)
+	public String run(String script, Reader input)
 			throws IOException,
 			ClassNotFoundException,
 			ExitException {
@@ -275,7 +275,7 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 * @throws ExitException if the script terminates with a non-zero exit code
 	 */
-	public static void run(String script, Reader input, OutputStream output)
+	public void run(String script, Reader input, OutputStream output)
 			throws IOException,
 			ClassNotFoundException,
 			ExitException {
@@ -293,7 +293,7 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 * @throws ExitException if the script terminates with a non-zero exit code
 	 */
-	public static String run(Reader script, Reader input)
+	public String run(Reader script, Reader input)
 			throws IOException,
 			ClassNotFoundException,
 			ExitException {
@@ -313,7 +313,7 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 * @throws ExitException if the script terminates with a non-zero exit code
 	 */
-	public static void run(Reader script, Reader input, OutputStream output)
+	public void run(Reader script, Reader input, OutputStream output)
 			throws IOException,
 			ClassNotFoundException,
 			ExitException {
@@ -331,7 +331,7 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 * @throws ExitException if the script terminates with a non-zero exit code
 	 */
-	public static String run(String script, File input)
+	public String run(String script, File input)
 			throws IOException,
 			ClassNotFoundException,
 			ExitException {
@@ -351,7 +351,7 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 * @throws ExitException if the script terminates with a non-zero exit code
 	 */
-	public static void run(String script, File input, OutputStream output)
+	public void run(String script, File input, OutputStream output)
 			throws IOException,
 			ClassNotFoundException,
 			ExitException {
@@ -371,7 +371,7 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 * @throws ExitException if the script terminates with a non-zero exit code
 	 */
-	public static String run(Reader script, File input)
+	public String run(Reader script, File input)
 			throws IOException,
 			ClassNotFoundException,
 			ExitException {
@@ -391,7 +391,7 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 * @throws ExitException if the script terminates with a non-zero exit code
 	 */
-	public static void run(Reader script, File input, OutputStream output)
+	public void run(Reader script, File input, OutputStream output)
 			throws IOException,
 			ClassNotFoundException,
 			ExitException {
@@ -411,7 +411,7 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 * @throws ExitException if the script terminates with a non-zero exit code
 	 */
-	public static String run(String script, InputStream input)
+	public String run(String script, InputStream input)
 			throws IOException,
 			ClassNotFoundException,
 			ExitException {
@@ -431,7 +431,7 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 * @throws ExitException if the script terminates with a non-zero exit code
 	 */
-	public static void run(String script, InputStream input, OutputStream output)
+	public void run(String script, InputStream input, OutputStream output)
 			throws IOException,
 			ClassNotFoundException,
 			ExitException {
@@ -449,7 +449,7 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 * @throws ExitException if the script terminates with a non-zero exit code
 	 */
-	public static String run(Reader script, InputStream input)
+	public String run(Reader script, InputStream input)
 			throws IOException,
 			ClassNotFoundException,
 			ExitException {
@@ -469,7 +469,7 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 * @throws ExitException if the script terminates with a non-zero exit code
 	 */
-	public static void run(Reader script, InputStream input, OutputStream output)
+	public void run(Reader script, InputStream input, OutputStream output)
 			throws IOException,
 			ClassNotFoundException,
 			ExitException {
@@ -480,7 +480,7 @@ public class Awk {
 	 * Internal method that configures default {@link AwkSettings} and executes
 	 * the AWK script.
 	 */
-	private static void run(
+	private void run(
 			Reader scriptReader,
 			InputStream inputStream,
 			OutputStream outputStream,
@@ -513,9 +513,8 @@ public class Awk {
 								scriptReader,
 								false));
 
-		Awk awk = new Awk();
 		try {
-			awk.invoke(settings);
+			invoke(settings);
 		} catch (ExitException e) {
 			if (e.getCode() != 0) {
 				throw e;
@@ -532,7 +531,7 @@ public class Awk {
 	 * @throws IOException if an I/O error occurs during compilation
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 */
-	public static AwkTuples compile(String script) throws IOException, ClassNotFoundException {
+	public AwkTuples compile(String script) throws IOException, ClassNotFoundException {
 		return compile(new StringReader(script));
 	}
 
@@ -545,12 +544,10 @@ public class Awk {
 	 * @throws IOException if an I/O error occurs during compilation
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 */
-	public static AwkTuples compile(Reader script) throws IOException, ClassNotFoundException {
+	public AwkTuples compile(Reader script) throws IOException, ClassNotFoundException {
 		AwkSettings settings = new AwkSettings();
 		settings.addScriptSource(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, script, false));
-
-		Awk awk = new Awk();
-		return awk.compile(settings);
+		return compile(settings);
 	}
 
 	public AwkTuples compile(AwkCompileSettings settings)
@@ -633,11 +630,10 @@ public class Awk {
 	 * <p>
 	 *
 	 * @param expression AWK expression to compile to AwkTuples
-	 * @param extensions Extensions that can be used in the expression
 	 * @return AwkTuples to be interpreted by AVM
 	 * @throws IOException if anything goes wrong with the compilation
 	 */
-	public static AwkTuples compileForEval(String expression, Map<String, JawkExtension> extensions) throws IOException {
+	public AwkTuples compileForEval(String expression) throws IOException {
 
 		// Create a ScriptSource
 		ScriptSource expressionSource = new ScriptSource(
@@ -646,7 +642,7 @@ public class Awk {
 				false);
 
 		// Parse the expression
-		AwkParser parser = new AwkParser(false, false, extensions);
+		AwkParser parser = new AwkParser(false, false, this.extensions);
 		AstNode ast = parser.parseExpression(expressionSource);
 
 		// Create the tuples that we will return
@@ -680,8 +676,8 @@ public class Awk {
 	 * @return the value of the specified expression
 	 * @throws IOException if anything goes wrong with the evaluation
 	 */
-	public static Object eval(String expression) throws IOException {
-		return eval(expression, null, null, Collections.emptyMap());
+	public Object eval(String expression) throws IOException {
+		return eval(expression, null, null);
 	}
 
 	/**
@@ -694,39 +690,8 @@ public class Awk {
 	 * @return the value of the specified expression
 	 * @throws IOException if anything goes wrong with the evaluation
 	 */
-	public static Object eval(String expression, String input) throws IOException {
-		return eval(expression, input, null, Collections.emptyMap());
-	}
-
-	/**
-	 * Evaluates the specified AWK expression (not a full script, just an expression)
-	 * and returns the value of this expression.
-	 * <p>
-	 *
-	 * @param expression Expression to evaluate (e.g. <code>2+3</code> or <code>$2 "-" $3</code>
-	 * @param input Optional text input (that will be available as $0, and tokenized as $1, $2, etc.)
-	 * @param fieldSeparator Value of the FS global variable used for parsing the input
-	 * @return the value of the specified expression
-	 * @throws IOException if anything goes wrong with the evaluation
-	 */
-	public static Object eval(String expression, String input, String fieldSeparator) throws IOException {
-		return eval(expression, input, fieldSeparator, Collections.emptyMap());
-	}
-
-	/**
-	 * Evaluates the specified AWK expression (not a full script, just an expression)
-	 * and returns the value of this expression.
-	 * <p>
-	 *
-	 * @param expression Expression to evaluate (e.g. <code>2+3</code> or <code>$2 "-" $3</code>
-	 * @param input Optional text input (that will be available as $0, and tokenized as $1, $2, etc.)
-	 * @param extensions Extensions that can be used in the expression
-	 * @return the value of the specified expression
-	 * @throws IOException if anything goes wrong with the evaluation
-	 */
-	public static Object eval(String expression, String input, Map<String, JawkExtension> extensions)
-			throws IOException {
-		return eval(expression, input, null, extensions);
+	public Object eval(String expression, String input) throws IOException {
+		return eval(expression, input, null);
 	}
 
 	/**
@@ -737,17 +702,11 @@ public class Awk {
 	 * @param expression Expression to evaluate (e.g. <code>2+3</code> or <code>$2 "-" $3</code>
 	 * @param input Optional text input (that will be available as $0, and tokenized as $1, $2, etc.)
 	 * @param fieldSeparator Value of the FS global variable used for parsing the input
-	 * @param extensions Extensions that can be used in the expression
 	 * @return the value of the specified expression
 	 * @throws IOException if anything goes wrong with the evaluation
 	 */
-	public static Object eval(
-			String expression,
-			String input,
-			String fieldSeparator,
-			Map<String, JawkExtension> extensions)
-			throws IOException {
-		return eval(compileForEval(expression, Collections.emptyMap()), input, fieldSeparator, extensions);
+	public Object eval(String expression, String input, String fieldSeparator) throws IOException {
+		return eval(compileForEval(expression), input, fieldSeparator);
 	}
 
 	/**
@@ -755,19 +714,13 @@ public class Awk {
 	 * TERNARY_EXPRESSION AST (the value that has been pushed in the stack).
 	 * <p>
 	 *
-	 * @param tuples Tuples returned by {@link Awk#compileForEval(String, Map)}
+	 * @param tuples Tuples returned by {@link Awk#compileForEval(String)}
 	 * @param input Optional text input (that will be available as $0, and tokenized as $1, $2, etc.)
 	 * @param fieldSeparator Value of the FS global variable used for parsing the input
-	 * @param extensions Extensions that can be used in the expression
 	 * @return the value of the specified expression
 	 * @throws IOException if anything goes wrong with the evaluation
 	 */
-	public static Object eval(
-			AwkTuples tuples,
-			String input,
-			String fieldSeparator,
-			Map<String, JawkExtension> extensions)
-			throws IOException {
+	public Object eval(AwkTuples tuples, String input, String fieldSeparator) throws IOException {
 
 		AwkSettings settings = new AwkSettings();
 		if (input != null) {
@@ -784,7 +737,7 @@ public class Awk {
 				.setOutputStream(
 						new PrintStream(new ByteArrayOutputStream(), false, StandardCharsets.UTF_8.name()));
 
-		AVM avm = new AVM(settings, extensions);
+		AVM avm = new AVM(settings, this.extensions);
 		return avm.eval(tuples, input);
 	}
 
