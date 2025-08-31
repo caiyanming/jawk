@@ -8,29 +8,31 @@ import org.metricshub.jawk.frontend.ast.LexerException;
 
 public class AwkParserTest {
 
+	private static final Awk AWK = new Awk();
+
 	@Test
 	public void testStringParsing() throws Exception {
-		assertEquals("'\\\\' must become \\", "\\", Awk.eval("\"\\\\\" "));
-		assertEquals("'\\a' must become BEL", "\u0007", Awk.eval("\"\\a\" "));
-		assertEquals("'\\b' must become BS", "\u0008", Awk.eval("\"\\b\" "));
-		assertEquals("'\\f' must become FF", "\014", Awk.eval("\"\\f\" "));
-		assertEquals("'\\n' must become LF", "\n", Awk.eval("\"\\n\" "));
-		assertEquals("'\\r' must become CR", "\r", Awk.eval("\"\\r\" "));
-		assertEquals("'\\t' must become TAB", "\t", Awk.eval("\"\\t\" "));
-		assertEquals("'\\v' must become VT", "\u000B", Awk.eval("\"\\v\" "));
-		assertEquals("'\\33' must become ESC", "\u001B", Awk.eval("\"\\33\" "));
-		assertEquals("'\\1!' must become {0x01, 0x21}", "\u0001!", Awk.eval("\"\\1!\" "));
-		assertEquals("'\\19' must become {0x01, 0x39}", "\u00019", Awk.eval("\"\\19\" "));
-		assertEquals("'\\38' must become {0x03, 0x38}", "\u00038", Awk.eval("\"\\38\" "));
-		assertEquals("'\\132' must become Z", "Z", Awk.eval("\"\\132\" "));
-		assertEquals("'\\1320' must become Z0", "Z0", Awk.eval("\"\\1320\" "));
-		assertEquals("'\\\"' must become \"", "\"", Awk.eval("\"\\\"\" "));
-		assertEquals("'\\x1B' must become ESC", "\u001B", Awk.eval("\"\\x1B\" "));
-		assertEquals("'\\x1b' must become ESC", "\u001B", Awk.eval("\"\\x1b\" "));
-		assertEquals("'\\x1!' must become {0x01, 0x21}", "\u0001!", Awk.eval("\"\\x1!\" "));
-		assertEquals("'\\x1G' must become {0x01, 0x47}", "\u0001G", Awk.eval("\"\\x1G\" "));
-		assertEquals("'\\x21A' must become !A", "!A", Awk.eval("\"\\x21A\" "));
-		assertEquals("'\\x!' must become x!", "x!", Awk.eval("\"\\x!\" "));
+		assertEquals("'\\\\' must become \\", "\\", AWK.eval("\"\\\\\" "));
+		assertEquals("'\\a' must become BEL", "\u0007", AWK.eval("\"\\a\" "));
+		assertEquals("'\\b' must become BS", "\u0008", AWK.eval("\"\\b\" "));
+		assertEquals("'\\f' must become FF", "\014", AWK.eval("\"\\f\" "));
+		assertEquals("'\\n' must become LF", "\n", AWK.eval("\"\\n\" "));
+		assertEquals("'\\r' must become CR", "\r", AWK.eval("\"\\r\" "));
+		assertEquals("'\\t' must become TAB", "\t", AWK.eval("\"\\t\" "));
+		assertEquals("'\\v' must become VT", "\u000B", AWK.eval("\"\\v\" "));
+		assertEquals("'\\33' must become ESC", "\u001B", AWK.eval("\"\\33\" "));
+		assertEquals("'\\1!' must become {0x01, 0x21}", "\u0001!", AWK.eval("\"\\1!\" "));
+		assertEquals("'\\19' must become {0x01, 0x39}", "\u00019", AWK.eval("\"\\19\" "));
+		assertEquals("'\\38' must become {0x03, 0x38}", "\u00038", AWK.eval("\"\\38\" "));
+		assertEquals("'\\132' must become Z", "Z", AWK.eval("\"\\132\" "));
+		assertEquals("'\\1320' must become Z0", "Z0", AWK.eval("\"\\1320\" "));
+		assertEquals("'\\\"' must become \"", "\"", AWK.eval("\"\\\"\" "));
+		assertEquals("'\\x1B' must become ESC", "\u001B", AWK.eval("\"\\x1B\" "));
+		assertEquals("'\\x1b' must become ESC", "\u001B", AWK.eval("\"\\x1b\" "));
+		assertEquals("'\\x1!' must become {0x01, 0x21}", "\u0001!", AWK.eval("\"\\x1!\" "));
+		assertEquals("'\\x1G' must become {0x01, 0x47}", "\u0001G", AWK.eval("\"\\x1G\" "));
+		assertEquals("'\\x21A' must become !A", "!A", AWK.eval("\"\\x21A\" "));
+		assertEquals("'\\x!' must become x!", "x!", AWK.eval("\"\\x!\" "));
 		assertThrows(
 				"Unfinished string by EOF must throw",
 				LexerException.class,
@@ -38,7 +40,7 @@ public class AwkParserTest {
 		assertThrows(
 				"Unfinished string by EOL must throw",
 				LexerException.class,
-				() -> Awk.eval("\"unfinished\n\""));
+				() -> AWK.eval("\"unfinished\n\""));
 		assertThrows(
 				"Interrupted octal number in string by EOF must throw",
 				LexerException.class,
@@ -46,7 +48,7 @@ public class AwkParserTest {
 		assertThrows(
 				"Interrupted octal number in string by EOL must throw",
 				LexerException.class,
-				() -> Awk.eval("\"unfinished\\0\n\""));
+				() -> AWK.eval("\"unfinished\\0\n\""));
 		assertThrows(
 				"Interrupted hex number in string by EOF must throw",
 				LexerException.class,
@@ -54,15 +56,15 @@ public class AwkParserTest {
 		assertThrows(
 				"Interrupted hex number in string by EOL must throw",
 				LexerException.class,
-				() -> Awk.eval("\"unfinished\\xf\n\""));
+				() -> AWK.eval("\"unfinished\\xf\n\""));
 	}
 
 	@Test
 	public void testMultiLineStatement() throws Exception {
 		assertEquals("|| must allow eol", "success", runAwk("BEGIN { if (0 || \n    1) { printf \"success\" } }", null));
 		assertEquals("&& must allow eol", "success", runAwk("BEGIN { if (1 && \n    1) { printf \"success\" } }", null));
-		assertEquals("? must allow eol", "success", Awk.eval("1 ?\n\"success\" : \"failed\" "));
-		assertEquals(": must allow eol", "success", Awk.eval("1 ? \"success\" :\n\"failed\" "));
+		assertEquals("? must allow eol", "success", AWK.eval("1 ?\n\"success\" : \"failed\" "));
+		assertEquals(": must allow eol", "success", AWK.eval("1 ? \"success\" :\n\"failed\" "));
 		assertEquals(", must allow eol", "success", runAwk("BEGIN { printf(\"%s\", \n\"success\") }", null));
 		assertEquals("do must allow eol", "success", runAwk("BEGIN { do\n printf \"success\"; while (0) }", null));
 		assertEquals(
@@ -73,7 +75,7 @@ public class AwkParserTest {
 
 	@Test
 	public void testUnaryPlus() throws Exception {
-		assertEquals("+a must convert a to number", 0L, Awk.eval("+a "));
+		assertEquals("+a must convert a to number", 0L, AWK.eval("+a "));
 	}
 
 	@Test
@@ -89,7 +91,7 @@ public class AwkParserTest {
 		assertEquals(
 				"Nested ternary must parse correctly",
 				2L,
-				Awk.eval("1 ? 2 : 3 ? 4 : 5 "));
+				AWK.eval("1 ? 2 : 3 ? 4 : 5 "));
 	}
 
 	@Test
@@ -112,8 +114,8 @@ public class AwkParserTest {
 
 	@Test
 	public void testPow() throws Exception {
-		assertEquals("^ (pow) operator must be supported", 256L, Awk.eval("2^8 "));
-		assertEquals("** (pow) operator must be supported", 256L, Awk.eval("2**8 "));
+		assertEquals("^ (pow) operator must be supported", 256L, AWK.eval("2^8 "));
+		assertEquals("** (pow) operator must be supported", 256L, AWK.eval("2**8 "));
 	}
 
 	@Test
@@ -141,11 +143,11 @@ public class AwkParserTest {
 				"2211",
 				runAwk("{ a = 3; printf $--a ; printf a ; printf $(--a) ; printf a }", "1 2 3"));
 		assertEquals("++ precedes ^", "22", runAwk("BEGIN { a = 1; printf(2^a++); printf a }", null));
-		assertEquals("^ precedes unary -", -1L, Awk.eval("-1^2"));
-		assertEquals("^ precedes unary !", 1, Awk.eval("!0^2"));
-		assertEquals("Unary - precedes *", -2L, Awk.eval("0 + -1 * 2"));
-		assertEquals("* precedes +", 5L, Awk.eval("1 + 2 * 2"));
-		assertEquals("+ precedes string concat", "33", Awk.eval("1 + 2 3"));
+		assertEquals("^ precedes unary -", -1L, AWK.eval("-1^2"));
+		assertEquals("^ precedes unary !", 1, AWK.eval("!0^2"));
+		assertEquals("Unary - precedes *", -2L, AWK.eval("0 + -1 * 2"));
+		assertEquals("* precedes +", 5L, AWK.eval("1 + 2 * 2"));
+		assertEquals("+ precedes string concat", "33", AWK.eval("1 + 2 3"));
 	}
 
 	@Test
@@ -161,6 +163,6 @@ public class AwkParserTest {
 		assertThrows(
 				"Unfinished regexp by EOL must throw",
 				LexerException.class,
-				() -> Awk.eval("/unfinished\n/"));
+				() -> AWK.eval("/unfinished\n/"));
 	}
 }

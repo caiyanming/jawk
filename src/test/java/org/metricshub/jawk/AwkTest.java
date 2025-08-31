@@ -65,6 +65,8 @@ public class AwkTest {
 	@Rule
 	public final SystemOutRule systemOutRule = new SystemOutRule().enableLog().muteForSuccessfulTests();
 
+	private static final Awk AWK = new Awk();
+
 	String[] linesOutput() {
 		return systemOutRule.getLog().split(EOL);
 	}
@@ -231,15 +233,15 @@ public class AwkTest {
 
 	@Test
 	public void testNot() throws Exception {
-		assertEquals("!0 must return 1", 1, Awk.eval("!0"));
-		assertEquals("!1 must return 0", 0, Awk.eval("!1"));
-		assertEquals("!0.0 must return 1", 1, Awk.eval("!0.0"));
-		assertEquals("!0.1 must return 0", 0, Awk.eval("!0.1"));
-		assertEquals("!2^31 must return 0", 0, Awk.eval("!2^31"));
-		assertEquals("!2^33 must return 0", 0, Awk.eval("!2^33"));
-		assertEquals("!\"\" must return 1", 1, Awk.eval("!\"\""));
-		assertEquals("!\"a\" must return 0", 0, Awk.eval("!\"a\""));
-		assertEquals("!uninitialized must return true", 1, Awk.eval("!uninitialized"));
+		assertEquals("!0 must return 1", 1, AWK.eval("!0"));
+		assertEquals("!1 must return 0", 0, AWK.eval("!1"));
+		assertEquals("!0.0 must return 1", 1, AWK.eval("!0.0"));
+		assertEquals("!0.1 must return 0", 0, AWK.eval("!0.1"));
+		assertEquals("!2^31 must return 0", 0, AWK.eval("!2^31"));
+		assertEquals("!2^33 must return 0", 0, AWK.eval("!2^33"));
+		assertEquals("!\"\" must return 1", 1, AWK.eval("!\"\""));
+		assertEquals("!\"a\" must return 0", 0, AWK.eval("!\"a\""));
+		assertEquals("!uninitialized must return true", 1, AWK.eval("!uninitialized"));
 	}
 
 	@Test
@@ -311,12 +313,12 @@ public class AwkTest {
 
 	@Test
 	public void testPrintfC() throws Exception {
-		assertEquals("A", Awk.eval("sprintf(\"%c\", 65)"));
+		assertEquals("A", AWK.eval("sprintf(\"%c\", 65)"));
 	}
 
 	@Test
 	public void testConcatenationLeftAssociativity() throws Exception {
-		assertEquals("Concatenated elements must be eval'ed from left to right", "0123", Awk.eval("a++ a++ a++ a++"));
+		assertEquals("Concatenated elements must be eval'ed from left to right", "0123", AWK.eval("a++ a++ a++ a++"));
 	}
 
 	@Test
@@ -329,7 +331,7 @@ public class AwkTest {
 
 	@Test
 	public void testAtan2ArgumentsLeftAssociativity() throws Exception {
-		assertEquals("atan2 arguments must be eval'ed from left to right", 0.0, Awk.eval("atan2(a++, a++)"));
+		assertEquals("atan2 arguments must be eval'ed from left to right", 0.0, AWK.eval("atan2(a++, a++)"));
 	}
 
 	@Test
@@ -361,17 +363,17 @@ public class AwkTest {
 		assertEquals(
 				"Chained additions and subtractions must be eval'ed from left to right",
 				6L,
-				Awk.eval("10 - 3 - 2 + 1"));
+				AWK.eval("10 - 3 - 2 + 1"));
 	}
 
 	@Test
 	public void testChainedMultiplicationsAndDivisionsLeftAssociativity() throws Exception {
-		assertEquals("Chained multiplies and divides must be eval'ed from left to right", 5L, Awk.eval("12 / 3 / 4 * 5"));
+		assertEquals("Chained multiplies and divides must be eval'ed from left to right", 5L, AWK.eval("12 / 3 / 4 * 5"));
 	}
 
 	@Test
 	public void testChainedExponentiationRightAssociativity() throws Exception {
-		assertEquals("Chained powers must be eval'ed from right to left", 4L, Awk.eval("256 ^ 0.5 ^ 4 ^ 0.5"));
+		assertEquals("Chained powers must be eval'ed from right to left", 4L, AWK.eval("256 ^ 0.5 ^ 4 ^ 0.5"));
 	}
 
 	// Additional tests to further cover left associativity:
@@ -405,7 +407,7 @@ public class AwkTest {
 		assertEquals(
 				"Chained string concatenation must be eval'ed from left to right",
 				"abcde",
-				Awk.eval("\"a\" \"b\" \"c\" \"d\" \"e\""));
+				AWK.eval("\"a\" \"b\" \"c\" \"d\" \"e\""));
 	}
 
 	@Test
@@ -413,22 +415,22 @@ public class AwkTest {
 		assertEquals(
 				"Complex expression with mixed operators must be eval'ed from left to right",
 				8L,
-				Awk.eval("10 + 12 / 3 * 2 - 6 / 3 * 5"));
+				AWK.eval("10 + 12 / 3 * 2 - 6 / 3 * 5"));
 	}
 
 	@Test
 	public void testSubstr() throws Exception {
-		assertEquals("234", Awk.eval("substr(\"12345\", 2, 3)"));
-		assertEquals("2345", Awk.eval("substr(\"12345\", 2, 10)"));
-		assertEquals("123", Awk.eval("substr(\"12345\", 0, 3)"));
-		assertEquals("123", Awk.eval("substr(\"12345\", -1, 3)"));
-		assertEquals("", Awk.eval("substr(\"12345\", 2, 0)").toString());
-		assertEquals("", Awk.eval("substr(\"12345\", 2, -1)").toString());
-		assertEquals("", Awk.eval("substr(\"12345\", -1, -1)").toString());
-		assertEquals("", Awk.eval("substr(\"12345\", 10, 3)").toString());
-		assertEquals("2345", Awk.eval("substr(\"12345\", 2)"));
-		assertEquals("12345", Awk.eval("substr(\"12345\", 0)"));
-		assertEquals("12345", Awk.eval("substr(\"12345\", -1)"));
+		assertEquals("234", AWK.eval("substr(\"12345\", 2, 3)"));
+		assertEquals("2345", AWK.eval("substr(\"12345\", 2, 10)"));
+		assertEquals("123", AWK.eval("substr(\"12345\", 0, 3)"));
+		assertEquals("123", AWK.eval("substr(\"12345\", -1, 3)"));
+		assertEquals("", AWK.eval("substr(\"12345\", 2, 0)").toString());
+		assertEquals("", AWK.eval("substr(\"12345\", 2, -1)").toString());
+		assertEquals("", AWK.eval("substr(\"12345\", -1, -1)").toString());
+		assertEquals("", AWK.eval("substr(\"12345\", 10, 3)").toString());
+		assertEquals("2345", AWK.eval("substr(\"12345\", 2)"));
+		assertEquals("12345", AWK.eval("substr(\"12345\", 0)"));
+		assertEquals("12345", AWK.eval("substr(\"12345\", -1)"));
 	}
 
 	@Test
@@ -557,35 +559,35 @@ public class AwkTest {
 
 	@Test
 	public void testEvalNumericExpression() throws Exception {
-		Object result = Awk.eval("1 + 2", null);
+		Object result = AWK.eval("1 + 2", null);
 		assertTrue(result instanceof Number);
 		assertEquals(3, ((Number) result).intValue());
 	}
 
 	@Test
 	public void testEvalFieldExtraction() throws Exception {
-		Object result = Awk.eval("$2", "my text input");
+		Object result = AWK.eval("$2", "my text input");
 		assertEquals("text", result);
 	}
 
 	@Test
 	public void testEvalNF() throws Exception {
-		Object result = Awk.eval("NF", "a b c");
+		Object result = AWK.eval("NF", "a b c");
 		assertEquals(3, ((Number) result).intValue());
 	}
 
 	@Test
 	public void testEvalFailsStatement() throws Exception {
-		assertThrows(ParserException.class, () -> Awk.eval("print 3.14", null));
-		assertThrows(ParserException.class, () -> Awk.eval("1 + 2, 3", null));
-		assertThrows(ParserException.class, () -> Awk.eval("1 + 2 ; 3 + 4", null));
-		assertThrows(ParserException.class, () -> Awk.eval("BEGIN { print 5 }", null));
+		assertThrows(ParserException.class, () -> AWK.eval("print 3.14", null));
+		assertThrows(ParserException.class, () -> AWK.eval("1 + 2, 3", null));
+		assertThrows(ParserException.class, () -> AWK.eval("1 + 2 ; 3 + 4", null));
+		assertThrows(ParserException.class, () -> AWK.eval("BEGIN { print 5 }", null));
 	}
 
 	@Test
 	public void compileFromString() throws Exception {
 		String script = "{ print $0 }";
-		AwkTuples tuples = Awk.compile(script);
+		AwkTuples tuples = AWK.compile(script);
 
 		AwkSettings settings = new AwkSettings();
 		settings.setInput(new ByteArrayInputStream("foo\nbar\n".getBytes(StandardCharsets.UTF_8)));
@@ -602,7 +604,7 @@ public class AwkTest {
 	@Test
 	public void compileFromReader() throws Exception {
 		String script = "{ print $0 }";
-		AwkTuples tuples = Awk.compile(new StringReader(script));
+		AwkTuples tuples = AWK.compile(new StringReader(script));
 
 		AwkSettings settings = new AwkSettings();
 		settings.setInput(new ByteArrayInputStream("one\n".getBytes(StandardCharsets.UTF_8)));
@@ -619,7 +621,7 @@ public class AwkTest {
 	@Test
 	public void invokeWithExplicitExtensions() throws Exception {
 		String script = "{ print $0 }";
-		AwkTuples tuples = Awk.compile(script);
+		AwkTuples tuples = AWK.compile(script);
 
 		AwkSettings settings = new AwkSettings();
 		settings.setInput(new ByteArrayInputStream("value\n".getBytes(StandardCharsets.UTF_8)));

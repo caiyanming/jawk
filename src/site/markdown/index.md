@@ -26,25 +26,26 @@ scripts.
 ### Evaluate an expression
 
 ```java
-Object value = Awk.eval("2 + 3");
+Object value = new Awk().eval("2 + 3");
 ```
 
 ### Run a script directly
 
 ```java
-String output = Awk.run("{ print $1 }", "foo bar");
+String output = new Awk().run("{ print $1 }", "foo bar");
 ```
 
 ### Compile and invoke a script
 
 ```java
-AwkTuples tuples = Awk.compile("{ print $0 }");
+Awk awk = new Awk();
+AwkTuples tuples = awk.compile("{ print $0 }");
 AwkSettings settings = new AwkSettings();
 // configure input/output streams here
-new Awk().invoke(tuples, settings);
+awk.invoke(tuples, settings);
 ```
 
-`compileForEval(...)` and `Awk.eval(AwkTuples, ...)` provide the same workflow
+`compileForEval(...)` and `eval(AwkTuples, ...)` provide the same workflow
 for expressions.
 
 See [AWK in Java documentation](java.html) for advanced examples.
