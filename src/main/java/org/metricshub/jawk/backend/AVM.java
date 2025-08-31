@@ -61,6 +61,7 @@ import org.metricshub.jawk.jrt.RegexTokenizer;
 import org.metricshub.jawk.jrt.SingleCharacterTokenizer;
 import org.metricshub.jawk.jrt.VariableManager;
 import org.metricshub.jawk.util.AwkLogger;
+import org.metricshub.jawk.util.AwkInterpreteSettings;
 import org.metricshub.jawk.util.AwkSettings;
 import org.metricshub.jawk.util.ScriptSource;
 import org.metricshub.jawk.jrt.BSDRandom;
@@ -81,12 +82,12 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * The interpreter runs completely independent of the frontend/intermediate step.
  * In fact, an intermediate file produced by Jawk is sufficient to
  * execute on this interpreter. The binding data-structure is
- * the AwkSettings, which can contain options pertinent to
+ * the AwkInterpreteSettings, which can contain options pertinent to
  * the interpreter. For example, the interpreter must know about
  * the -v command line argument values, as well as the file/variable list
  * parameter values (ARGC/ARGV) after the script on the command line.
  * However, if programmatic access to the AVM is required, meaningful
- * AwkSettings are not required.
+ * AwkInterpreteSettings are not required.
  * <p>
  * Semantic analysis has occurred prior to execution of the interpreter.
  * Therefore, the interpreter throws AwkRuntimeExceptions upon most
@@ -124,7 +125,7 @@ public class AVM implements VariableManager {
 		operandStack.push(o);
 	}
 
-	private final AwkSettings settings;
+	private final AwkInterpreteSettings settings;
 
 	/**
 	 * Construct the interpreter.
@@ -153,7 +154,7 @@ public class AVM implements VariableManager {
 	 * @param extensions Map of the extensions to load
 	 */
 	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "constructor stores provided settings and extension map for later use")
-	public AVM(final AwkSettings parameters, final Map<String, JawkExtension> extensions) {
+	public AVM(final AwkInterpreteSettings parameters, final Map<String, JawkExtension> extensions) {
 		if (parameters != null) {
 			this.settings = parameters;
 			locale = settings.getLocale();
@@ -179,7 +180,7 @@ public class AVM implements VariableManager {
 			jrt.setStreams(settings.getOutputStream(), System.err);
 		}
 		for (JawkExtension ext : this.extensions.values()) {
-			ext.init(this, jrt, settings); // this = VariableManager
+			ext.init(this, jrt, (AwkSettings) settings); // this = VariableManager
 		}
 	}
 
