@@ -51,12 +51,10 @@ import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.frontend.AwkParser;
 import org.metricshub.jawk.frontend.AstNode;
 import org.metricshub.jawk.intermediate.AwkTuples;
-import org.metricshub.jawk.util.AwkLogger;
 import org.metricshub.jawk.util.AwkSettings;
 import org.metricshub.jawk.util.AwkCompileSettings;
 import org.metricshub.jawk.util.AwkInterpreteSettings;
 import org.metricshub.jawk.util.ScriptSource;
-import org.slf4j.Logger;
 
 /**
  * Entry point into the parsing, analysis, and execution
@@ -98,8 +96,6 @@ public class Awk {
 	private static final String DEFAULT_EXTENSIONS = org.metricshub.jawk.ext.CoreExtension.class.getName()
 			+ "#"
 			+ org.metricshub.jawk.ext.StdinExtension.class.getName();
-
-	private static final Logger LOG = AwkLogger.getLogger(Awk.class);
 
 	private final Map<String, JawkExtension> extensions;
 
@@ -577,7 +573,6 @@ public class Awk {
 			if (settings.isDumpSyntaxTree()) {
 				// dump the syntax tree of the script to a file
 				String filename = settings.getOutputFilename("syntax_tree.lst");
-				LOG.info("writing to '{}'", filename);
 				PrintStream ps = new PrintStream(new FileOutputStream(filename), false, StandardCharsets.UTF_8.name());
 				if (ast != null) {
 					ast.dump(ps);
@@ -607,7 +602,6 @@ public class Awk {
 			if (settings.isWriteIntermediateFile()) {
 				// dump the intermediate code to an intermediate code file
 				String filename = settings.getOutputFilename("a.ai");
-				LOG.info("writing to '{}'", filename);
 				writeObjectToFile(tuples, filename);
 				return null;
 			}
@@ -615,7 +609,6 @@ public class Awk {
 		if (settings.isDumpIntermediateCode()) {
 			// dump the intermediate code to a human-readable text file
 			String filename = settings.getOutputFilename("avm.lst");
-			LOG.info("writing to '{}'", filename);
 			PrintStream ps = new PrintStream(new FileOutputStream(filename), false, StandardCharsets.UTF_8.name());
 			tuples.dump(ps);
 			ps.close();
@@ -798,7 +791,6 @@ public class Awk {
 		StringTokenizer st = new StringTokenizer(extensionsStr, "#");
 		while (st.hasMoreTokens()) {
 			String cls = st.nextToken();
-			LOG.trace("cls = {}", cls);
 			try {
 				Class<?> c = Class.forName(cls);
 				// check if it's a JawkExtension
@@ -806,8 +798,8 @@ public class Awk {
 					throw new ClassNotFoundException(cls + " does not implement JawkExtension");
 				}
 				if (extensionClasses.contains(c)) {
-					LOG.warn("class {} is multiple times referred in extension class list. Skipping.", cls);
-					continue;
+					throw new IllegalArgumentException(
+							"class " + cls + " is multiple times referred in extension class list.");
 				} else {
 					extensionClasses.add(c);
 				}
@@ -837,10 +829,10 @@ public class Awk {
 						| SecurityException
 						| IllegalArgumentException
 						| InvocationTargetException e) {
-					LOG.warn("Cannot instantiate " + c.getName(), e);
+					throw new IllegalStateException("Cannot instantiate " + c.getName(), e);
 				}
 			} catch (ClassNotFoundException cnfe) {
-				LOG.warn("Cannot classload {} : {}", new Object[] { cls, cnfe });
+				throw new IllegalStateException("Cannot classload " + cls, cnfe);
 			}
 		}
 

@@ -60,13 +60,11 @@ import java.util.ArrayDeque;
 import org.metricshub.jawk.jrt.RegexTokenizer;
 import org.metricshub.jawk.jrt.SingleCharacterTokenizer;
 import org.metricshub.jawk.jrt.VariableManager;
-import org.metricshub.jawk.util.AwkLogger;
 import org.metricshub.jawk.util.AwkInterpreteSettings;
 import org.metricshub.jawk.util.AwkSettings;
 import org.metricshub.jawk.util.ScriptSource;
 import org.metricshub.jawk.jrt.BSDRandom;
 import org.metricshub.printf4j.Printf4J;
-import org.slf4j.Logger;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
@@ -98,7 +96,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 public class AVM implements VariableManager {
 
-	private static final Logger LOG = AwkLogger.getLogger(AVM.class);
 	private static final boolean IS_WINDOWS = System.getProperty("os.name").indexOf("Windows") >= 0;
 
 	private RuntimeStack runtimeStack = new RuntimeStack();
@@ -2083,30 +2080,16 @@ public class AVM implements VariableManager {
 			// End of the instructions
 			jrt.jrtCloseAll();
 		} catch (RuntimeException re) {
-			LOG.error("", re);
-			LOG.error("operandStack = {}", operandStack);
-			LOG.error("position = {}", position);
-			LOG.error("line number = {}", position.lineNumber());
-
-			// clear runtime stack
+// clear runtime stack
 			runtimeStack.popAllFrames();
-			// clear operand stack
+// clear operand stack
 			operandStack.clear();
-
-			throw re;
+			throw new AwkRuntimeException(position.lineNumber(), re.getMessage(), re);
 		} catch (AssertionError ae) {
-			LOG.error("", ae);
-			LOG.error("operandStack = {}", operandStack);
-			try {
-				LOG.error("position = {}", position);
-			} catch (Throwable t) {
-				LOG.error("{ could not report on position", t);
-			}
-			try {
-				LOG.error("line number = {}", position.lineNumber());
-			} catch (Throwable t) {
-				LOG.error("{ could not report on line number", t);
-			}
+// clear runtime stack
+			runtimeStack.popAllFrames();
+// clear operand stack
+			operandStack.clear();
 			throw ae;
 		}
 
@@ -2135,12 +2118,12 @@ public class AVM implements VariableManager {
 					AssocArray aa = (AssocArray) value;
 					value = aa.mapString();
 				}
-				LOG.info("{} = {}", name, value);
+				System.out.println(name + " = " + value);
 			}
 		} else {
 			// dump associative arrays
 			for (AssocArray aa : aaArray) {
-				LOG.info(aa.mapString());
+				System.out.println(aa.mapString());
 			}
 		}
 	}

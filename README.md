@@ -10,6 +10,8 @@ Jawk is a pure Java implementation of [AWK](https://en.wikipedia.org/wiki/AWK). 
 
 This project is forked from the excellent [Jawk project](https://jawk.sourceforge.net/) that was maintained by [hoijui on GitHub](https://github.com/hoijui/Jawk).
 
+Jawk does not rely on any logging framework; errors are reported through standard Java exceptions.
+
 [Project Documentation](https://metricshub.org/Jawk)
 
 ## Run Jawk CLI

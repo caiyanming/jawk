@@ -25,6 +25,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.InputStream;
 import java.io.PrintStream;
+import org.metricshub.jawk.jrt.AwkRuntimeException;
 import org.metricshub.jawk.util.AwkParameters;
 import org.metricshub.jawk.util.AwkSettings;
 
@@ -90,6 +91,18 @@ public final class Main {
 			awk.invoke(settings);
 		} catch (ExitException e) {
 			System.exit(e.getCode());
+		} catch (AwkRuntimeException e) {
+			if (e.getLineNumber() >= 0) {
+				System.err
+						.printf(
+								"%s (line %d): %s\n",
+								e.getClass().getSimpleName(),
+								e.getLineNumber(),
+								e.getMessage());
+			} else {
+				System.err.printf("%s: %s\n", e.getClass().getSimpleName(), e.getMessage());
+			}
+			System.exit(1);
 		} catch (Exception e) {
 			System.err.printf("%s: %s\n", e.getClass().getSimpleName(), e.getMessage());
 			System.exit(1);

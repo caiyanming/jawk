@@ -90,7 +90,7 @@ Because we're using Java, the following differences exist in order to blend easi
 
 There's a growing list of things that make our version diverge from the original Jawk written by Danny Daglas, and maintained by Robin Vobruba:
 
-* Replaced [Logback](https://logback.qos.ch/) with the [SimpleLogger](https://www.slf4j.org/api/org/slf4j/simple/SimpleLogger.html) that comes with [SLF4J](https://www.slf4j.org/)
+* Removed all logging framework dependencies; Jawk now reports errors solely through Java exceptions
 * Removed the AWK-to-JVM bytecode compiler
 * Removed the Socket extension (to get a smaller jar)
 * Improved performance in parsing inputs and printed output

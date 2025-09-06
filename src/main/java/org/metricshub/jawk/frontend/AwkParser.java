@@ -43,9 +43,7 @@ import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.intermediate.Address;
 import org.metricshub.jawk.intermediate.AwkTuples;
 import java.util.function.Supplier;
-import org.metricshub.jawk.util.AwkLogger;
 import org.metricshub.jawk.util.ScriptSource;
-import org.slf4j.Logger;
 import org.metricshub.jawk.frontend.ast.LexerException;
 import org.metricshub.jawk.frontend.ast.ParserException;
 
@@ -58,8 +56,6 @@ import org.metricshub.jawk.frontend.ast.ParserException;
  * @author Danny Daglas
  */
 public class AwkParser {
-
-	private static final Logger LOG = AwkLogger.getLogger(AwkParser.class);
 
 	/**
 	 * Flags that describe special behaviours of AST nodes. These replace the
@@ -332,20 +328,6 @@ public class AwkParser {
 	}
 
 	/**
-	 * Logs a warning about the syntax of the script (at which line, of which file)
-	 *
-	 * @param message
-	 */
-	private void warn(String message) {
-		LOG
-				.warn(
-						"%s (%s:%d)",
-						message,
-						scriptSources.get(scriptSourcesCurrentIndex).getDescription(),
-						reader.getLineNumber());
-	}
-
-	/**
 	 * Parse the script streamed by script_reader. Build and return the
 	 * root of the abstract syntax tree which represents the Jawk script.
 	 *
@@ -466,7 +448,6 @@ public class AwkParser {
 					} else if (c >= 'a' && c <= 'f') {
 						hexChar = c - 'a' + 10;
 					} else {
-						warn("no hex digits in `\\x' sequence");
 						string.append('x');
 						continue;
 					}
@@ -536,7 +517,6 @@ public class AwkParser {
 				}
 			}
 		} catch (IllegalAccessException iac) {
-			LOG.error("Failed to create token string", iac);
 			return "[" + token + ": " + iac + "]";
 		}
 		return "{" + token + "}";

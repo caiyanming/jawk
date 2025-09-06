@@ -26,8 +26,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.metricshub.jawk.util.AwkLogger;
-import org.slf4j.Logger;
 
 /**
  * Relay data from an input stream to an output stream.
@@ -41,8 +39,6 @@ import org.slf4j.Logger;
  * @author Danny Daglas
  */
 public class DataPump implements Runnable {
-
-	private static final Logger LOG = AwkLogger.getLogger(DataPump.class);
 
 	private InputStream is;
 	private PrintStream os;
@@ -86,13 +82,13 @@ public class DataPump implements Runnable {
 			while ((len = is.read(b, 0, b.length)) >= 0) {
 				os.write(b, 0, len);
 			}
-		} catch (IOException ioe) {
-			LOG.debug("Error pumping data from InputStream to OutputStream", ioe);
+		} catch (IOException ioe) { // NOPMD - ignore IO errors while pumping data
+			// ignore
 		}
 		try {
 			is.close();
-		} catch (IOException ioe) {
-			LOG.debug("Couldn't close InputStream", ioe);
+		} catch (IOException ioe) { // NOPMD - ignore close failures
+			// ignore
 		}
 	}
 }

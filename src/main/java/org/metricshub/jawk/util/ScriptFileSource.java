@@ -27,10 +27,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import org.slf4j.Logger;
 
 /**
  * Represents one AWK-script file content source.
@@ -38,8 +38,6 @@ import org.slf4j.Logger;
  * @author Danny Daglas
  */
 public class ScriptFileSource extends ScriptSource {
-
-	private static final Logger LOG = AwkLogger.getLogger(ScriptFileSource.class);
 
 	private String filePath;
 	private Reader fileReader;
@@ -77,7 +75,7 @@ public class ScriptFileSource extends ScriptSource {
 			try {
 				fileReader = Files.newBufferedReader(Paths.get(filePath), StandardCharsets.UTF_8);
 			} catch (IOException ex) {
-				LOG.error("Failed to open script source for reading: " + filePath, ex);
+				throw new UncheckedIOException("Failed to open script source for reading: " + filePath, ex);
 			}
 		}
 
@@ -91,7 +89,9 @@ public class ScriptFileSource extends ScriptSource {
 			try {
 				fileInputStream = new FileInputStream(filePath);
 			} catch (FileNotFoundException ex) {
-				LOG.error("Failed to open script source for reading: " + filePath, ex);
+				throw new UncheckedIOException(
+						"Failed to open script source for reading: " + filePath,
+						ex);
 			}
 		}
 
