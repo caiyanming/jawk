@@ -50,8 +50,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.math.BigDecimal;
 import org.metricshub.jawk.intermediate.UninitializedObject;
-import org.metricshub.jawk.util.AwkLogger;
-import org.slf4j.Logger;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
@@ -89,8 +87,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * @author Danny Daglas
  */
 public class JRT {
-
-	private static final Logger LOG = AwkLogger.getLogger(JRT.class);
 
 	private static final boolean IS_WINDOWS = System.getProperty("os.name").indexOf("Windows") >= 0;
 
@@ -381,19 +377,15 @@ public class JRT {
 		if (!(o1 instanceof Number)) {
 			try {
 				o1 = new BigDecimal(o1String).doubleValue();
-			} catch (NumberFormatException nfe) {
-				if (o1String.length() > 0) {
-					LOG.debug("Invalid number", nfe);
-				}
+			} catch (NumberFormatException nfe) { // NOPMD - ignore invalid number
+				// ignore invalid number, handled by subsequent logic
 			}
 		}
 		if (!(o2 instanceof Number)) {
 			try {
 				o2 = new BigDecimal(o2String).doubleValue();
-			} catch (NumberFormatException nfe) {
-				if (o2String.length() > 0) {
-					LOG.debug("Invalid number", nfe);
-				}
+			} catch (NumberFormatException nfe) { // NOPMD - ignore invalid number
+				// ignore invalid number, handled by subsequent logic
 			}
 		}
 
@@ -631,29 +623,25 @@ public class JRT {
 		initializeArgList(locale);
 
 		while (true) {
-			try {
-				if ((partitioningReader == null || inputLine == null)
-						&& !prepareNextReader(input, locale)) {
-					return false;
-				}
-
-				inputLine = partitioningReader.readRecord();
-				if (inputLine == null) {
-					continue;
-				}
-
-				if (!forGetline) {
-					// For getline the caller will re-acquire $0; otherwise parse fields
-					jrtParseFields();
-				}
-				vm.incNR();
-				if (partitioningReader.fromFilenameList()) {
-					vm.incFNR();
-				}
-				return true;
-			} catch (IOException ioe) {
-				LOG.warn("IO Exception", ioe);
+			if ((partitioningReader == null || inputLine == null)
+					&& !prepareNextReader(input, locale)) {
+				return false;
 			}
+
+			inputLine = partitioningReader.readRecord();
+			if (inputLine == null) {
+				continue;
+			}
+
+			if (!forGetline) {
+				// For getline the caller will re-acquire $0; otherwise parse fields
+				jrtParseFields();
+			}
+			vm.incNR();
+			if (partitioningReader.fromFilenameList()) {
+				vm.incFNR();
+			}
+			return true; // NOPMD - loop ends when a line is consumed
 		}
 	}
 
@@ -1089,7 +1077,6 @@ public class JRT {
 				fileReaders.put(filename, pr);
 				vm.setFILENAME(filename);
 			} catch (IOException ioe) {
-				LOG.warn("IO Exception", ioe);
 				fileReaders.remove(filename);
 				throw ioe;
 			}
@@ -1145,7 +1132,6 @@ public class JRT {
 				commandReaders.put(cmd, pr);
 				vm.setFILENAME("");
 			} catch (IOException ioe) {
-				LOG.warn("IO Exception", ioe);
 				commandReaders.remove(cmd);
 				Process p = commandProcesses.get(cmd);
 				commandProcesses.remove(cmd);
@@ -1348,7 +1334,6 @@ public class JRT {
 				return Integer.valueOf(p.exitValue());
 			}
 		} catch (IOException ioe) {
-			LOG.warn("IO Exception", ioe);
 			return MINUS_ONE;
 		}
 	}

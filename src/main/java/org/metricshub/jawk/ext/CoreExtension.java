@@ -37,8 +37,6 @@ import org.metricshub.jawk.jrt.BlockObject;
 import org.metricshub.jawk.jrt.IllegalAwkArgumentException;
 import org.metricshub.jawk.jrt.JRT;
 import org.metricshub.jawk.jrt.VariableManager;
-import org.metricshub.jawk.util.AwkLogger;
-import org.slf4j.Logger;
 
 /**
  * Extensions which make developing in Jawk and
@@ -206,8 +204,6 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 	// Singleton instance for this extension
 	private static CoreExtension instance = null;
 	private static final Object INSTANCE_LOCK = new Object();
-	private static final Logger LOG = AwkLogger.getLogger(CoreExtension.class);
-
 	private int refMapIdx = 0;
 	private Map<String, Object> referenceMap = new HashMap<String, Object>();
 	private Map<AssocArray, Iterator<?>> iterators = new HashMap<AssocArray, Iterator<?>>();
@@ -242,8 +238,6 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 		synchronized (INSTANCE_LOCK) {
 			if (instance == null) {
 				instance = this;
-			} else {
-				LOG.warn("Multiple CoreExtension instances in this VM. Using original instance.");
 			}
 		}
 	}
@@ -571,7 +565,7 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 			if (value instanceof AssocArray) {
 				value = ((AssocArray) value).mapString();
 			}
-			LOG.info("REF : {} = {}", new Object[] { entry.getKey(), value });
+			System.out.println("REF : " + entry.getKey() + " = " + value);
 		}
 	}
 

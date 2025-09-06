@@ -32,9 +32,7 @@ import org.metricshub.jawk.NotImplementedError;
 import org.metricshub.jawk.jrt.BlockObject;
 import org.metricshub.jawk.jrt.JRT;
 import org.metricshub.jawk.jrt.VariableManager;
-import org.metricshub.jawk.util.AwkLogger;
 import org.metricshub.jawk.util.AwkSettings;
-import org.slf4j.Logger;
 
 /**
  * Enable stdin processing in Jawk, to be used in conjunction with the -ni parameter.
@@ -97,8 +95,6 @@ import org.slf4j.Logger;
  */
 public class StdinExtension extends AbstractExtension implements JawkExtension {
 
-	private static final Logger LOG = AwkLogger.getLogger(StdinExtension.class);
-
 	private static final Object DONE = new Object();
 
 	private final BlockingQueue<Object> getLineInput = new LinkedBlockingQueue<Object>();
@@ -140,16 +136,13 @@ public class StdinExtension extends AbstractExtension implements JawkExtension {
 						}
 					}
 				} catch (InterruptedException ie) {
-					LOG.error("", ie);
-					// do nothing ... the thread death will signal an issue
+					throw new RuntimeException(ie);
 				} catch (IOException ioe) {
-					LOG.error("", ioe);
-					// do nothing ... the thread death will signal an issue
+					throw new RuntimeException(ioe);
 				}
 				try {
 					getLineInput.put(DONE);
 				} catch (InterruptedException ie) {
-					LOG.error("Should never be interrupted.", ie);
 					throw new IllegalStateException("Should never be interrupted.", ie);
 				}
 				synchronized (blocker) {
@@ -234,7 +227,6 @@ public class StdinExtension extends AbstractExtension implements JawkExtension {
 			getJrt().jrtParseFields();
 			return 1;
 		} catch (InterruptedException ie) {
-			LOG.warn("", ie);
 			return -1;
 		}
 	}

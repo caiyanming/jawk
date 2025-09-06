@@ -24,8 +24,6 @@ package org.metricshub.jawk.jrt;
 
 import java.util.LinkedList;
 import java.util.List;
-import org.metricshub.jawk.util.AwkLogger;
-import org.slf4j.Logger;
 
 /**
  * Manages multiple blocking code segments simultaneously such that
@@ -36,8 +34,6 @@ import org.slf4j.Logger;
  * @author Danny Daglas
  */
 public class BlockManager {
-
-	private static final Logger LOG = AwkLogger.getLogger(BlockManager.class);
 
 	private final Object notifierLock = "NOTIFIER_LOCK";
 	private String notifier = null;
@@ -146,7 +142,6 @@ public class BlockManager {
 			} catch (InterruptedException ie) {
 				currentThread().interrupt();
 			} catch (RuntimeException re) {
-				LOG.error("exitting", re);
 				throw re;
 			}
 		}

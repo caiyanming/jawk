@@ -78,23 +78,11 @@
 
 	<dependencies>
 
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>2.0.17</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-simple</artifactId>
-			<version>2.0.17</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.metricshub</groupId>
-			<artifactId>printf4j</artifactId>
-			<version>0.9.08</version>
-		</dependency>
+               <dependency>
+                       <groupId>org.metricshub</groupId>
+                       <artifactId>printf4j</artifactId>
+                       <version>0.9.08</version>
+               </dependency>
 
 		<dependency>
 			<groupId>com.github.stefanbirkner</groupId>

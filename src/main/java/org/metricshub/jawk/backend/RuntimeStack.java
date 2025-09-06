@@ -29,15 +29,12 @@ import java.util.LinkedList;
 
 import org.metricshub.jawk.intermediate.UninitializedObject;
 import org.metricshub.jawk.jrt.AssocArray;
-import org.metricshub.jawk.util.AwkLogger;
-import org.slf4j.Logger;
 
 /**
  * Runtime stack used by the AVM interpreter.
  */
 class RuntimeStack {
 
-	private static final Logger LOG = AwkLogger.getLogger(RuntimeStack.class);
 	static final UninitializedObject BLANK = new UninitializedObject();
 
 	private Object[] globals = null;
@@ -47,10 +44,10 @@ class RuntimeStack {
 
 	@SuppressWarnings("unused")
 	public void dump() {
-		LOG.info("globals = {}", Arrays.toString(globals));
-		LOG.info("locals = {}", Arrays.toString(locals));
-		LOG.info("localsStack = {}", localsStack);
-		LOG.info("returnIndexes = {}", returnIndexes);
+		System.out.println("globals = " + Arrays.toString(globals));
+		System.out.println("locals = " + Arrays.toString(locals));
+		System.out.println("localsStack = " + localsStack);
+		System.out.println("returnIndexes = " + returnIndexes);
 	}
 
 	Object[] getNumGlobals() {

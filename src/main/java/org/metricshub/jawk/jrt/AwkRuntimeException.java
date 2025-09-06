@@ -33,6 +33,8 @@ public class AwkRuntimeException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 
+	private final int lineNumber;
+
 	/**
 	 * <p>
 	 * Constructor for AwkRuntimeException.
@@ -42,6 +44,12 @@ public class AwkRuntimeException extends RuntimeException {
 	 */
 	public AwkRuntimeException(String msg) {
 		super(msg);
+		this.lineNumber = -1;
+	}
+
+	public AwkRuntimeException(String msg, Throwable cause) {
+		super(msg, cause);
+		this.lineNumber = -1;
 	}
 
 	/**
@@ -53,6 +61,22 @@ public class AwkRuntimeException extends RuntimeException {
 	 * @param msg a {@link java.lang.String} object
 	 */
 	public AwkRuntimeException(int lineno, String msg) {
-		super(msg + " (line: " + lineno + ")");
+		super(msg);
+		this.lineNumber = lineno;
+	}
+
+	public AwkRuntimeException(int lineno, String msg, Throwable cause) {
+		super(msg, cause);
+		this.lineNumber = lineno;
+	}
+
+	/**
+	 * Returns the line number associated with this exception or {@code -1} if
+	 * unavailable.
+	 *
+	 * @return the offending line number or {@code -1}
+	 */
+	public int getLineNumber() {
+		return lineNumber;
 	}
 }

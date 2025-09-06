@@ -28,7 +28,6 @@ import java.io.PrintStream;
 import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.util.Locale;
-import org.slf4j.Logger;
 
 /**
  * Manages the command-line parameters accepted by Jawk.
@@ -85,8 +84,6 @@ import org.slf4j.Logger;
  * @author Danny Daglas
  */
 public final class AwkParameters {
-
-	private static final Logger LOG = AwkLogger.getLogger(AwkParameters.class);
 
 	private static final String JAR_NAME;
 
@@ -210,13 +207,19 @@ public final class AwkParameters {
 							scriptSource.getReader();
 						}
 					} catch (IOException ex) {
-						LOG.error("Failed to read script '" + scriptSource.getDescription() + "'", ex);
+						System.err
+								.println(
+										"Failed to read script '" + scriptSource.getDescription()
+												+ "': " + ex.getMessage());
 						System.exit(1);
 					}
 				}
 			}
 		} catch (IllegalArgumentException iae) {
-			LOG.error("Failed to parse arguments. Please see the help/usage output (cmd line switch '-h').", iae);
+			System.err
+					.println(
+							"Failed to parse arguments. Please see the help/usage output (cmd line switch '-h').");
+			iae.printStackTrace(System.err);
 			System.exit(1);
 		}
 
