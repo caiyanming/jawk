@@ -1,5 +1,7 @@
 package org.metricshub.jawk.frontend;
 
+import static org.metricshub.jawk.frontend.AwkParser.Token.*;
+
 /*-
  * ╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲
  * Jawk
@@ -25,8 +27,6 @@ package org.metricshub.jawk.frontend;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.PrintStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
@@ -70,71 +70,88 @@ public class AwkParser {
 		NON_STATEMENT
 	}
 
-	/** Lexer token values, similar to yytok values in lex/yacc. */
-	private static int sIdx = 257;
+	/** Lexer token values. */
+	enum Token {
+		EOF,
+		NEWLINE,
+		SEMICOLON,
+		ID,
+		FUNC_ID,
+		INTEGER,
+		DOUBLE,
+		STRING,
 
-	// Lexable tokens...
+		EQUALS,
 
-	private static final int EOF = sIdx++;
-	private static final int NEWLINE = sIdx++;
-	private static final int SEMICOLON = sIdx++;
-	private static final int ID = sIdx++;
-	private static final int FUNC_ID = sIdx++;
-	private static final int INTEGER = sIdx++;
-	private static final int DOUBLE = sIdx++;
-	private static final int STRING = sIdx++;
+		AND,
+		OR,
 
-	private static final int EQUALS = sIdx++;
+		EQ,
+		GT,
+		GE,
+		LT,
+		LE,
+		NE,
+		NOT,
+		PIPE,
+		QUESTION_MARK,
+		COLON,
+		APPEND,
 
-	private static final int AND = sIdx++;
-	private static final int OR = sIdx++;
+		PLUS,
+		MINUS,
+		MULT,
+		DIVIDE,
+		MOD,
+		POW,
+		COMMA,
+		MATCHES,
+		NOT_MATCHES,
+		DOLLAR,
 
-	private static final int EQ = sIdx++;
-	private static final int GT = sIdx++;
-	private static final int GE = sIdx++;
-	private static final int LT = sIdx++;
-	private static final int LE = sIdx++;
-	private static final int NE = sIdx++;
-	private static final int NOT = sIdx++;
-	private static final int PIPE = sIdx++;
-	private static final int QUESTION_MARK = sIdx++;
-	private static final int COLON = sIdx++;
-	private static final int APPEND = sIdx++;
+		INC,
+		DEC,
 
-	private static final int PLUS = sIdx++;
-	private static final int MINUS = sIdx++;
-	private static final int MULT = sIdx++;
-	private static final int DIVIDE = sIdx++;
-	private static final int MOD = sIdx++;
-	private static final int POW = sIdx++;
-	private static final int COMMA = sIdx++;
-	private static final int MATCHES = sIdx++;
-	private static final int NOT_MATCHES = sIdx++;
-	private static final int DOLLAR = sIdx++;
+		PLUS_EQ,
+		MINUS_EQ,
+		MULT_EQ,
+		DIV_EQ,
+		MOD_EQ,
+		POW_EQ,
 
-	private static final int INC = sIdx++;
-	private static final int DEC = sIdx++;
+		OPEN_PAREN,
+		CLOSE_PAREN,
+		OPEN_BRACE,
+		CLOSE_BRACE,
+		OPEN_BRACKET,
+		CLOSE_BRACKET,
 
-	private static final int PLUS_EQ = sIdx++;
-	private static final int MINUS_EQ = sIdx++;
-	private static final int MULT_EQ = sIdx++;
-	private static final int DIV_EQ = sIdx++;
-	private static final int MOD_EQ = sIdx++;
-	private static final int POW_EQ = sIdx++;
+		BUILTIN_FUNC_NAME,
 
-	private static final int OPEN_PAREN = sIdx++;
-	private static final int CLOSE_PAREN = sIdx++;
-	private static final int OPEN_BRACE = sIdx++;
-	private static final int CLOSE_BRACE = sIdx++;
-	private static final int OPEN_BRACKET = sIdx++;
-	private static final int CLOSE_BRACKET = sIdx++;
+		EXTENSION,
 
-	private static final int BUILTIN_FUNC_NAME = sIdx++;
+		KW_SLEEP,
+		KW_DUMP,
 
-	private static final int EXTENSION = sIdx++;
-
-	private static final int KW_SLEEP = sIdx++;
-	private static final int KW_DUMP = sIdx++;
+		KW_FUNCTION,
+		KW_BEGIN,
+		KW_END,
+		KW_IN,
+		KW_IF,
+		KW_ELSE,
+		KW_WHILE,
+		KW_FOR,
+		KW_DO,
+		KW_RETURN,
+		KW_EXIT,
+		KW_NEXT,
+		KW_CONTINUE,
+		KW_DELETE,
+		KW_BREAK,
+		KW_PRINT,
+		KW_PRINTF,
+		KW_GETLINE
+	}
 
 	/**
 	 * Contains a mapping of Jawk keywords to their
@@ -150,32 +167,32 @@ public class AwkParser {
 	 * they are not stored in this map. They are separated
 	 * into other maps.
 	 */
-	private static final Map<String, Integer> KEYWORDS = new HashMap<String, Integer>();
+	private static final Map<String, Token> KEYWORDS = new HashMap<String, Token>();
 
 	static {
 		// special keywords
-		KEYWORDS.put("function", sIdx++);
-		KEYWORDS.put("BEGIN", sIdx++);
-		KEYWORDS.put("END", sIdx++);
-		KEYWORDS.put("in", sIdx++);
+		KEYWORDS.put("function", KW_FUNCTION);
+		KEYWORDS.put("BEGIN", KW_BEGIN);
+		KEYWORDS.put("END", KW_END);
+		KEYWORDS.put("in", KW_IN);
 
 		// statements
-		KEYWORDS.put("if", sIdx++);
-		KEYWORDS.put("else", sIdx++);
-		KEYWORDS.put("while", sIdx++);
-		KEYWORDS.put("for", sIdx++);
-		KEYWORDS.put("do", sIdx++);
-		KEYWORDS.put("return", sIdx++);
-		KEYWORDS.put("exit", sIdx++);
-		KEYWORDS.put("next", sIdx++);
-		KEYWORDS.put("continue", sIdx++);
-		KEYWORDS.put("delete", sIdx++);
-		KEYWORDS.put("break", sIdx++);
+		KEYWORDS.put("if", KW_IF);
+		KEYWORDS.put("else", KW_ELSE);
+		KEYWORDS.put("while", KW_WHILE);
+		KEYWORDS.put("for", KW_FOR);
+		KEYWORDS.put("do", KW_DO);
+		KEYWORDS.put("return", KW_RETURN);
+		KEYWORDS.put("exit", KW_EXIT);
+		KEYWORDS.put("next", KW_NEXT);
+		KEYWORDS.put("continue", KW_CONTINUE);
+		KEYWORDS.put("delete", KW_DELETE);
+		KEYWORDS.put("break", KW_BREAK);
 
 		// special-form functions
-		KEYWORDS.put("print", sIdx++);
-		KEYWORDS.put("printf", sIdx++);
-		KEYWORDS.put("getline", sIdx++);
+		KEYWORDS.put("print", KW_PRINT);
+		KEYWORDS.put("printf", KW_PRINTF);
+		KEYWORDS.put("getline", KW_GETLINE);
 
 		KEYWORDS.put("_sleep", KW_SLEEP);
 		KEYWORDS.put("_dump", KW_DUMP);
@@ -281,7 +298,7 @@ public class AwkParser {
 	private int scriptSourcesCurrentIndex;
 	private LineNumberReader reader;
 	private int c;
-	private int token;
+	private Token token;
 
 	private StringBuffer text = new StringBuffer();
 	private StringBuffer string = new StringBuffer();
@@ -495,32 +512,15 @@ public class AwkParser {
 		read();
 	}
 
-	private static String toTokenString(int token) {
-		Class<AwkParser> c = AwkParser.class;
-		Field[] fields = c.getDeclaredFields();
-		try {
-			for (Field field : fields) {
-				if ((field.getModifiers() & Modifier.STATIC) > 0
-						&& field.getType() == Integer.TYPE
-						&& field.getInt(null) == token) {
-					return field.getName();
-				}
-			}
-		} catch (IllegalAccessException iac) {
-			return "[" + token + ": " + iac + "]";
-		}
-		return "{" + token + "}";
-	}
-
-	private int lexer(int expectedToken) throws IOException {
+	private Token lexer(Token expectedToken) throws IOException {
 		if (token != expectedToken) {
 			throw parserException(
-					"Expecting " + toTokenString(expectedToken) + ". Found: " + toTokenString(token) + " (" + text + ")");
+					"Expecting " + expectedToken.name() + ". Found: " + token.name() + " (" + text + ")");
 		}
 		return lexer();
 	}
 
-	private int lexer() throws IOException {
+	private Token lexer() throws IOException {
 		// clear whitespace
 		while (c >= 0 && (c == ' ' || c == '\t' || c == '#' || c == '\\')) {
 			if (c == '\\') {
@@ -800,12 +800,11 @@ public class AwkParser {
 				token = EXTENSION;
 				return token;
 			}
-			Integer kwToken = KEYWORDS.get(text.toString());
+			Token kwToken = KEYWORDS.get(text.toString());
 			if (kwToken != null) {
-				int kw = kwToken.intValue();
-				boolean treatAsIdentifier = !additionalFunctions && (kw == KW_SLEEP || kw == KW_DUMP);
+				boolean treatAsIdentifier = !additionalFunctions && (kwToken == KW_SLEEP || kwToken == KW_DUMP);
 				if (!treatAsIdentifier) {
-					token = kw;
+					token = kwToken;
 					return token;
 				}
 				// treat as identifier
@@ -890,7 +889,7 @@ public class AwkParser {
 	private void terminator() throws IOException {
 		// like optTerminator, except error if no terminator was found
 		if (!optTerminator()) {
-			throw parserException("Expecting statement terminator. Got " + toTokenString(token) + ": " + text);
+			throw parserException("Expecting statement terminator. Got " + token.name() + ": " + text);
 		}
 	}
 
@@ -943,7 +942,7 @@ public class AwkParser {
 	AST RULE_LIST() throws IOException {
 		optNewline();
 		AST ruleOrFunction = null;
-		if (token == KEYWORDS.get("function")) {
+		if (token == KW_FUNCTION) {
 			ruleOrFunction = FUNCTION();
 		} else if (token != EOF) {
 			ruleOrFunction = RULE();
@@ -962,7 +961,7 @@ public class AwkParser {
 			functionName = text.toString();
 			lexer();
 		} else {
-			throw parserException("Expecting function name. Got " + toTokenString(token) + ": " + text);
+			throw parserException("Expecting function name. Got " + token.name() + ": " + text);
 		}
 		symbolTable.setFunctionName(functionName);
 		lexer(OPEN_PAREN);
@@ -1009,10 +1008,10 @@ public class AwkParser {
 	AST RULE() throws IOException {
 		AST optExpr;
 		AST optStmts;
-		if (token == KEYWORDS.get("BEGIN")) {
+		if (token == KW_BEGIN) {
 			lexer();
 			optExpr = symbolTable.addBEGIN();
-		} else if (token == KEYWORDS.get("END")) {
+		} else if (token == KW_END) {
 			lexer();
 			optExpr = symbolTable.addEND();
 		} else if (token != OPEN_BRACE && token != SEMICOLON && token != NEWLINE && token != EOF) {
@@ -1115,7 +1114,7 @@ public class AwkParser {
 	AST ASSIGNMENT_EXPRESSION(boolean allowComparison, boolean allowInKeyword, boolean allowMultidimIndices)
 			throws IOException {
 		AST commaExpression = COMMA_EXPRESSION(allowComparison, allowInKeyword, allowMultidimIndices);
-		int op = 0;
+		Token op = null;
 		String txt = null;
 		AST assignmentExpression = null;
 		if (token == EQUALS
@@ -1174,7 +1173,7 @@ public class AwkParser {
 	AST LOGICAL_OR_EXPRESSION(boolean allowComparison, boolean allowInKeyword, boolean allowMultidimIndices)
 			throws IOException {
 		AST le2 = LOGICAL_AND_EXPRESSION(allowComparison, allowInKeyword, allowMultidimIndices);
-		int op = 0;
+		Token op = null;
 		String txt = null;
 		AST le1 = null;
 		if (token == OR) {
@@ -1191,7 +1190,7 @@ public class AwkParser {
 	AST LOGICAL_AND_EXPRESSION(boolean allowComparison, boolean allowInKeyword, boolean allowMultidimIndices)
 			throws IOException {
 		AST comparisonExpression = IN_EXPRESSION(allowComparison, allowInKeyword, allowMultidimIndices);
-		int op = 0;
+		Token op = null;
 		String txt = null;
 		AST le2 = null;
 		if (token == AND) {
@@ -1214,7 +1213,7 @@ public class AwkParser {
 			throws IOException {
 		// true = allow postInc/dec operators
 		AST comparison = MATCHING_EXPRESSION(allowComparison, allowInKeyword, allowMultidimIndices);
-		if (allowInKeyword && token == KEYWORDS.get("in")) {
+		if (allowInKeyword && token == KW_IN) {
 			lexer();
 			return new InExpressionAst(
 					comparison,
@@ -1227,7 +1226,7 @@ public class AwkParser {
 	AST MATCHING_EXPRESSION(boolean allowComparison, boolean allowInKeyword, boolean allowMultidimIndices)
 			throws IOException {
 		AST expression = COMPARISON_EXPRESSION(allowComparison, allowInKeyword, allowMultidimIndices);
-		int op = 0;
+		Token op = null;
 		String txt = null;
 		AST comparisonExpression = null;
 		if (token == MATCHES || token == NOT_MATCHES) {
@@ -1246,7 +1245,7 @@ public class AwkParser {
 	AST COMPARISON_EXPRESSION(boolean allowComparison, boolean allowInKeyword, boolean allowMultidimIndices)
 			throws IOException {
 		AST expression = CONCAT_EXPRESSION(allowComparison, allowInKeyword, allowMultidimIndices);
-		int op = 0;
+		Token op = null;
 		String txt = null;
 		AST comparisonExpression = null;
 		// Allow < <= == != >=, and only > if comparators are allowed
@@ -1308,7 +1307,7 @@ public class AwkParser {
 			throws IOException {
 		AST term = TERM(allowComparison, allowInKeyword, allowMultidimIndices);
 		while (token == PLUS || token == MINUS) {
-			int op = token;
+			Token op = token;
 			String txt = text.toString();
 			lexer();
 			AST nextTerm = TERM(allowComparison, allowInKeyword, allowMultidimIndices);
@@ -1323,7 +1322,7 @@ public class AwkParser {
 	AST TERM(boolean allowComparison, boolean allowInKeyword, boolean allowMultidimIndices) throws IOException {
 		AST unaryFactor = UNARY_FACTOR(allowComparison, allowInKeyword, allowMultidimIndices);
 		while (token == MULT || token == DIVIDE || token == MOD) {
-			int op = token;
+			Token op = token;
 			String txt = text.toString();
 			lexer();
 			AST nextUnaryFactor = UNARY_FACTOR(allowComparison, allowInKeyword, allowMultidimIndices);
@@ -1356,7 +1355,7 @@ public class AwkParser {
 			throws IOException {
 		AST incdecAst = FACTOR_FOR_INCDEC(allowComparison, allowInKeyword, allowMultidimIndices);
 		if (token == POW) {
-			int op = token;
+			Token op = token;
 			String txt = text.toString();
 			lexer();
 			AST term = POWER_FACTOR(allowComparison, allowInKeyword, allowMultidimIndices);
@@ -1448,7 +1447,7 @@ public class AwkParser {
 			AST str = symbolTable.addSTRING(string.toString());
 			lexer();
 			return str;
-		} else if (token == KEYWORDS.get("getline")) {
+		} else if (token == KW_GETLINE) {
 			return GETLINE_EXPRESSION(null, allowComparison, allowInKeyword);
 		} else if (token == DIVIDE || token == DIV_EQ) {
 			readRegexp();
@@ -1477,9 +1476,9 @@ public class AwkParser {
 	// SYMBOL : ID [ '(' params ')' | '[' ASSIGNMENT_EXPRESSION ']' ]
 	AST SYMBOL(boolean allowComparison, boolean allowInKeyword) throws IOException {
 		if (token != ID && token != FUNC_ID && token != BUILTIN_FUNC_NAME && token != EXTENSION) {
-			throw parserException("Expecting an ID. Got " + toTokenString(token) + ": " + text);
+			throw parserException("Expecting an ID. Got " + token.name() + ": " + text);
 		}
-		int idToken = token;
+		Token idToken = token;
 		String id = text.toString();
 		boolean parens = c == '(';
 		lexer();
@@ -1601,34 +1600,34 @@ public class AwkParser {
 			return lst;
 		}
 		AST stmt;
-		if (token == KEYWORDS.get("if")) {
+		if (token == KW_IF) {
 			stmt = IF_STATEMENT();
-		} else if (token == KEYWORDS.get("while")) {
+		} else if (token == KW_WHILE) {
 			stmt = WHILE_STATEMENT();
-		} else if (token == KEYWORDS.get("for")) {
+		} else if (token == KW_FOR) {
 			stmt = FOR_STATEMENT();
 		} else {
-			if (token == KEYWORDS.get("do")) {
+			if (token == KW_DO) {
 				stmt = DO_STATEMENT();
-			} else if (token == KEYWORDS.get("return")) {
+			} else if (token == KW_RETURN) {
 				stmt = RETURN_STATEMENT();
-			} else if (token == KEYWORDS.get("exit")) {
+			} else if (token == KW_EXIT) {
 				stmt = EXIT_STATEMENT();
-			} else if (token == KEYWORDS.get("delete")) {
+			} else if (token == KW_DELETE) {
 				stmt = DELETE_STATEMENT();
-			} else if (token == KEYWORDS.get("print")) {
+			} else if (token == KW_PRINT) {
 				stmt = PRINT_STATEMENT();
-			} else if (token == KEYWORDS.get("printf")) {
+			} else if (token == KW_PRINTF) {
 				stmt = PRINTF_STATEMENT();
-			} else if (token == KEYWORDS.get("next")) {
+			} else if (token == KW_NEXT) {
 				stmt = NEXT_STATEMENT();
-			} else if (token == KEYWORDS.get("continue")) {
+			} else if (token == KW_CONTINUE) {
 				stmt = CONTINUE_STATEMENT();
-			} else if (token == KEYWORDS.get("break")) {
+			} else if (token == KW_BREAK) {
 				stmt = BREAK_STATEMENT();
-			} else if (additionalFunctions && token == KEYWORDS.get("_sleep")) {
+			} else if (additionalFunctions && token == KW_SLEEP) {
 				stmt = SLEEP_STATEMENT();
-			} else if (additionalFunctions && token == KEYWORDS.get("_dump")) {
+			} else if (additionalFunctions && token == KW_DUMP) {
 				stmt = DUMP_STATEMENT();
 			} else {
 				stmt = EXPRESSION_STATEMENT(true, false); // allow in keyword, do NOT allow non-statement ASTs
@@ -1687,7 +1686,7 @@ public class AwkParser {
 		// processing statements to this OPT_STATEMENT_LIST.
 
 		optNewline();
-		if (token == KEYWORDS.get("else")) {
+		if (token == KW_ELSE) {
 			lexer();
 			optNewline();
 			AST b2 = BLOCK_OR_STMT();
@@ -1748,7 +1747,7 @@ public class AwkParser {
 		expr1 = OPT_SIMPLE_STATEMENT(false); // false = "no in keyword allowed"
 
 		// branch here if we expect a for(... in ...) statement
-		if (token == KEYWORDS.get("in")) {
+		if (token == KW_IN) {
 			if (expr1.ast1 == null || expr1.ast2 != null) {
 				throw parserException("Invalid expression prior to 'in' statement. Got : " + expr1);
 			}
@@ -1762,7 +1761,7 @@ public class AwkParser {
 			// id
 			if (token != ID) {
 				throw parserException(
-						"Expecting an ARRAY ID for 'in' statement. Got " + toTokenString(token) + ": " + text);
+						"Expecting an ARRAY ID for 'in' statement. Got " + token.name() + ": " + text);
 			}
 			String arrId = text.toString();
 
@@ -1780,7 +1779,7 @@ public class AwkParser {
 			lexer();
 			optNewline();
 		} else {
-			throw parserException("Expecting ;. Got " + toTokenString(token) + ": " + text);
+			throw parserException("Expecting ;. Got " + token.name() + ": " + text);
 		}
 		if (token != SEMICOLON) {
 			expr2 = ASSIGNMENT_EXPRESSION(true, true, false); // allow comparators, allow IN keyword, do NOT allow multidim
@@ -1790,7 +1789,7 @@ public class AwkParser {
 			lexer();
 			optNewline();
 		} else {
-			throw parserException("Expecting ;. Got " + toTokenString(token) + ": " + text);
+			throw parserException("Expecting ;. Got " + token.name() + ": " + text);
 		}
 		if (token != CLOSE_PAREN) {
 			expr3 = OPT_SIMPLE_STATEMENT(true); // true = "allow the in keyword"
@@ -1803,11 +1802,11 @@ public class AwkParser {
 	AST OPT_SIMPLE_STATEMENT(boolean allowInKeyword) throws IOException {
 		if (token == SEMICOLON) {
 			return null;
-		} else if (token == KEYWORDS.get("delete")) {
+		} else if (token == KW_DELETE) {
 			return DELETE_STATEMENT();
-		} else if (token == KEYWORDS.get("print")) {
+		} else if (token == KW_PRINT) {
 			return PRINT_STATEMENT();
-		} else if (token == KEYWORDS.get("printf")) {
+		} else if (token == KW_PRINTF) {
 			return PRINTF_STATEMENT();
 		} else {
 			// allow non-statement ASTs
@@ -1833,10 +1832,10 @@ public class AwkParser {
 	private static final class ParsedPrintStatement {
 
 		private AST funcParams;
-		private int outputToken;
+		private Token outputToken;
 		private AST outputExpr;
 
-		ParsedPrintStatement(AST funcParams, int outputToken, AST outputExpr) {
+		ParsedPrintStatement(AST funcParams, Token outputToken, AST outputExpr) {
 			this.funcParams = funcParams;
 			this.outputToken = outputToken;
 			this.outputExpr = outputExpr;
@@ -1846,7 +1845,7 @@ public class AwkParser {
 			return funcParams;
 		}
 
-		public int getOutputToken() {
+		public Token getOutputToken() {
 			return outputToken;
 		}
 
@@ -1857,7 +1856,7 @@ public class AwkParser {
 
 	private ParsedPrintStatement parsePrintStatement(boolean parens) throws IOException {
 		AST funcParams;
-		int outputToken;
+		Token outputToken;
 		AST outputExpr;
 		if (parens) {
 			lexer();
@@ -1886,7 +1885,7 @@ public class AwkParser {
 			outputExpr = ASSIGNMENT_EXPRESSION(true, true, false); // true = allow comparators, allow IN keyword, do NOT
 			// allow multidim indices expressions
 		} else {
-			outputToken = -1;
+			outputToken = null;
 			outputExpr = null;
 		}
 
@@ -2073,7 +2072,7 @@ public class AwkParser {
 		if (token == KEYWORDS.get(keyword)) {
 			lexer();
 		} else {
-			throw parserException("Expecting " + keyword + ". Got " + toTokenString(token) + ": " + text);
+			throw parserException("Expecting " + keyword + ". Got " + token.name() + ": " + text);
 		}
 	}
 
@@ -3168,10 +3167,10 @@ public class AwkParser {
 	private final class AssignmentExpressionAst extends ScalarExpressionAst {
 
 		/** operand / operator */
-		private int op;
+		private Token op;
 		private String text;
 
-		private AssignmentExpressionAst(AST lhs, int op, String text, AST rhs) {
+		private AssignmentExpressionAst(AST lhs, Token op, String text, AST rhs) {
 			super(lhs, rhs);
 			this.op = op;
 			this.text = text;
@@ -3316,10 +3315,10 @@ public class AwkParser {
 		/**
 		 * operand / operator
 		 */
-		private int op;
+		private Token op;
 		private String text;
 
-		private ComparisonExpressionAst(AST lhs, int op, String text, AST rhs) {
+		private ComparisonExpressionAst(AST lhs, Token op, String text, AST rhs) {
 			super(lhs, rhs);
 			this.op = op;
 			this.text = text;
@@ -3378,10 +3377,10 @@ public class AwkParser {
 		/**
 		 * operand / operator
 		 */
-		private int op;
+		private Token op;
 		private String text;
 
-		private LogicalExpressionAst(AST lhs, int op, String text, AST rhs) {
+		private LogicalExpressionAst(AST lhs, Token op, String text, AST rhs) {
 			super(lhs, rhs);
 			this.op = op;
 			this.text = text;
@@ -3426,10 +3425,10 @@ public class AwkParser {
 		/**
 		 * operand / operator
 		 */
-		private int op;
+		private Token op;
 		private String text;
 
-		private BinaryExpressionAst(AST lhs, int op, String text, AST rhs) {
+		private BinaryExpressionAst(AST lhs, Token op, String text, AST rhs) {
 			super(lhs, rhs);
 			this.op = op;
 			this.text = text;
@@ -4588,9 +4587,9 @@ public class AwkParser {
 
 	private final class PrintAst extends ScalarExpressionAst {
 
-		private int outputToken;
+		private Token outputToken;
 
-		private PrintAst(AST exprList, int outToken, AST outputExpr) {
+		private PrintAst(AST exprList, Token outToken, AST outputExpr) {
 			super(exprList, outputExpr);
 			this.outputToken = outToken;
 		}
@@ -4724,9 +4723,9 @@ public class AwkParser {
 
 	private final class PrintfAst extends ScalarExpressionAst {
 
-		private int outputToken;
+		private Token outputToken;
 
-		private PrintfAst(AST exprList, int outToken, AST outputExpr) {
+		private PrintfAst(AST exprList, Token outToken, AST outputExpr) {
 			super(exprList, outputExpr);
 			this.outputToken = outToken;
 		}
