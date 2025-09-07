@@ -47,8 +47,6 @@ public interface AwkInterpreteSettings {
 
 	boolean isAdditionalFunctions();
 
-	boolean isAdditionalTypeFunctions();
-
 	PrintStream getOutputStream();
 
 	Locale getLocale();

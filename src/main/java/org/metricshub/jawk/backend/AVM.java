@@ -1004,8 +1004,7 @@ public class AVM implements VariableManager {
 					position.next();
 					break;
 				}
-				case INTFUNC:
-				case CAST_INT: {
+				case INTFUNC: {
 					// stack[0] = arg to int() function
 					push((long) JRT.toDouble(pop()));
 					position.next();
@@ -1957,16 +1956,6 @@ public class AVM implements VariableManager {
 					position.next();
 					break;
 				}
-				case CAST_DOUBLE: {
-					push(JRT.toDouble(pop()));
-					position.next();
-					break;
-				}
-				case CAST_STRING: {
-					push(pop().toString());
-					position.next();
-					break;
-				}
 				case THIS: {
 					// this is in preparation for a function
 					// call for the JVM-COMPILED script, only
@@ -1987,7 +1976,6 @@ public class AVM implements VariableManager {
 					org.metricshub.jawk.frontend.AwkParser ap = new org.metricshub.jawk.frontend.AwkParser(
 							// true, true, true, extensions
 							settings.isAdditionalFunctions(),
-							settings.isAdditionalTypeFunctions(),
 							extensions);
 					try {
 						AstNode ast = ap.parse(scriptSources);

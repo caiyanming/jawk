@@ -135,9 +135,6 @@ public class AwkParser {
 
 	private static final int KW_SLEEP = sIdx++;
 	private static final int KW_DUMP = sIdx++;
-	private static final int KW_INTEGER = sIdx++;
-	private static final int KW_DOUBLE = sIdx++;
-	private static final int KW_STRING = sIdx++;
 
 	/**
 	 * Contains a mapping of Jawk keywords to their
@@ -182,9 +179,6 @@ public class AwkParser {
 
 		KEYWORDS.put("_sleep", KW_SLEEP);
 		KEYWORDS.put("_dump", KW_DUMP);
-		KEYWORDS.put("_INTEGER", KW_INTEGER);
-		KEYWORDS.put("_DOUBLE", KW_DOUBLE);
-		KEYWORDS.put("_STRING", KW_STRING);
 	}
 
 	/**
@@ -268,7 +262,6 @@ public class AwkParser {
 	private final AwkSymbolTableImpl symbolTable = new AwkSymbolTableImpl();
 
 	private final boolean additionalFunctions;
-	private final boolean additionalTypeFunctions;
 	private final Map<String, JawkExtension> extensions;
 
 	/**
@@ -277,13 +270,10 @@ public class AwkParser {
 	 * </p>
 	 *
 	 * @param additionalFunctions a boolean
-	 * @param additionalTypeFunctions a boolean
 	 * @param extensions a {@link java.util.Map} object
 	 */
-	public AwkParser(boolean additionalFunctions, boolean additionalTypeFunctions,
-			Map<String, JawkExtension> extensions) {
+	public AwkParser(boolean additionalFunctions, Map<String, JawkExtension> extensions) {
 		this.additionalFunctions = additionalFunctions;
-		this.additionalTypeFunctions = additionalTypeFunctions;
 		this.extensions = extensions == null ? Collections.emptyMap() : new HashMap<>(extensions);
 	}
 
@@ -813,9 +803,7 @@ public class AwkParser {
 			Integer kwToken = KEYWORDS.get(text.toString());
 			if (kwToken != null) {
 				int kw = kwToken.intValue();
-				boolean treatAsIdentifier = (!additionalFunctions && (kw == KW_SLEEP || kw == KW_DUMP))
-						||
-						(!additionalTypeFunctions && (kw == KW_INTEGER || kw == KW_DOUBLE || kw == KW_STRING));
+				boolean treatAsIdentifier = !additionalFunctions && (kw == KW_SLEEP || kw == KW_DUMP);
 				if (!treatAsIdentifier) {
 					token = kw;
 					return token;
@@ -1310,18 +1298,9 @@ public class AwkParser {
 			return new ConcatExpressionAst(
 					te,
 					CONCAT_EXPRESSION(allowComparison, allowInKeyword, allowMultidimIndices));
-		} else
-			if (additionalTypeFunctions
-					&& (token == KEYWORDS.get("_INTEGER")
-							|| token == KEYWORDS.get("_DOUBLE")
-							|| token == KEYWORDS.get("_STRING"))) {
-								// allow concatenation here only when certain tokens follow
-								return new ConcatExpressionAst(
-										te,
-										CONCAT_EXPRESSION(allowComparison, allowInKeyword, allowMultidimIndices));
-							} else {
-								return te;
-							}
+		} else {
+			return te;
+		}
 	}
 
 	// EXPRESSION : TERM [ (+|-) EXPRESSION ]
@@ -1479,12 +1458,6 @@ public class AwkParser {
 			AST regexpAst = symbolTable.addREGEXP(regexp.toString());
 			lexer();
 			return regexpAst;
-		} else if (additionalTypeFunctions && token == KEYWORDS.get("_INTEGER")) {
-			return INTEGER_EXPRESSION(allowComparison, allowInKeyword, allowMultidimIndices);
-		} else if (additionalTypeFunctions && token == KEYWORDS.get("_DOUBLE")) {
-			return DOUBLE_EXPRESSION(allowComparison, allowInKeyword, allowMultidimIndices);
-		} else if (additionalTypeFunctions && token == KEYWORDS.get("_STRING")) {
-			return STRING_EXPRESSION(allowComparison, allowInKeyword, allowMultidimIndices);
 		} else {
 			if (token == DOLLAR) {
 				lexer();
@@ -1498,84 +1471,6 @@ public class AwkParser {
 				return new DollarExpressionAst(FACTOR(allowComparison, allowInKeyword, allowMultidimIndices));
 			}
 			return SYMBOL(allowComparison, allowInKeyword);
-		}
-	}
-
-	AST INTEGER_EXPRESSION(boolean allowComparison, boolean allowInKeyword, boolean allowMultidimIndices)
-			throws IOException {
-		boolean parens = c == '(';
-		expectKeyword("_INTEGER");
-		if (token == SEMICOLON || token == NEWLINE || token == CLOSE_BRACE) {
-			throw parserException("expression expected");
-		} else {
-			// do NOT allow for a blank param list: "()" using the parens boolean below
-			// otherwise, the parser will complain because assignmentExpression cannot be ()
-			if (parens) {
-				lexer(OPEN_PAREN);
-			}
-			AST intExprAst;
-			if (token == CLOSE_PAREN) {
-				throw parserException("expression expected");
-			} else {
-				intExprAst = new IntegerExpressionAst(
-						ASSIGNMENT_EXPRESSION(allowComparison || parens, allowInKeyword, allowMultidimIndices));
-			}
-			if (parens) {
-				lexer(CLOSE_PAREN);
-			}
-			return intExprAst;
-		}
-	}
-
-	AST DOUBLE_EXPRESSION(boolean allowComparison, boolean allowInKeyword, boolean allowMultidimIndices)
-			throws IOException {
-		boolean parens = c == '(';
-		expectKeyword("_DOUBLE");
-		if (token == SEMICOLON || token == NEWLINE || token == CLOSE_BRACE) {
-			throw parserException("expression expected");
-		} else {
-			// do NOT allow for a blank param list: "()" using the parens boolean below
-			// otherwise, the parser will complain because assignmentExpression cannot be ()
-			if (parens) {
-				lexer(OPEN_PAREN);
-			}
-			AST doubleExprAst;
-			if (token == CLOSE_PAREN) {
-				throw parserException("expression expected");
-			} else {
-				doubleExprAst = new DoubleExpressionAst(
-						ASSIGNMENT_EXPRESSION(allowComparison || parens, allowInKeyword, allowMultidimIndices));
-			}
-			if (parens) {
-				lexer(CLOSE_PAREN);
-			}
-			return doubleExprAst;
-		}
-	}
-
-	AST STRING_EXPRESSION(boolean allowComparison, boolean allowInKeyword, boolean allowMultidimIndices)
-			throws IOException {
-		boolean parens = c == '(';
-		expectKeyword("_STRING");
-		if (token == SEMICOLON || token == NEWLINE || token == CLOSE_BRACE) {
-			throw parserException("expression expected");
-		} else {
-			// do NOT allow for a blank param list: "()" using the parens boolean below
-			// otherwise, the parser will complain because assignmentExpression cannot be ()
-			if (parens) {
-				lexer(OPEN_PAREN);
-			}
-			AST stringExprAst;
-			if (token == CLOSE_PAREN) {
-				throw parserException("expression expected");
-			} else {
-				stringExprAst = new StringExpressionAst(
-						ASSIGNMENT_EXPRESSION(allowComparison || parens, allowInKeyword, allowMultidimIndices));
-			}
-			if (parens) {
-				lexer(CLOSE_PAREN);
-			}
-			return stringExprAst;
 		}
 	}
 
@@ -4480,57 +4375,6 @@ public class AwkParser {
 			int ast2Result = getAst2().populateTuples(tuples);
 			assert ast2Result == 1;
 			tuples.conditionPair();
-			popSourceLineNumber(tuples);
-			return 1;
-		}
-	}
-
-	private final class IntegerExpressionAst extends ScalarExpressionAst {
-
-		private IntegerExpressionAst(AST expr) {
-			super(expr);
-		}
-
-		@Override
-		public int populateTuples(AwkTuples tuples) {
-			pushSourceLineNumber(tuples);
-			int ast1Result = getAst1().populateTuples(tuples);
-			assert ast1Result == 1;
-			tuples.castInt();
-			popSourceLineNumber(tuples);
-			return 1;
-		}
-	}
-
-	private final class DoubleExpressionAst extends ScalarExpressionAst {
-
-		private DoubleExpressionAst(AST expr) {
-			super(expr);
-		}
-
-		@Override
-		public int populateTuples(AwkTuples tuples) {
-			pushSourceLineNumber(tuples);
-			int ast1Result = getAst1().populateTuples(tuples);
-			assert ast1Result == 1;
-			tuples.castDouble();
-			popSourceLineNumber(tuples);
-			return 1;
-		}
-	}
-
-	private final class StringExpressionAst extends ScalarExpressionAst {
-
-		private StringExpressionAst(AST expr) {
-			super(expr);
-		}
-
-		@Override
-		public int populateTuples(AwkTuples tuples) {
-			pushSourceLineNumber(tuples);
-			int ast1Result = getAst1().populateTuples(tuples);
-			assert ast1Result == 1;
-			tuples.castString();
 			popSourceLineNumber(tuples);
 			return 1;
 		}

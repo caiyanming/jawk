@@ -96,13 +96,6 @@ public class AwkSettings implements AwkCompileSettings, AwkInterpreteSettings {
 	private boolean additionalFunctions = false;
 
 	/**
-	 * Whether to enable additional type functions (_INTEGER/_DOUBLE/_STRING);
-	 * <code>false</code> by default.
-	 */
-
-	private boolean additionalTypeFunctions = false;
-
-	/**
 	 * Whether to maintain array keys in sorted order;
 	 * <code>false</code> by default.
 	 */
@@ -174,7 +167,6 @@ public class AwkSettings implements AwkCompileSettings, AwkInterpreteSettings {
 		desc.append("dumpSyntaxTree = ").append(isDumpSyntaxTree()).append(newLine);
 		desc.append("dumpIntermediateCode = ").append(isDumpIntermediateCode()).append(newLine);
 		desc.append("additionalFunctions = ").append(isAdditionalFunctions()).append(newLine);
-		desc.append("additionalTypeFunctions = ").append(isAdditionalTypeFunctions()).append(newLine);
 		desc.append("useSortedArrayKeys = ").append(isUseSortedArrayKeys()).append(newLine);
 		desc.append("catchIllegalFormatExceptions = ").append(isCatchIllegalFormatExceptions()).append(newLine);
 		desc.append("writeIntermediateFile = ").append(isWriteIntermediateFile()).append(newLine);
@@ -196,9 +188,6 @@ public class AwkSettings implements AwkCompileSettings, AwkInterpreteSettings {
 
 		if (isAdditionalFunctions()) {
 			extensions.append(", _sleep & _dump enabled");
-		}
-		if (isAdditionalTypeFunctions()) {
-			extensions.append(", _INTEGER, _DOUBLE, _STRING enabled");
 		}
 		if (isUseSortedArrayKeys()) {
 			extensions.append(", associative array keys are sorted");
@@ -442,26 +431,6 @@ public class AwkSettings implements AwkCompileSettings, AwkInterpreteSettings {
 	 */
 	public void setAdditionalFunctions(boolean additionalFunctions) {
 		this.additionalFunctions = additionalFunctions;
-	}
-
-	/**
-	 * Whether to enable additional type functions (_INTEGER/_DOUBLE/_STRING);
-	 * <code>false</code> by default.
-	 *
-	 * @return the additionalTypeFunctions
-	 */
-	public boolean isAdditionalTypeFunctions() {
-		return additionalTypeFunctions;
-	}
-
-	/**
-	 * Whether to enable additional type functions (_INTEGER/_DOUBLE/_STRING);
-	 * <code>false</code> by default.
-	 *
-	 * @param additionalTypeFunctions the additionalTypeFunctions to set
-	 */
-	public void setAdditionalTypeFunctions(boolean additionalTypeFunctions) {
-		this.additionalTypeFunctions = additionalTypeFunctions;
 	}
 
 	/**

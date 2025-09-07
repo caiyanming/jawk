@@ -42,11 +42,6 @@ public interface AwkCompileSettings {
 	boolean isAdditionalFunctions();
 
 	/**
-	 * @return {@code true} to enable additional type functions
-	 */
-	boolean isAdditionalTypeFunctions();
-
-	/**
 	 * @return {@code true} to dump the syntax tree
 	 */
 	boolean isDumpSyntaxTree();

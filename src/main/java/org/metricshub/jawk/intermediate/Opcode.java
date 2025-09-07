@@ -1160,30 +1160,6 @@ public enum Opcode {
 	IS_IN,
 
 	/**
-	 * Cast to integer
-	 * <p>
-	 * Stack before: object <br>
-	 * Stack after: integer
-	 */
-	CAST_INT,
-
-	/**
-	 * Cast to double
-	 * <p>
-	 * Stack before: object <br>
-	 * Stack after: double
-	 */
-	CAST_DOUBLE,
-
-	/**
-	 * Cast to string
-	 * <p>
-	 * Stack before: object <br>
-	 * Stack after: string
-	 */
-	CAST_STRING,
-
-	/**
 	 * Deprecated.
 	 */
 	THIS,

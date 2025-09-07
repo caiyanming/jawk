@@ -51,8 +51,6 @@ import java.util.Locale;
  * Dump the syntax tree.
  * <li><i>Extension</i> -x <br/>
  * Enables _sleep, _dump, and exec keywords/functions.
- * <li><i>Extension</i> -y <br/>
- * Enables _INTEGER, _DOUBLE, and _STRING type casting keywords.
  * <li><i>Extension</i> -t <br/>
  * Maintain array keys in sorted order (using a TreeMap instead of a HashMap)
  * <li><i>Extension</i> -r <br/>
@@ -159,8 +157,6 @@ public final class AwkParameters {
 					settings.setDumpIntermediateCode(true);
 				} else if (args[argIdx].equals("-x")) {
 					settings.setAdditionalFunctions(true);
-				} else if (args[argIdx].equals("-y")) {
-					settings.setAdditionalTypeFunctions(true);
 				} else if (args[argIdx].equals("-t")) {
 					settings.setUseSortedArrayKeys(true);
 				} else if (args[argIdx].equals("-r")) {
@@ -249,7 +245,6 @@ public final class AwkParameters {
 								" [-S]" +
 								" [-s]" +
 								" [-x]" +
-								" [-y]" +
 								" [-r]" +
 								" [--locale locale]" +
 								" [-ext]" +
@@ -268,7 +263,6 @@ public final class AwkParameters {
 		dest.println(" -S = (extension) Write the syntax tree to file. (default: syntax_tree.lst)");
 		dest.println(" -s = (extension) Write the intermediate code to file. (default: avm.lst)");
 		dest.println(" -x = (extension) Enable _sleep, _dump as keywords, and exec as a builtin func.");
-		dest.println(" -y = (extension) Enable _INTEGER, _DOUBLE, and _STRING casting keywords.");
 		dest.println(" -r = (extension) Do NOT hide IllegalFormatExceptions for [s]printf.");
 		dest.println(" --locale Locale = (extension) Specify a locale to be used instead of US-English");
 		dest.println("-ext= (extension) Enable user-defined extensions. (default: not enabled)");
