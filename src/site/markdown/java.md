@@ -185,9 +185,8 @@ available.  The most notable differences are:
 * Regular expressions use Java's implementation and therefore have slightly
   different semantics compared to traditional AWK.
 * `printf`/`sprintf` formatting relies on `java.util.Formatter`.  Unexpected
-  argument types will raise an exception unless the `_INTEGER`, `_DOUBLE` or
-  `_STRING` helpers are enabled with the `-y` option or their equivalents in
-  `AwkSettings`.
+  argument types will raise an exception; Jawk does not provide helper
+  keywords for typecasting.
 * Extensions must be explicitly enabled.  Only the core extensions bundled with
   Jawk are available by default.
 

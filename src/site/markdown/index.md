@@ -72,19 +72,7 @@ As stated earlier, **Jawk** interprets AWK scripts in Java. This is a full imple
 Because we're using Java, the following differences exist in order to blend easily within the Java environment:
 
 * **Jawk** regular expressions are implemented with Java regular expressions. Therefore, they differ from AWK's regular expression semantics (mostly by adding functionality over AWK's regular expressions).
-* printf/sprintf formatting is done by java.util.Formatter. This is markedly different from C's, and thus AWK's printf(). Java's Formatter class does not attempt to implicitly convert its argument datatypes. If differing datatypes are present than what is expected, an IllegalFormatException will occur. Therefore, the script developer must either keep track of implicit type conversions by Jawk, or use \_DOUBLE, \_INTEGER, and _STRING keywords to forcibly convert parameters to these types (to do so, the -y parameter must be provided). An example is provided below:
-
-    ```awk
-    BEGIN {
-        a=3
-        # java.util.Formatter accepts %n as \\n
-        printf("Integer of a = %02d%n", _INTEGER a)
-        printf("Double of a = %.2f%n", _DOUBLE a)
-        printf("String of a = %s%n", _STRING a)
-    }
-    ```
-
-    Without the -y argument, only "String of a = 3" is displayed because `_STRING` is evaluated to a blank string, and the concatenation of two expressions results in a string. With the -y argument, all three lines are displayed.
+* printf/sprintf formatting is done by java.util.Formatter. This is markedly different from C's, and thus AWK's printf(). Java's Formatter class does not attempt to implicitly convert its argument datatypes. If differing datatypes are present than what is expected, an IllegalFormatException will occur. Therefore, the script developer must keep track of implicit type conversions in Jawk.
 
 ### Differences with the original Jawk
 

@@ -1464,33 +1464,6 @@ public class AwkTuples implements Serializable {
 
 	/**
 	 * <p>
-	 * castInt.
-	 * </p>
-	 */
-	public void castInt() {
-		queue.add(new Tuple(Opcode.CAST_INT));
-	}
-
-	/**
-	 * <p>
-	 * castDouble.
-	 * </p>
-	 */
-	public void castDouble() {
-		queue.add(new Tuple(Opcode.CAST_DOUBLE));
-	}
-
-	/**
-	 * <p>
-	 * castString.
-	 * </p>
-	 */
-	public void castString() {
-		queue.add(new Tuple(Opcode.CAST_STRING));
-	}
-
-	/**
-	 * <p>
 	 * scriptThis.
 	 * </p>
 	 */

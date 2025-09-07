@@ -48,7 +48,7 @@ public class ExtensionTest {
 		// Execute the awk script against the specified input
 		AVM avm = null;
 		try {
-			AwkParser parser = new AwkParser(false, false, myExtensionMap);
+			AwkParser parser = new AwkParser(false, myExtensionMap);
 			AstNode ast = parser.parse(settings.getScriptSources());
 			ast.semanticAnalysis();
 			ast.semanticAnalysis();

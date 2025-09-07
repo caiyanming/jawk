@@ -79,13 +79,9 @@ import org.metricshub.jawk.jrt.VariableManager;
  * <li>"Reference" (see below)
  * </ul>
  * <li><strong>String</strong> - <code>str = String(3)</code><br>
- * Converts its argument to a String.
- * Similar to the _STRING extension, but provided
- * for completeness/normalization.
+ * Converts its argument to a String for completeness/normalization.
  * <li><strong>Double</strong> - <code>dbl = Double(3)</code><br>
- * Converts its argument to a Double.
- * Similar to the _DOUBLE extension, but provided
- * for completeness/normalization.
+ * Converts its argument to a Double for completeness/normalization.
  * <li><strong>Halt</strong> - <code>Halt()</code><br>
  * Similar to exit(), except that END blocks are
  * not executed if Halt() called before END
