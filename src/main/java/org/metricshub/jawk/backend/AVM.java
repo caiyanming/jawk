@@ -1330,51 +1330,6 @@ public class AVM implements VariableManager {
 					position.next();
 					break;
 				}
-				case SLEEP: {
-					// arg[0] = numArgs
-					// if (numArgs==1)
-					// stack[0] = # of seconds
-					// else
-					// nothing on the stack
-					// int seconds = (int) JRT.toDouble(pop());
-					long seconds;
-					long numArgs = position.intArg(0);
-					if (numArgs == 0) {
-						seconds = 1;
-					} else {
-						seconds = (long) JRT.toDouble(pop());
-					}
-					try {
-						Thread.sleep(seconds * 1000);
-					} catch (InterruptedException ie) {
-						throw new AwkRuntimeException(
-								position.lineNumber(),
-								"Caught exception while waiting for process exit: " + ie);
-					}
-					position.next();
-					break;
-				}
-				case DUMP: {
-					// arg[0] = numArgs
-					// if (numArgs==0)
-					// all Jawk global variables
-					// else
-					// args are assoc arrays to display
-					// int seconds = (int) JRT.toDouble(pop());
-					long numArgs = position.intArg(0);
-					AssocArray[] aaArray;
-					if (numArgs == 0) {
-						aaArray = null;
-					} else {
-						aaArray = new AssocArray[(int) numArgs];
-						for (int i = 0; i < numArgs; ++i) {
-							aaArray[i] = (AssocArray) pop();
-						}
-					}
-					avmDump(aaArray);
-					position.next();
-					break;
-				}
 				case ADD: {
 					// stack[0] = item2
 					// stack[1] = item1
@@ -1974,8 +1929,6 @@ public class AVM implements VariableManager {
 							.add(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, new StringReader(awkCode), false));
 
 					org.metricshub.jawk.frontend.AwkParser ap = new org.metricshub.jawk.frontend.AwkParser(
-							// true, true, true, extensions
-							settings.isAdditionalFunctions(),
 							extensions);
 					try {
 						AstNode ast = ap.parse(scriptSources);
@@ -2092,28 +2045,6 @@ public class AVM implements VariableManager {
 	 */
 	public void waitForIO() {
 		jrt.jrtCloseAll();
-	}
-
-	private void avmDump(AssocArray[] aaArray) {
-		if (aaArray == null) {
-			// dump the runtime stack
-			Object[] globals = runtimeStack.getNumGlobals();
-			for (Map.Entry<String, Integer> e : globalVariableOffsets.entrySet()) {
-				String name = e.getKey();
-				int idx = e.getValue();
-				Object value = globals[idx];
-				if (value instanceof AssocArray) {
-					AssocArray aa = (AssocArray) value;
-					value = aa.mapString();
-				}
-				System.out.println(name + " = " + value);
-			}
-		} else {
-			// dump associative arrays
-			for (AssocArray aa : aaArray) {
-				System.out.println(aa.mapString());
-			}
-		}
 	}
 
 	private void printTo(PrintStream ps, long numArgs) {

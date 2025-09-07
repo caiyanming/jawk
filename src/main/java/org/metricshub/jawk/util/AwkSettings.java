@@ -90,12 +90,6 @@ public class AwkSettings implements AwkCompileSettings, AwkInterpreteSettings {
 	private boolean dumpIntermediateCode = false;
 
 	/**
-	 * Whether to enable additional functions (_sleep/_dump);
-	 * <code>false</code> by default.
-	 */
-	private boolean additionalFunctions = false;
-
-	/**
 	 * Whether to maintain array keys in sorted order;
 	 * <code>false</code> by default.
 	 */
@@ -166,7 +160,6 @@ public class AwkSettings implements AwkCompileSettings, AwkInterpreteSettings {
 		desc.append("fieldSeparator = ").append(getFieldSeparator()).append(newLine);
 		desc.append("dumpSyntaxTree = ").append(isDumpSyntaxTree()).append(newLine);
 		desc.append("dumpIntermediateCode = ").append(isDumpIntermediateCode()).append(newLine);
-		desc.append("additionalFunctions = ").append(isAdditionalFunctions()).append(newLine);
 		desc.append("useSortedArrayKeys = ").append(isUseSortedArrayKeys()).append(newLine);
 		desc.append("catchIllegalFormatExceptions = ").append(isCatchIllegalFormatExceptions()).append(newLine);
 		desc.append("writeIntermediateFile = ").append(isWriteIntermediateFile()).append(newLine);
@@ -186,9 +179,6 @@ public class AwkSettings implements AwkCompileSettings, AwkInterpreteSettings {
 	public String toExtensionDescription() {
 		StringBuilder extensions = new StringBuilder();
 
-		if (isAdditionalFunctions()) {
-			extensions.append(", _sleep & _dump enabled");
-		}
 		if (isUseSortedArrayKeys()) {
 			extensions.append(", associative array keys are sorted");
 		}
@@ -411,26 +401,6 @@ public class AwkSettings implements AwkCompileSettings, AwkInterpreteSettings {
 	 */
 	public void setDumpIntermediateCode(boolean dumpIntermediateCode) {
 		this.dumpIntermediateCode = dumpIntermediateCode;
-	}
-
-	/**
-	 * Whether to enable additional functions (_sleep/_dump);
-	 * <code>false</code> by default.
-	 *
-	 * @return the additionalFunctions
-	 */
-	public boolean isAdditionalFunctions() {
-		return additionalFunctions;
-	}
-
-	/**
-	 * Whether to enable additional functions (_sleep/_dump);
-	 * <code>false</code> by default.
-	 *
-	 * @param additionalFunctions the additionalFunctions to set
-	 */
-	public void setAdditionalFunctions(boolean additionalFunctions) {
-		this.additionalFunctions = additionalFunctions;
 	}
 
 	/**

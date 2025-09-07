@@ -128,9 +128,6 @@ public class AwkParser {
 
 		EXTENSION,
 
-		KW_SLEEP,
-		KW_DUMP,
-
 		KW_FUNCTION,
 		KW_BEGIN,
 		KW_END,
@@ -191,9 +188,6 @@ public class AwkParser {
 		KEYWORDS.put("print", Token.KW_PRINT);
 		KEYWORDS.put("printf", Token.KW_PRINTF);
 		KEYWORDS.put("getline", Token.KW_GETLINE);
-
-		KEYWORDS.put("_sleep", Token.KW_SLEEP);
-		KEYWORDS.put("_dump", Token.KW_DUMP);
 	}
 
 	/**
@@ -202,7 +196,6 @@ public class AwkParser {
 	 * from lexer token values.
 	 */
 	private static int fIdx = 257;
-	private static final int F_EXEC = fIdx++;
 	/**
 	 * A mapping of built-in function names to their
 	 * function token values.
@@ -235,7 +228,7 @@ public class AwkParser {
 		BUILTIN_FUNC_NAMES.put("system", fIdx++);
 		BUILTIN_FUNC_NAMES.put("tolower", fIdx++);
 		BUILTIN_FUNC_NAMES.put("toupper", fIdx++);
-		BUILTIN_FUNC_NAMES.put("exec", F_EXEC);
+		BUILTIN_FUNC_NAMES.put("exec", fIdx++);
 	}
 
 	private static final int SP_IDX = 257;
@@ -276,7 +269,6 @@ public class AwkParser {
 	 */
 	private final AwkSymbolTableImpl symbolTable = new AwkSymbolTableImpl();
 
-	private final boolean additionalFunctions;
 	private final Map<String, JawkExtension> extensions;
 
 	/**
@@ -284,11 +276,9 @@ public class AwkParser {
 	 * Constructor for AwkParser.
 	 * </p>
 	 *
-	 * @param additionalFunctions a boolean
 	 * @param extensions a {@link java.util.Map} object
 	 */
-	public AwkParser(boolean additionalFunctions, Map<String, JawkExtension> extensions) {
-		this.additionalFunctions = additionalFunctions;
+	public AwkParser(Map<String, JawkExtension> extensions) {
 		this.extensions = extensions == null ? Collections.emptyMap() : new HashMap<>(extensions);
 	}
 
@@ -800,21 +790,13 @@ public class AwkParser {
 			}
 			Token kwToken = KEYWORDS.get(text.toString());
 			if (kwToken != null) {
-				boolean treatAsIdentifier = !additionalFunctions && (kwToken == Token.KW_SLEEP || kwToken == Token.KW_DUMP);
-				if (!treatAsIdentifier) {
-					token = kwToken;
-					return token;
-				}
-				// treat as identifier
+				token = kwToken;
+				return token;
 			}
 			Integer builtinIdx = BUILTIN_FUNC_NAMES.get(text.toString());
 			if (builtinIdx != null) {
-				int idx = builtinIdx.intValue();
-				if (additionalFunctions || idx != F_EXEC) {
-					token = Token.BUILTIN_FUNC_NAME;
-					return token;
-				}
-				// treat as identifier
+				token = Token.BUILTIN_FUNC_NAME;
+				return token;
 			}
 			if (c == '(') {
 				token = Token.FUNC_ID;
@@ -1625,10 +1607,6 @@ public class AwkParser {
 				stmt = CONTINUE_STATEMENT();
 			} else if (token == Token.KW_BREAK) {
 				stmt = BREAK_STATEMENT();
-			} else if (additionalFunctions && token == Token.KW_SLEEP) {
-				stmt = SLEEP_STATEMENT();
-			} else if (additionalFunctions && token == Token.KW_DUMP) {
-				stmt = DUMP_STATEMENT();
 			} else {
 				stmt = EXPRESSION_STATEMENT(true, false); // allow in keyword, do Token.NOT allow non-statement ASTs
 			}
@@ -2009,55 +1987,6 @@ public class AwkParser {
 																																							// keyword, do Token.NOT allow multidim
 																																							// indices
 																																							// expressions
-		}
-	}
-
-	AST SLEEP_STATEMENT() throws IOException {
-		boolean parens = c == '(';
-		expectKeyword("_sleep");
-		if (token == Token.SEMICOLON || token == Token.NEWLINE || token == Token.CLOSE_BRACE) {
-			return new SleepStatementAst(null);
-		} else {
-			// allow for a blank param list: "()" using the parens boolean below
-			// otherwise, the parser will complain because assignmentExpression cannot be ()
-			if (parens) {
-				lexer();
-			}
-			AST sleepAst;
-			if (token == Token.CLOSE_PAREN) {
-				sleepAst = new SleepStatementAst(null);
-			} else {
-				sleepAst = new SleepStatementAst(ASSIGNMENT_EXPRESSION(true, true, false)); // true = allow comparators, allow
-																																										// IN keyword, do Token.NOT allow
-																																										// multidim indices expressions
-			}
-			if (parens) {
-				lexer(Token.CLOSE_PAREN);
-			}
-			return sleepAst;
-		}
-	}
-
-	AST DUMP_STATEMENT() throws IOException {
-		boolean parens = c == '(';
-		expectKeyword("_dump");
-		if (token == Token.SEMICOLON || token == Token.NEWLINE || token == Token.CLOSE_BRACE) {
-			return new DumpStatementAst(null);
-		} else {
-			if (parens) {
-				lexer();
-			}
-			AST dumpAst;
-			if (token == Token.CLOSE_PAREN) {
-				dumpAst = new DumpStatementAst(null);
-			} else {
-				dumpAst = new DumpStatementAst(EXPRESSION_LIST(true, true, false)); // true = allow comparators, allow IN
-																																						// keyword
-			}
-			if (parens) {
-				lexer(Token.CLOSE_PAREN);
-			}
-			return dumpAst;
 		}
 	}
 
@@ -4929,60 +4858,6 @@ public class AwkParser {
 			}
 			assert breakable != null;
 			tuples.gotoAddress(breakable.breakAddress());
-			popSourceLineNumber(tuples);
-			return 0;
-		}
-	}
-
-	private final class SleepStatementAst extends AST {
-
-		private SleepStatementAst(AST expr) {
-			super(expr);
-		}
-
-		@Override
-		public int populateTuples(AwkTuples tuples) {
-			pushSourceLineNumber(tuples);
-			if (getAst1() == null) {
-				tuples.sleep(0);
-			} else {
-				int ast1Result = getAst1().populateTuples(tuples);
-				assert ast1Result == 1;
-				tuples.sleep(ast1Result);
-			}
-			popSourceLineNumber(tuples);
-			return 0;
-		}
-	}
-
-	private final class DumpStatementAst extends AST {
-
-		private DumpStatementAst(AST expr) {
-			super(expr);
-		}
-
-		@Override
-		public int populateTuples(AwkTuples tuples) {
-			pushSourceLineNumber(tuples);
-			if (getAst1() == null) {
-				tuples.dump(0);
-			} else {
-				assert getAst1() instanceof FunctionCallParamListAst;
-				AST ptr = getAst1();
-				while (ptr != null) {
-					if (!(ptr.getAst1() instanceof IDAst)) {
-						throw new SemanticException("Token.ID required for argument(s) to _dump");
-					}
-					IDAst idAst = (IDAst) ptr.getAst1();
-					if (idAst.isScalar()) {
-						throw new SemanticException("_dump: Cannot use a scalar as an argument.");
-					}
-					idAst.setArray(true);
-					ptr = ptr.getAst2();
-				}
-				int ast1Result = getAst1().populateTuples(tuples);
-				tuples.dump(ast1Result);
-			}
 			popSourceLineNumber(tuples);
 			return 0;
 		}

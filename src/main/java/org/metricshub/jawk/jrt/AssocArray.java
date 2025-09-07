@@ -105,7 +105,6 @@ public class AssocArray implements Comparator<Object> {
 	/**
 	 * Provide a string representation of the delegated
 	 * map object.
-	 * It exists to support the _DUMP keyword.
 	 *
 	 * @return string representing the map/array
 	 */

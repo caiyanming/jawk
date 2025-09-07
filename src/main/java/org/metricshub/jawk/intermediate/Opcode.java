@@ -807,17 +807,7 @@ public enum Opcode {
 	 */
 	MATCHES,
 
-	/**
-	 * <strong>Extension:</strong> Pauses the execution thread by N number of seconds.
-	 * <p>
-	 * Stack before: N ...<br/>
-	 * Stack after: ...
-	 */
-	SLEEP,
-	/** Constant <code>DUMP=337</code> */
-	DUMP,
-
-	/** Constant <code>DEREF_ARRAY=338</code> */
+	/** Constant <code>DEREF_ARRAY=336</code> */
 	DEREF_ARRAY,
 
 	// for (x in y) {keyset} support
