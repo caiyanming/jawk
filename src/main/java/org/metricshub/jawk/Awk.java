@@ -564,7 +564,6 @@ public class Awk {
 		}
 		if (!notIntermediateScriptSources.isEmpty()) {
 			AwkParser parser = new AwkParser(
-					settings.isAdditionalFunctions(),
 					this.extensions);
 			// parse the script
 			AstNode ast = parser.parse(notIntermediateScriptSources);
@@ -634,7 +633,7 @@ public class Awk {
 				false);
 
 		// Parse the expression
-		AwkParser parser = new AwkParser(false, this.extensions);
+		AwkParser parser = new AwkParser(this.extensions);
 		AstNode ast = parser.parseExpression(expressionSource);
 
 		// Create the tuples that we will return

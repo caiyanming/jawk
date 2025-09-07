@@ -37,11 +37,6 @@ public interface AwkCompileSettings {
 	List<ScriptSource> getScriptSources();
 
 	/**
-	 * @return {@code true} to enable additional functions
-	 */
-	boolean isAdditionalFunctions();
-
-	/**
 	 * @return {@code true} to dump the syntax tree
 	 */
 	boolean isDumpSyntaxTree();

@@ -45,8 +45,6 @@ public interface AwkInterpreteSettings {
 
 	boolean isCatchIllegalFormatExceptions();
 
-	boolean isAdditionalFunctions();
-
 	PrintStream getOutputStream();
 
 	Locale getLocale();

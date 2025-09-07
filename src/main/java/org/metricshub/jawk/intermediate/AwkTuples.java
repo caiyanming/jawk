@@ -984,28 +984,6 @@ public class AwkTuples implements Serializable {
 
 	/**
 	 * <p>
-	 * sleep.
-	 * </p>
-	 *
-	 * @param numArgs a int
-	 */
-	public void sleep(int numArgs) {
-		queue.add(new Tuple(Opcode.SLEEP, numArgs));
-	}
-
-	/**
-	 * <p>
-	 * dump.
-	 * </p>
-	 *
-	 * @param numArgs a int
-	 */
-	public void dump(int numArgs) {
-		queue.add(new Tuple(Opcode.DUMP, numArgs));
-	}
-
-	/**
-	 * <p>
 	 * dereferenceArray.
 	 * </p>
 	 */
