@@ -202,7 +202,7 @@
 					<archive>
 						<manifest>
 							<packageName>${project.groupId}</packageName>
-							<mainClass>org.metricshub.jawk.Main</mainClass>
+                                                        <mainClass>org.metricshub.jawk.Cli</mainClass>
 						</manifest>
 					</archive>
 				</configuration>

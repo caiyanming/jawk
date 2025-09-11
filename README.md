@@ -17,6 +17,8 @@ Jawk does not rely on any logging framework; errors are reported through standar
 ## Run Jawk CLI
 
 See [Jawk CLI documentation](https://metricshub.org/Jawk/cli.html)
+for command-line options, including `-K <filename>` to compile a script
+to a tuples file and `-l <filename>` to load previously compiled tuples.
 
 ## Run AWK inside Java
 

@@ -40,15 +40,24 @@ import org.metricshub.jawk.ExitException;
 import org.metricshub.jawk.util.AwkSettings;
 import org.metricshub.jawk.util.ScriptSource;
 
-/** Simple JSR-223 script engine for Jawk. */
+/**
+ * Simple JSR-223 script engine for Jawk that delegates execution to the
+ * {@link Awk} runtime.
+ */
 public class JawkScriptEngine extends AbstractScriptEngine {
 
 	private final ScriptEngineFactory factory;
 
+	/**
+	 * Creates a new script engine instance.
+	 *
+	 * @param factory the owning {@link ScriptEngineFactory}
+	 */
 	public JawkScriptEngine(ScriptEngineFactory factory) {
 		this.factory = factory;
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public Object eval(Reader scriptReader, ScriptContext context) throws ScriptException {
 		try {
@@ -67,12 +76,18 @@ public class JawkScriptEngine extends AbstractScriptEngine {
 			} catch (java.io.UnsupportedEncodingException e) {
 				throw new IllegalStateException(e);
 			}
-			settings.addScriptSource(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, scriptReader, false));
 			Awk awk = new Awk();
-			awk.invoke(settings);
+			// Execute the AWK script using the configured settings
+			awk
+					.invoke(
+							new ScriptSource(
+									ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
+									scriptReader),
+							settings);
 			String out = result.toString(StandardCharsets.UTF_8.name());
 			Writer writer = context.getWriter();
 			if (writer != null) {
+				// Write result to the script context's writer if provided
 				writer.write(out);
 				writer.flush();
 			}
@@ -87,16 +102,19 @@ public class JawkScriptEngine extends AbstractScriptEngine {
 		}
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public Object eval(String script, ScriptContext context) throws ScriptException {
 		return eval(new StringReader(script), context);
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public Bindings createBindings() {
 		return new SimpleBindings();
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public ScriptEngineFactory getFactory() {
 		return factory;

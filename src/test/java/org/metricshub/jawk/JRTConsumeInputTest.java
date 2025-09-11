@@ -65,9 +65,9 @@ public class JRTConsumeInputTest {
 
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		settings.setOutputStream(new PrintStream(out, true, StandardCharsets.UTF_8.name()));
-		settings.addScriptSource(new ScriptSource("Body", new StringReader("{ next } \nEND { print NR }"), false));
+		ScriptSource script = new ScriptSource("Body", new StringReader("{ next } \nEND { print NR }"));
 
-		new Awk().invoke(settings);
+		new Awk().invoke(script, settings);
 
 		assertEquals("3\n", out.toString("UTF-8"));
 	}

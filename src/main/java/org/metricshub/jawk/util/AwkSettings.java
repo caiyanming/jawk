@@ -39,7 +39,7 @@ import java.util.Map;
  *
  * @author Danny Daglas
  */
-public class AwkSettings implements AwkCompileSettings, AwkInterpreteSettings {
+public class AwkSettings implements AwkInterpreteSettings {
 
 	/**
 	 * Where input is read from.
@@ -63,31 +63,10 @@ public class AwkSettings implements AwkCompileSettings, AwkInterpreteSettings {
 	private List<String> nameValueOrFileNames = new ArrayList<String>();
 
 	/**
-	 * Script sources meta info.
-	 * This will usually be either one String container,
-	 * made up of the script given on the command line directly,
-	 * with the first non-"-" parameter,
-	 * or one or multiple script file names (if provided with -f switches).
-	 */
-	private List<ScriptSource> scriptSources = new ArrayList<ScriptSource>();
-
-	/**
 	 * Initial Field Separator (FS) value.
 	 * <code>null</code> means the default FS value.
 	 */
 	private String fieldSeparator = null;
-
-	/**
-	 * Whether to dump the syntax tree;
-	 * <code>false</code> by default.
-	 */
-	private boolean dumpSyntaxTree = false;
-
-	/**
-	 * Whether to dump the intermediate code;
-	 * <code>false</code> by default.
-	 */
-	private boolean dumpIntermediateCode = false;
 
 	/**
 	 * Whether to maintain array keys in sorted order;
@@ -101,23 +80,6 @@ public class AwkSettings implements AwkCompileSettings, AwkInterpreteSettings {
 	 * <code>true</code> by default.
 	 */
 	private boolean catchIllegalFormatExceptions = true;
-
-	/**
-	 * Whether user extensions are enabled;
-	 * <code>false</code> by default.
-	 */
-	/**
-	 * Write to intermediate file;
-	 * <code>false</code> by default.
-	 */
-	private boolean writeIntermediateFile = false;
-
-	/**
-	 * Output filename;
-	 * <code>null</code> by default,
-	 * which means the appropriate default file-name will get used.
-	 */
-	private String outputFilename = null;
 
 	/**
 	 * Output stream;
@@ -156,14 +118,9 @@ public class AwkSettings implements AwkCompileSettings, AwkInterpreteSettings {
 
 		desc.append("variables = ").append(getVariables()).append(newLine);
 		desc.append("nameValueOrFileNames = ").append(getNameValueOrFileNames()).append(newLine);
-		desc.append("scriptSources = ").append(scriptSources).append(newLine);
 		desc.append("fieldSeparator = ").append(getFieldSeparator()).append(newLine);
-		desc.append("dumpSyntaxTree = ").append(isDumpSyntaxTree()).append(newLine);
-		desc.append("dumpIntermediateCode = ").append(isDumpIntermediateCode()).append(newLine);
 		desc.append("useSortedArrayKeys = ").append(isUseSortedArrayKeys()).append(newLine);
 		desc.append("catchIllegalFormatExceptions = ").append(isCatchIllegalFormatExceptions()).append(newLine);
-		desc.append("writeIntermediateFile = ").append(isWriteIntermediateFile()).append(newLine);
-		desc.append("outputFilename = ").append(getOutputFilename()).append(newLine);
 
 		return desc.toString();
 	}
@@ -212,48 +169,6 @@ public class AwkSettings implements AwkCompileSettings, AwkInterpreteSettings {
 		}
 		// note: can overwrite previously defined variables
 		putVariable(name, value);
-	}
-
-	/**
-	 * <p>
-	 * Getter for the field <code>outputFilename</code>.
-	 * </p>
-	 *
-	 * @param defaultFileName The filename to return if -o argument
-	 *        is not used.
-	 * @return the optarg for the -o parameter, or the defaultFileName
-	 *         parameter if -o is not utilized.
-	 */
-	public String getOutputFilename(String defaultFileName) {
-		if (getOutputFilename() == null) {
-			return defaultFileName;
-		} else {
-			return getOutputFilename();
-		}
-	}
-
-	/**
-	 * <p>
-	 * Getter for the field <code>scriptSources</code>.
-	 * </p>
-	 *
-	 * @return a copy of the script sources meta info.
-	 *         This will usually be either one String container,
-	 *         made up of the script given on the command line directly,
-	 *         with the first non-"-" parameter,
-	 *         or one or multiple script file names (if provided with -f switches).
-	 */
-	public List<ScriptSource> getScriptSources() {
-		return new ArrayList<ScriptSource>(scriptSources);
-	}
-
-	/**
-	 * Add the specified ScriptSource
-	 *
-	 * @param scriptSource ScriptSource instance to add
-	 */
-	public void addScriptSource(ScriptSource scriptSource) {
-		scriptSources.add(scriptSource);
 	}
 
 	/**
@@ -331,19 +246,6 @@ public class AwkSettings implements AwkCompileSettings, AwkInterpreteSettings {
 	}
 
 	/**
-	 * Script sources meta info.
-	 * This will usually be either one String container,
-	 * made up of the script given on the command line directly,
-	 * with the first non-"-" parameter,
-	 * or one or multiple script file names (if provided with -f switches).
-	 *
-	 * @param scriptSources the scriptSources to set
-	 */
-	public void setScriptSources(List<ScriptSource> scriptSources) {
-		this.scriptSources = new ArrayList<ScriptSource>(scriptSources);
-	}
-
-	/**
 	 * Initial Field Separator (FS) value.
 	 * <code>null</code> means the default FS value.
 	 *
@@ -364,46 +266,6 @@ public class AwkSettings implements AwkCompileSettings, AwkInterpreteSettings {
 	}
 
 	/**
-	 * Whether to dump the syntax tree;
-	 * <code>false</code> by default.
-	 *
-	 * @return the dumpSyntaxTree
-	 */
-	public boolean isDumpSyntaxTree() {
-		return dumpSyntaxTree;
-	}
-
-	/**
-	 * Whether to dump the syntax tree;
-	 * <code>false</code> by default.
-	 *
-	 * @param dumpSyntaxTree the dumpSyntaxTree to set
-	 */
-	public void setDumpSyntaxTree(boolean dumpSyntaxTree) {
-		this.dumpSyntaxTree = dumpSyntaxTree;
-	}
-
-	/**
-	 * Whether to dump the intermediate code;
-	 * <code>false</code> by default.
-	 *
-	 * @return the dumpIntermediateCode
-	 */
-	public boolean isDumpIntermediateCode() {
-		return dumpIntermediateCode;
-	}
-
-	/**
-	 * Whether to dump the intermediate code;
-	 * <code>false</code> by default.
-	 *
-	 * @param dumpIntermediateCode the dumpIntermediateCode to set
-	 */
-	public void setDumpIntermediateCode(boolean dumpIntermediateCode) {
-		this.dumpIntermediateCode = dumpIntermediateCode;
-	}
-
-	/**
 	 * Whether to maintain array keys in sorted order;
 	 * <code>false</code> by default.
 	 *
@@ -421,48 +283,6 @@ public class AwkSettings implements AwkCompileSettings, AwkInterpreteSettings {
 	 */
 	public void setUseSortedArrayKeys(boolean useSortedArrayKeys) {
 		this.useSortedArrayKeys = useSortedArrayKeys;
-	}
-
-	/**
-	 * Write to intermediate file;
-	 * <code>false</code> by default.
-	 *
-	 * @return the writeIntermediateFile
-	 */
-	public boolean isWriteIntermediateFile() {
-		return writeIntermediateFile;
-	}
-
-	/**
-	 * Write to intermediate file;
-	 * <code>false</code> by default.
-	 *
-	 * @param writeIntermediateFile the writeIntermediateFile to set
-	 */
-	public void setWriteIntermediateFile(boolean writeIntermediateFile) {
-		this.writeIntermediateFile = writeIntermediateFile;
-	}
-
-	/**
-	 * Output filename;
-	 * <code>null</code> by default,
-	 * which means the appropriate default file-name will get used.
-	 *
-	 * @return the outputFilename
-	 */
-	public String getOutputFilename() {
-		return outputFilename;
-	}
-
-	/**
-	 * Output filename;
-	 * <code>null</code> by default,
-	 * which means the appropriate default file-name will get used.
-	 *
-	 * @param outputFilename the outputFilename to set
-	 */
-	public void setOutputFilename(String outputFilename) {
-		this.outputFilename = outputFilename;
 	}
 
 	/**

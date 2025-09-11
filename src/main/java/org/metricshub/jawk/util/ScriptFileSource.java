@@ -22,10 +22,7 @@ package org.metricshub.jawk.util;
  * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
  */
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
@@ -41,7 +38,6 @@ public class ScriptFileSource extends ScriptSource {
 
 	private String filePath;
 	private Reader fileReader;
-	private InputStream fileInputStream;
 
 	/**
 	 * <p>
@@ -51,10 +47,9 @@ public class ScriptFileSource extends ScriptSource {
 	 * @param filePath a {@link java.lang.String} object
 	 */
 	public ScriptFileSource(String filePath) {
-		super(filePath, null, filePath.endsWith(".ai"));
+		super(filePath, null);
 		this.filePath = filePath;
 		this.fileReader = null;
-		this.fileInputStream = null;
 	}
 
 	/**
@@ -71,7 +66,7 @@ public class ScriptFileSource extends ScriptSource {
 	/** {@inheritDoc} */
 	@Override
 	public Reader getReader() {
-		if ((fileReader == null) && !isIntermediate()) {
+		if (fileReader == null) {
 			try {
 				fileReader = Files.newBufferedReader(Paths.get(filePath), StandardCharsets.UTF_8);
 			} catch (IOException ex) {
@@ -80,21 +75,5 @@ public class ScriptFileSource extends ScriptSource {
 		}
 
 		return fileReader;
-	}
-
-	/** {@inheritDoc} */
-	@Override
-	public InputStream getInputStream() {
-		if ((fileInputStream == null) && isIntermediate()) {
-			try {
-				fileInputStream = new FileInputStream(filePath);
-			} catch (FileNotFoundException ex) {
-				throw new UncheckedIOException(
-						"Failed to open script source for reading: " + filePath,
-						ex);
-			}
-		}
-
-		return fileInputStream;
 	}
 }
