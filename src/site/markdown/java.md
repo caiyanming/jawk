@@ -68,7 +68,7 @@ Object value = awk.eval(expr, "5 3", " ");
 
 The examples below show how to configure `AwkSettings` directly to customize
 input sources, output handling or to register `JawkExtension`s. The
-`invoke(AwkSettings)` helper compiles and runs the script in one step.
+`invoke(ScriptSource, AwkSettings)` helper compiles and runs the script in one step.
 
 #### Invoke AWK script files on input files
 
@@ -95,12 +95,9 @@ private String runAwk(File scriptFile, List<String> inputFileList) throws IOExce
     ByteArrayOutputStream resultBytesStream = new ByteArrayOutputStream();
     settings.setOutputStream(new PrintStream(resultBytesStream));
 
-    // Sets the AWK script to execute
-    settings.addScriptSource(new ScriptFileSource(scriptFile.getAbsolutePath()));
-
     // Execute the awk script against the specified input
     Awk awk = new Awk();
-    awk.invoke(settings);
+    awk.invoke(new ScriptFileSource(scriptFile.getAbsolutePath()), settings);
 
     // Return the result as a string
     return resultBytesStream.toString(StandardCharsets.UTF_8);

@@ -10,7 +10,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.io.StringReader;
 import java.net.URISyntaxException;
@@ -25,6 +27,7 @@ import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.metricshub.jawk.frontend.ast.ParserException;
 import org.metricshub.jawk.intermediate.AwkTuples;
 import org.metricshub.jawk.util.AwkSettings;
+import org.metricshub.jawk.Cli;
 
 public class AwkTest {
 
@@ -42,7 +45,7 @@ public class AwkTest {
 	}
 
 	static void awk(String... args) throws ClassNotFoundException, IOException {
-		Main.main(args);
+		Cli.main(args);
 	}
 
 	static File classpathFile(final Class<?> c, String path) {
@@ -633,5 +636,67 @@ public class AwkTest {
 		new Awk(Collections.emptyMap()).invoke(tuples, settings);
 
 		assertEquals("value\n", out.toString(StandardCharsets.UTF_8.name()));
+	}
+
+	@Test
+	public void loadSerializedTuples() throws Exception {
+		String script = "{ print toupper($0) }";
+		AwkTuples tuples = AWK.compile(script);
+
+		File tmp = File.createTempFile("jawk", ".tpl");
+		try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(tmp))) {
+			oos.writeObject(tuples);
+		}
+
+		Cli cli = Cli.parseCommandLineArguments(new String[] { "-l", tmp.getAbsolutePath() });
+		AwkSettings settings = cli.getSettings();
+		settings.setInput(new ByteArrayInputStream("abc\n".getBytes(StandardCharsets.UTF_8)));
+		settings.setDefaultRS("\n");
+		settings.setDefaultORS("\n");
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		settings.setOutputStream(new PrintStream(out, false, StandardCharsets.UTF_8.name()));
+
+		new Awk().invoke(cli.getPrecompiledTuples(), settings);
+
+		assertEquals("ABC\n", out.toString(StandardCharsets.UTF_8.name()));
+	}
+
+	@Test
+	public void compileTuplesViaCLI() throws Exception {
+		File tmp = File.createTempFile("jawk", ".tpl");
+		Cli.main(new String[] { "-K", tmp.getAbsolutePath(), "{ print toupper($0) }" });
+
+		Cli cli = Cli.parseCommandLineArguments(new String[] { "-l", tmp.getAbsolutePath() });
+		AwkSettings settings = cli.getSettings();
+		settings.setInput(new ByteArrayInputStream("abc\n".getBytes(StandardCharsets.UTF_8)));
+		settings.setDefaultRS("\n");
+		settings.setDefaultORS("\n");
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		settings.setOutputStream(new PrintStream(out, false, StandardCharsets.UTF_8.name()));
+
+		new Awk().invoke(cli.getPrecompiledTuples(), settings);
+
+		assertEquals("ABC\n", out.toString(StandardCharsets.UTF_8.name()));
+	}
+
+	@Test
+	public void rejectsInvalidVariableName() {
+		assertThrows(
+				IllegalArgumentException.class,
+				() -> Cli.parseCommandLineArguments(new String[]
+				{ "-v", "1foo=bar", "{ print }" }));
+	}
+
+	@Test
+	public void compileTuplesRequiresFilename() {
+		assertThrows(
+				IllegalArgumentException.class,
+				() -> Cli
+						.create(
+								new String[]
+								{ "-K" },
+								new ByteArrayInputStream(new byte[0]),
+								new PrintStream(new ByteArrayOutputStream(), false, StandardCharsets.UTF_8.name()),
+								new PrintStream(new ByteArrayOutputStream(), false, StandardCharsets.UTF_8.name())));
 	}
 }

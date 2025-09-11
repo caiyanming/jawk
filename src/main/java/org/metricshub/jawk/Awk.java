@@ -26,11 +26,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.Reader;
@@ -38,7 +35,6 @@ import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,21 +42,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.metricshub.jawk.backend.AVM;
 import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.frontend.AwkParser;
 import org.metricshub.jawk.frontend.AstNode;
 import org.metricshub.jawk.intermediate.AwkTuples;
-import org.metricshub.jawk.util.AwkSettings;
-import org.metricshub.jawk.util.AwkCompileSettings;
 import org.metricshub.jawk.util.AwkInterpreteSettings;
+import org.metricshub.jawk.util.AwkSettings;
 import org.metricshub.jawk.util.ScriptSource;
 
 /**
  * Entry point into the parsing, analysis, and execution
  * of a Jawk script.
- * This entry point is used when Jawk is executed as a library.
- * If you want to use Jawk as a stand-alone application, please use {@see Main}.
+ * This entry point is used both when Jawk is executed as a library and when
+ * invoked from the command line.
  * <p>
  * The overall process to execute a Jawk script is as follows:
  * <ul>
@@ -100,6 +96,11 @@ public class Awk {
 	private final Map<String, JawkExtension> extensions;
 
 	/**
+	 * The last parsed {@link AstNode} produced during compilation.
+	 */
+	private AstNode lastAst;
+
+	/**
 	 * Create a new instance of Awk without extensions
 	 */
 	public Awk() {
@@ -111,6 +112,16 @@ public class Awk {
 	 */
 	public Awk(Map<String, JawkExtension> extensions) {
 		this.extensions = new HashMap<String, JawkExtension>(extensions);
+	}
+
+	/**
+	 * Returns the last parsed AST produced by {@link #compile(List)}.
+	 *
+	 * @return the last {@link AstNode}, or {@code null} if no compilation occurred
+	 */
+	@SuppressFBWarnings("EI_EXPOSE_REP")
+	public AstNode getLastAst() {
+		return lastAst;
 	}
 
 	/**
@@ -127,11 +138,29 @@ public class Awk {
 	 * @throws org.metricshub.jawk.ExitException if interpretation is requested,
 	 *         and a specific exit code is requested.
 	 */
-	public void invoke(AwkSettings settings) throws IOException, ClassNotFoundException, ExitException {
-		AwkTuples tuples = compile(settings);
-		if (tuples == null) {
-			return;
-		}
+	public void invoke(String script, AwkSettings settings)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		invoke(
+				new ScriptSource(
+						ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
+						new StringReader(script)),
+				settings);
+	}
+
+	public void invoke(ScriptSource script, AwkSettings settings)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		invoke(Collections.singletonList(script), settings);
+	}
+
+	public void invoke(List<ScriptSource> scripts, AwkSettings settings)
+			throws IOException,
+			ClassNotFoundException,
+			ExitException {
+		AwkTuples tuples = compile(scripts);
 		invoke(tuples, settings);
 	}
 
@@ -502,15 +531,12 @@ public class Awk {
 								false,
 								StandardCharsets.UTF_8.name()));
 
-		settings
-				.addScriptSource(
-						new ScriptSource(
-								ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
-								scriptReader,
-								false));
+		ScriptSource script = new ScriptSource(
+				ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
+				scriptReader);
 
 		try {
-			invoke(settings);
+			invoke(script, settings);
 		} catch (ExitException e) {
 			if (e.getCode() != 0) {
 				throw e;
@@ -528,7 +554,12 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 */
 	public AwkTuples compile(String script) throws IOException, ClassNotFoundException {
-		return compile(new StringReader(script));
+		return compile(
+				Collections
+						.singletonList(
+								new ScriptSource(
+										ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
+										new StringReader(script))));
 	}
 
 	/**
@@ -541,76 +572,32 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 */
 	public AwkTuples compile(Reader script) throws IOException, ClassNotFoundException {
-		AwkSettings settings = new AwkSettings();
-		settings.addScriptSource(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, script, false));
-		return compile(settings);
+		return compile(
+				Collections
+						.singletonList(
+								new ScriptSource(
+										ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
+										script)));
 	}
 
-	public AwkTuples compile(AwkCompileSettings settings)
+	public AwkTuples compile(List<ScriptSource> scripts)
 			throws IOException,
 			ClassNotFoundException {
 
+		lastAst = null;
 		AwkTuples tuples = new AwkTuples();
-		List<ScriptSource> notIntermediateScriptSources = new ArrayList<ScriptSource>(settings.getScriptSources().size());
-		for (ScriptSource scriptSource : settings.getScriptSources()) {
-			if (scriptSource.isIntermediate()) {
-				// read the intermediate file, bypassing frontend processing
-				// if several intermediate files are supplied, the most recent one
-				// encountered in the list takes precedence
-				tuples = (AwkTuples) readObjectFromInputStream(scriptSource.getInputStream());
-			} else {
-				notIntermediateScriptSources.add(scriptSource);
-			}
-		}
-		if (!notIntermediateScriptSources.isEmpty()) {
-			AwkParser parser = new AwkParser(
-					this.extensions);
-			// parse the script
-			AstNode ast = parser.parse(notIntermediateScriptSources);
-
-			if (settings.isDumpSyntaxTree()) {
-				// dump the syntax tree of the script to a file
-				String filename = settings.getOutputFilename("syntax_tree.lst");
-				PrintStream ps = new PrintStream(new FileOutputStream(filename), false, StandardCharsets.UTF_8.name());
-				if (ast != null) {
-					ast.dump(ps);
-				}
-				ps.close();
-				return null;
-			}
-			// otherwise, attempt to traverse the syntax tree and build
-			// the intermediate code
+		if (!scripts.isEmpty()) {
+			AwkParser parser = new AwkParser(this.extensions);
+			AstNode ast = parser.parse(scripts);
+			lastAst = ast;
 			if (ast != null) {
-				// 1st pass to tie actual parameters to back-referenced formal parameters
 				ast.semanticAnalysis();
-				// 2nd pass to tie actual parameters to forward-referenced formal parameters
 				ast.semanticAnalysis();
-				// build tuples
 				int result = ast.populateTuples(tuples);
-				// ASSERTION: NOTHING should be left on the operand stack ...
 				assert result == 0;
-				// Assign queue.next to the next element in the queue.
-				// Calls touch(...) per Tuple so that addresses can be normalized/assigned/allocated
 				tuples.postProcess();
-				// record global_var -> offset mapping into the tuples
-				// so that the interpreter/compiler can assign variables
-				// on the "file list input" command line
 				parser.populateGlobalVariableNameToOffsetMappings(tuples);
 			}
-			if (settings.isWriteIntermediateFile()) {
-				// dump the intermediate code to an intermediate code file
-				String filename = settings.getOutputFilename("a.ai");
-				writeObjectToFile(tuples, filename);
-				return null;
-			}
-		}
-		if (settings.isDumpIntermediateCode()) {
-			// dump the intermediate code to a human-readable text file
-			String filename = settings.getOutputFilename("avm.lst");
-			PrintStream ps = new PrintStream(new FileOutputStream(filename), false, StandardCharsets.UTF_8.name());
-			tuples.dump(ps);
-			ps.close();
-			return null;
 		}
 
 		return tuples;
@@ -629,8 +616,7 @@ public class Awk {
 		// Create a ScriptSource
 		ScriptSource expressionSource = new ScriptSource(
 				ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
-				new StringReader(expression),
-				false);
+				new StringReader(expression));
 
 		// Parse the expression
 		AwkParser parser = new AwkParser(this.extensions);
@@ -759,19 +745,6 @@ public class Awk {
 		return new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
 	}
 
-	private static Object readObjectFromInputStream(InputStream is) throws IOException, ClassNotFoundException {
-		ObjectInputStream ois = new ObjectInputStream(is);
-		Object retval = ois.readObject();
-		ois.close();
-		return retval;
-	}
-
-	private static void writeObjectToFile(Object object, String filename) throws IOException {
-		ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename));
-		oos.writeObject(object);
-		oos.close();
-	}
-
 	public static Map<String, JawkExtension> getDefaultExtensions() {
 		String extensionsStr = System.getProperty("jawk.extensions", null);
 		if (extensionsStr == null) {
@@ -836,4 +809,5 @@ public class Awk {
 
 		return retval;
 	}
+
 }

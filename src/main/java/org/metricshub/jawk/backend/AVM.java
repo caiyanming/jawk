@@ -1926,7 +1926,7 @@ public class AVM implements VariableManager {
 					String awkCode = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
 					List<ScriptSource> scriptSources = new ArrayList<ScriptSource>(1);
 					scriptSources
-							.add(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, new StringReader(awkCode), false));
+							.add(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, new StringReader(awkCode)));
 
 					org.metricshub.jawk.frontend.AwkParser ap = new org.metricshub.jawk.frontend.AwkParser(
 							extensions);

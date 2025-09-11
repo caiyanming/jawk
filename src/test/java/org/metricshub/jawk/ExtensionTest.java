@@ -6,13 +6,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.StringReader;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.junit.Test;
 import org.metricshub.jawk.backend.AVM;
 import org.metricshub.jawk.ext.JawkExtension;
-import org.metricshub.jawk.frontend.AwkParser;
-import org.metricshub.jawk.frontend.AstNode;
 import org.metricshub.jawk.intermediate.AwkTuples;
 import org.metricshub.jawk.util.AwkSettings;
 import org.metricshub.jawk.util.ScriptSource;
@@ -37,25 +36,15 @@ public class ExtensionTest {
 		ByteArrayOutputStream resultBytesStream = new ByteArrayOutputStream();
 		settings.setOutputStream(new PrintStream(resultBytesStream));
 
-		// Sets the AWK script to execute
-		settings
-				.addScriptSource(
-						new ScriptSource(
-								"Body",
-								new StringReader("BEGIN { ab[1] = \"a\"; ab[2] = \"b\"; printf myExtensionFunction(3, ab) }"),
-								false));
+		ScriptSource script = new ScriptSource(
+				"Body",
+				new StringReader(
+						"BEGIN { ab[1] = \"a\"; ab[2] = \"b\"; printf myExtensionFunction(3, ab) }"));
 
 		// Execute the awk script against the specified input
 		AVM avm = null;
 		try {
-			AwkParser parser = new AwkParser(myExtensionMap);
-			AstNode ast = parser.parse(settings.getScriptSources());
-			ast.semanticAnalysis();
-			ast.semanticAnalysis();
-			AwkTuples tuples = new AwkTuples();
-			ast.populateTuples(tuples);
-			tuples.postProcess();
-			parser.populateGlobalVariableNameToOffsetMappings(tuples);
+			AwkTuples tuples = new Awk(myExtensionMap).compile(Collections.singletonList(script));
 			avm = new AVM(settings, myExtensionMap);
 			avm.interpret(tuples);
 		} catch (ExitException e) {

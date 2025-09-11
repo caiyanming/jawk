@@ -23,14 +23,13 @@ package org.metricshub.jawk.util;
  */
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
 
 /**
  * Represents one AWK-script content source.
  * This is usually either a string,
  * given on the command line with the first non-"-" parameter,
- * or an "*.awk" (normal) or "*.ai" (intermediate) script,
+ * or an "*.awk" script,
  * given as a path with a "-f" command line switch.
  *
  * @author Danny Daglas
@@ -42,7 +41,6 @@ public class ScriptSource {
 
 	private String description;
 	private Reader reader;
-	private boolean intermediate;
 
 	/**
 	 * <p>
@@ -51,12 +49,10 @@ public class ScriptSource {
 	 *
 	 * @param description a {@link java.lang.String} object
 	 * @param reader a {@link java.io.Reader} object
-	 * @param intermediate a boolean
 	 */
-	public ScriptSource(String description, Reader reader, boolean intermediate) {
+	public ScriptSource(String description, Reader reader) {
 		this.description = description;
 		this.reader = reader;
-		this.intermediate = intermediate;
 	}
 
 	/**
@@ -71,43 +67,13 @@ public class ScriptSource {
 	}
 
 	/**
-	 * Obtain the InputStream containing the intermediate file.
-	 * This returns non-null only if {@see #isIntermediate()}
-	 * returns <code>false</code>.
+	 * Obtain the {@link Reader} serving the script contents.
 	 *
-	 * @return The reader which contains the intermediate file, null if
-	 *         either the -f argument is not used, or the argument does not
-	 *         refer to an intermediate file.
+	 * @return The reader which contains the script contents.
 	 * @throws java.io.IOException if any.
 	 */
 	public Reader getReader() throws IOException {
 		return reader;
-	}
-
-	/**
-	 * Returns the <code>InputStream</code> serving the contents of this source.
-	 * This returns non-<code>null</code> only if {@see #isIntermediate()}
-	 * returns <code>true</code>.
-	 *
-	 * @return a {@link java.io.InputStream} object
-	 * @throws java.io.IOException if any.
-	 */
-	public InputStream getInputStream() throws IOException {
-		return null;
-	}
-
-	/**
-	 * Indicates whether the underlying source is an intermediate file.
-	 * Intermediate files end with the ".ai" extension.
-	 * No other determination is made whether the file is an intermediate
-	 * one or not.
-	 * That is, the content of the file is not checked.
-	 *
-	 * @return <code>true</code> if the "-f optarg" is an intermediate file
-	 *         (a file ending in ".ai"), <code>false</code> otherwise.
-	 */
-	public final boolean isIntermediate() {
-		return intermediate;
 	}
 
 	/** {@inheritDoc} */

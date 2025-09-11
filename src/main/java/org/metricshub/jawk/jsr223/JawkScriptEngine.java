@@ -67,9 +67,13 @@ public class JawkScriptEngine extends AbstractScriptEngine {
 			} catch (java.io.UnsupportedEncodingException e) {
 				throw new IllegalStateException(e);
 			}
-			settings.addScriptSource(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, scriptReader, false));
 			Awk awk = new Awk();
-			awk.invoke(settings);
+			awk
+					.invoke(
+							new ScriptSource(
+									ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
+									scriptReader),
+							settings);
 			String out = result.toString(StandardCharsets.UTF_8.name());
 			Writer writer = context.getWriter();
 			if (writer != null) {

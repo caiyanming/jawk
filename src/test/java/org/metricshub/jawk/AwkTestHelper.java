@@ -93,14 +93,11 @@ public class AwkTestHelper {
 		ByteArrayOutputStream resultBytesStream = new ByteArrayOutputStream();
 		settings.setOutputStream(new PrintStream(resultBytesStream));
 
-		// Sets the AWK script to execute
-		settings.addScriptSource(new ScriptFileSource(scriptFile.getAbsolutePath()));
-
 		// Execute the awk script against the specified input
 		Awk awk = new Awk();
 		int exit = 0;
 		try {
-			awk.invoke(settings);
+			awk.invoke(new ScriptFileSource(scriptFile.getAbsolutePath()), settings);
 		} catch (ExitException e) {
 			exit = e.getCode();
 		}
@@ -163,13 +160,10 @@ public class AwkTestHelper {
 		ByteArrayOutputStream resultBytesStream = new ByteArrayOutputStream();
 		settings.setOutputStream(new PrintStream(resultBytesStream));
 
-		// Sets the AWK script to execute
-		settings.addScriptSource(new ScriptFileSource(scriptFile.getAbsolutePath()));
-
 		// Execute the awk script against the specified input
 		Awk awk = new Awk();
 		try {
-			awk.invoke(settings);
+			awk.invoke(new ScriptFileSource(scriptFile.getAbsolutePath()), settings);
 		} catch (ExitException e) {
 			if (e.getCode() != 0) {
 				throw e;
@@ -232,13 +226,10 @@ public class AwkTestHelper {
 			settings.putVariable("TEMPDIR", tempDirectory);
 		}
 
-		// Sets the AWK script to execute
-		settings.addScriptSource(new ScriptSource("Body", new StringReader(script), false));
-
 		// Execute the awk script against the specified input
 		Awk awk = new Awk();
 		try {
-			awk.invoke(settings);
+			awk.invoke(new ScriptSource("Body", new StringReader(script)), settings);
 		} catch (ExitException e) {
 			if (e.getCode() != 0) {
 				throw e;

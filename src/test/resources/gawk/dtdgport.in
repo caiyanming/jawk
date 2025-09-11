@@ -240,7 +240,7 @@
 					<archive>
 						<manifest>
 							<packageName>${project.groupId}</packageName>
-							<mainClass>org.metricshub.jawk.Main</mainClass>
+                                                    <mainClass>org.metricshub.jawk.Awk</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
