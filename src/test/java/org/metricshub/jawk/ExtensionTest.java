@@ -16,8 +16,16 @@ import org.metricshub.jawk.intermediate.AwkTuples;
 import org.metricshub.jawk.util.AwkSettings;
 import org.metricshub.jawk.util.ScriptSource;
 
+/**
+ * Tests the integration of a custom {@link JawkExtension} implementation with
+ * the interpreter.
+ */
 public class ExtensionTest {
 
+	/**
+	 * Verifies that an extension can be registered and invoked from an AWK
+	 * script.
+	 */
 	@Test
 	public void testExtension() throws Exception {
 		JawkExtension myExtension = new TestExtension();

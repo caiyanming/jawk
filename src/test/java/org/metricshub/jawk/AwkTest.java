@@ -587,6 +587,10 @@ public class AwkTest {
 		assertThrows(ParserException.class, () -> AWK.eval("BEGIN { print 5 }", null));
 	}
 
+	/**
+	 * Verifies that a script provided as a {@link String} can be compiled to
+	 * {@link AwkTuples} and executed.
+	 */
 	@Test
 	public void compileFromString() throws Exception {
 		String script = "{ print $0 }";
@@ -604,6 +608,10 @@ public class AwkTest {
 		assertEquals("foo\nbar\n", out.toString(StandardCharsets.UTF_8.name()));
 	}
 
+	/**
+	 * Verifies that a script provided as a {@link java.io.Reader} can be compiled
+	 * and executed.
+	 */
 	@Test
 	public void compileFromReader() throws Exception {
 		String script = "{ print $0 }";
@@ -621,6 +629,10 @@ public class AwkTest {
 		assertEquals("one\n", out.toString(StandardCharsets.UTF_8.name()));
 	}
 
+	/**
+	 * Ensures that providing explicit extensions to the {@link Awk} constructor
+	 * does not interfere with tuple execution.
+	 */
 	@Test
 	public void invokeWithExplicitExtensions() throws Exception {
 		String script = "{ print $0 }";
@@ -638,6 +650,10 @@ public class AwkTest {
 		assertEquals("value\n", out.toString(StandardCharsets.UTF_8.name()));
 	}
 
+	/**
+	 * Loads precompiled tuples from disk via the <code>-l</code> option and executes
+	 * them through the CLI.
+	 */
 	@Test
 	public void loadSerializedTuples() throws Exception {
 		String script = "{ print toupper($0) }";
@@ -661,6 +677,10 @@ public class AwkTest {
 		assertEquals("ABC\n", out.toString(StandardCharsets.UTF_8.name()));
 	}
 
+	/**
+	 * Compiles a script to tuples using the <code>-K</code> option and then loads
+	 * the generated file for execution.
+	 */
 	@Test
 	public void compileTuplesViaCLI() throws Exception {
 		File tmp = File.createTempFile("jawk", ".tpl");
@@ -679,6 +699,9 @@ public class AwkTest {
 		assertEquals("ABC\n", out.toString(StandardCharsets.UTF_8.name()));
 	}
 
+	/**
+	 * Ensures that the CLI rejects variable assignments with invalid identifiers.
+	 */
 	@Test
 	public void rejectsInvalidVariableName() {
 		assertThrows(
@@ -687,6 +710,10 @@ public class AwkTest {
 				{ "-v", "1foo=bar", "{ print }" }));
 	}
 
+	/**
+	 * The <code>-K</code> option must be accompanied by a filename; otherwise the
+	 * CLI should throw an {@link IllegalArgumentException}.
+	 */
 	@Test
 	public void compileTuplesRequiresFilename() {
 		assertThrows(
