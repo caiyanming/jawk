@@ -54,7 +54,21 @@ awk.invoke(tuples, settings);
 System.out.println(out.toString(StandardCharsets.UTF_8.name()));
 ```
 
-To supply custom extensions, create the `Awk` instance with a map of extensions.
+To supply custom extensions, create the `Awk` instance with the extension
+instances. Built-in extensions expose convenient singletons such as
+`CoreExtension.INSTANCE` and `StdinExtension.INSTANCE`:
+
+```java
+Awk awk = new Awk(CoreExtension.INSTANCE, new MyExtension());
+```
+
+Use `Awk.listAvailableExtensions()` to inspect the extensions discoverable on
+the current class path:
+
+```java
+Awk.listAvailableExtensions().forEach((name, extension) ->
+        System.out.println(name + " - " + extension.getClass().getName()));
+```
 
 ### Precompile expressions
 

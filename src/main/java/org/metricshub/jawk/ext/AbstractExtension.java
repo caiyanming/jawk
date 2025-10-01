@@ -22,6 +22,7 @@ package org.metricshub.jawk.ext;
  * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
  */
 
+import java.util.Collection;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.metricshub.jawk.jrt.IllegalAwkArgumentException;
 import org.metricshub.jawk.jrt.JRT;
@@ -42,6 +43,18 @@ public abstract class AbstractExtension implements JawkExtension {
 	private JRT jrt;
 	private VariableManager vm;
 	private AwkSettings settings;
+
+	/** {@inheritDoc} */
+	@Override
+	public String getExtensionName() {
+		return getClass().getSimpleName();
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public Collection<String> extensionKeywords() {
+		throw new UnsupportedOperationException("Extensions must override extensionKeywords()");
+	}
 
 	/** {@inheritDoc} */
 	@Override

@@ -2,7 +2,11 @@
 
 AWK, while an excellent text processing language, is limited as a general purpose language. For example, it would be impossible to create a socket or display a simple GUI without external assistance either from the shell or via extensions to AWK itself (i.e., gawk). To overcome this limitation, an extension facility is added to **Jawk** .
 
-The Jawk extension facility allows for arbitrary Java code to be called as AWK functions in a Jawk script. These extensions can come from the user (developer) or 3rd party providers (i.e., the Jawk project team). And, Jawk extensions are opt-in. In other words, the `-ext` flag is required to use Jawk extensions and extensions must be explicitly registered to the Jawk instance via the `-Djawk.extensions` property (except for core extensions bundled with Jawk ).
+The Jawk extension facility allows for arbitrary Java code to be called as AWK functions in a Jawk script. These extensions can come from the user (developer) or 3rd party providers (i.e., the Jawk project team). Extensions are opt-in and must be explicitly loaded either through the Java API by passing the extension instances to the `Awk` constructor or on the command line via the `-l`/`--load` option. The `--list-ext` option lists the extensions available on the class path, showing the registered name and the implementing class.
+
+You can pass any of these values back to `-l`/`--load`. For example, `-l stdin`, `-l StdinExtension`, and `-l org.metricshub.jawk.ext.StdinExtension` all load the same extension.
+
+Add any additional JARs or directories to the JVM class path (for example with `java -cp additional.jar -jar jawk-….jar`) before selecting the extensions to load. To expose an extension to the CLI, register an instance in a static initializer using `ExtensionRegistry.register("name", new MyExtension())`.
 
 Jawk extensions support **blocking**. You can think of blocking as a tool for extension event management. A Jawk script can block on a collection of blockable services, such as socket input availability, database triggers, user input, GUI dialog input response, or a simple fixed timeout, and, together with the `**-ni**` option, action rules can act on block events instead of input text, leveraging a powerful AWK construct originally intended for text processing, but now can be used to process blockable events. A sample enhanced echo server script is included in this article. It uses blocking to handle socket events, standard input from the user, and timeout events, all within the 47-line script (including comments).
 
@@ -41,19 +45,24 @@ import java.io.*;
 import java.util.*;
 
 // to run:
-// java -Djawk.extensions="org.jawk.ext.FileExtension"
-//         ... -jar jawk.jar -ext -ni -f {script.awk}
+// java -jar jawk.jar -l org.metricshub.jawk.ext.FileExtension -ni -f {script.awk}
 
 public class FileExtension extends AbstractExtension implements JawkExtension {
 
   private static final int POLLING_DELAY = 300;
 
+  @Override
   public String getExtensionName() { return "File Support"; }
-  public String[] extensionKeywords() {
-    return new String[] {
-        "FileCreationBlock",    // i.e., $0 = FileCreationBlock(aa, str, etc)
-        "FileInfo",        // i.e., FileInfo(map, "filename")
-    };
+
+  private static final Collection<String> KEYWORDS =
+      Collections.unmodifiableList(Arrays.asList(
+          "FileCreationBlock",    // i.e., $0 = FileCreationBlock(aa, str, etc)
+          "FileInfo"        // i.e., FileInfo(map, "filename")
+      ));
+
+  @Override
+  public Collection<String> extensionKeywords() {
+    return KEYWORDS;
   }
 
   private final Map<String,FileWatcher> file_watchers = new HashMap<String,FileWatcher>();
@@ -140,7 +149,7 @@ public class FileExtension extends AbstractExtension implements JawkExtension {
 }
 ```
 
-Most of the code registering itself to Jawk via the JawkExtension interface is fairly easy to follow. extensionKeywords() returns the set of extension functions to be accepted by the Jawk parser. And, invoke() maps extension keywords to Java methods which do the work. init() and getAssocArrayParameterPositions() require some context with regard to FileCreationBlock and will be discussed below.
+Most of the code registering itself to Jawk via the JawkExtension interface is fairly easy to follow. The `extensionKeywords()` method returns the set of extension functions to be accepted by the Jawk parser and the `invoke()` method maps extension keywords to Java methods which do the work. init() and getAssocArrayParameterPositions() require some context with regard to FileCreationBlock and will be discussed below.
 
 Likewise, the code handling "FileInfo" is easy to follow. "FileInfo" maps to the fileinfo() function via invoke. The fileinfo() method, then, computes `File.lastModified()` for the specified file and populates this result into an associative array. Then, 1 is returned if successful, 0 is returned otherwise (i.e., when lastModified() returns 0L).
 

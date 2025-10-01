@@ -18,7 +18,10 @@ Jawk does not rely on any logging framework; errors are reported through standar
 
 See [Jawk CLI documentation](https://metricshub.org/Jawk/cli.html)
 for command-line options, including `-K <filename>` to compile a script
-to a tuples file and `-l <filename>` to load previously compiled tuples.
+to a tuples file and `-L <filename>` to load previously compiled tuples.
+Use `--list-ext` to display available extensions (with their human readable
+names) and `-l <extension>` or `--load <extension>` to load them by extension
+name, simple class name, or fully qualified class name.
 
 ## Run AWK inside Java
 

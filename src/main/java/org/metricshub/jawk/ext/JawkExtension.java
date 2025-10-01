@@ -22,6 +22,7 @@ package org.metricshub.jawk.ext;
  * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
  */
 
+import java.util.Collection;
 import org.metricshub.jawk.jrt.JRT;
 import org.metricshub.jawk.jrt.VariableManager;
 import org.metricshub.jawk.util.AwkSettings;
@@ -91,14 +92,13 @@ public interface JawkExtension {
 	 * All the extended keywords supported
 	 * by this extension.
 	 * <p>
-	 * <strong>Note:</strong> Jawk will
-	 * throw a runtime exception if the
-	 * keyword collides with any other keyword
-	 * in the system, extension or otherwise.
+	 * Implementations must return an unmodifiable collection.
+	 * <strong>Note:</strong> Jawk will throw a runtime exception if the
+	 * keyword collides with any other keyword in the system, extension or otherwise.
 	 *
-	 * @return the list of keywords the extension provides support for
+	 * @return the keywords the extension provides support for
 	 */
-	String[] extensionKeywords();
+	Collection<String> extensionKeywords();
 
 	/**
 	 * Define the parameters which are <strong>expected</strong> to be
