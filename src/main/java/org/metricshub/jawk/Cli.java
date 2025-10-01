@@ -36,8 +36,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.metricshub.jawk.ext.ExtensionRegistry;
+import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.frontend.AstNode;
 import org.metricshub.jawk.intermediate.AwkTuples;
 import org.metricshub.jawk.jrt.AwkRuntimeException;
@@ -68,6 +72,8 @@ public final class Cli {
 
 	private final List<ScriptSource> scriptSources = new ArrayList<ScriptSource>();
 	private AwkTuples precompiledTuples;
+	private final List<String> extensionSpecs = new ArrayList<String>();
+	private boolean listExtensions;
 
 	private boolean dumpSyntaxTree;
 	private boolean dumpIntermediateCode;
@@ -118,7 +124,7 @@ public final class Cli {
 	}
 
 	/**
-	 * Returns the precompiled tuples loaded via the <code>-l</code> option, if any.
+	 * Returns the precompiled tuples loaded via the <code>-L</code> option, if any.
 	 *
 	 * @return the tuples or {@code null} if none were loaded
 	 */
@@ -155,8 +161,8 @@ public final class Cli {
 				// -f filename : load script from file
 				checkParameterHasArgument(args, argIdx);
 				scriptSources.add(new ScriptFileSource(args[++argIdx]));
-			} else if (arg.equals("-l")) {
-				// -l filename : load precompiled tuples
+			} else if (arg.equals("-L")) {
+				// -L filename : load precompiled tuples
 				checkParameterHasArgument(args, argIdx);
 				String file = args[++argIdx];
 				try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
@@ -164,6 +170,16 @@ public final class Cli {
 				} catch (IOException | ClassNotFoundException ex) {
 					throw new IllegalArgumentException("Failed to read tuples '" + file + "': " + ex.getMessage(), ex);
 				}
+			} else if (arg.equals("-l") || arg.equals("--load")) {
+				// -l/--load extension : load extension
+				checkParameterHasArgument(args, argIdx);
+				extensionSpecs.add(args[++argIdx]);
+			} else if (arg.equals("--list-ext")) {
+				if (argIdx != 0 || args.length != 1) {
+					throw new IllegalArgumentException("When listing extensions, we do not accept other arguments.");
+				}
+				listExtensions = true;
+				return;
 			} else if (arg.equals("-K")) {
 				// -K filename : compile scripts to tuples and exit
 				checkParameterHasArgument(args, argIdx);
@@ -194,7 +210,7 @@ public final class Cli {
 				settings.setLocale(new Locale(args[++argIdx]));
 			} else if (arg.equals("-h") || arg.equals("-?")) {
 				// -h/-? : display usage information and exit
-				if (args.length > 1) {
+				if (argIdx != 0 || args.length != 1) {
 					throw new IllegalArgumentException("When printing help/usage output, we do not accept other arguments.");
 				}
 				printUsage = true;
@@ -296,7 +312,24 @@ public final class Cli {
 			usage(out);
 			return;
 		}
-		Awk awk = new Awk();
+		if (listExtensions) {
+			Map<String, JawkExtension> available = ExtensionRegistry.listExtensions();
+			for (Entry<String, JawkExtension> entry : available.entrySet()) {
+				out.println(entry.getKey() + " - " + entry.getValue().getClass().getName());
+			}
+			return;
+		}
+
+		List<JawkExtension> extensions = new ArrayList<JawkExtension>();
+		for (String spec : extensionSpecs) {
+			JawkExtension extension = ExtensionRegistry.resolve(spec);
+			if (extension == null) {
+				throw new IllegalArgumentException("Unknown extension '" + spec + "'");
+			}
+			extensions.add(extension);
+		}
+
+		Awk awk = extensions.isEmpty() ? new Awk() : new Awk(extensions);
 		// Use precompiled tuples if provided; otherwise compile the scripts now
 		AwkTuples tuples = precompiledTuples != null ? precompiledTuples : awk.compile(scriptSources);
 		if (dumpSyntaxTree) {
@@ -348,22 +381,27 @@ public final class Cli {
 								JAR_NAME +
 								" [-F fs_val]" +
 								" [-f script-filename]" +
-								" [-l tuples-filename]" +
+								" [-L tuples-filename]" +
 								" [-K tuples-filename]" +
 								" [-o output-filename]" +
 								" [-S]" +
 								" [-s]" +
 								" [-r]" +
 								" [--locale locale]" +
-								" [-ext]" +
 								" [-t]" +
+								" [-l extension]..." +
 								" [-v name=val]..." +
 								" [script]" +
 								" [name=val | input_filename]...");
 		dest.println();
+		dest.println("java -jar " + JAR_NAME + " --list-ext");
+		dest.println();
 		dest.println(" -F fs_val = Use fs_val for FS.");
 		dest.println(" -f filename = Use contents of filename for script.");
-		dest.println(" -l filename = Load precompiled tuples from filename.");
+		dest.println(" -L filename = Load precompiled tuples from filename.");
+		dest.println(" -l extension = Load an extension by extension name or class name.");
+		dest.println(" --load extension = Same as -l.");
+		dest.println("                      Extensions must already be on the class path before loading them.");
 		dest.println(" -v name=val = Initial awk variable assignments.");
 		dest.println();
 		dest.println(" -t = (extension) Maintain array keys in sorted order.");
@@ -373,7 +411,7 @@ public final class Cli {
 		dest.println(" -s = (extension) Write the intermediate code to file. (default: avm.lst)");
 		dest.println(" -r = (extension) Do NOT hide IllegalFormatExceptions for [s]printf.");
 		dest.println(" --locale Locale = (extension) Specify a locale to be used instead of US-English");
-		dest.println("-ext= (extension) Enable user-defined extensions. (default: not enabled)");
+		dest.println(" --list-ext = (extension) List available extensions.");
 		dest.println();
 		dest.println(" -h or -? = (extension) This help screen.");
 	}

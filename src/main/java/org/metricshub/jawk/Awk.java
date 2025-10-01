@@ -32,18 +32,16 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.io.StringReader;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.metricshub.jawk.backend.AVM;
+import org.metricshub.jawk.ext.ExtensionRegistry;
 import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.frontend.AwkParser;
 import org.metricshub.jawk.frontend.AstNode;
@@ -73,25 +71,14 @@ import org.metricshub.jawk.util.ScriptSource;
  * And the number of times tuples are traversed is depends
  * on whether interpretation or compilation takes place.
  * <p>
- * By default a minimal set of extensions are automatically
- * included. Please refer to the EXTENSION_PREFIX static field
- * contents for an up-to-date list. As of the initial release
- * of the extension system, the prefix defines the following
- * extensions:
- * <ul>
- * <li>CoreExtension
- * <li>SocketExtension
- * <li>StdinExtension
- * </ul>
+ * The engine does not enable any extensions automatically. Extensions can be
+ * provided programmatically via the {@link Awk#Awk(Collection)} constructors or
+ * via the command line when using the CLI entry point.
  *
  * @see org.metricshub.jawk.backend.AVM
  * @author Danny Daglas
  */
 public class Awk {
-
-	private static final String DEFAULT_EXTENSIONS = org.metricshub.jawk.ext.CoreExtension.class.getName()
-			+ "#"
-			+ org.metricshub.jawk.ext.StdinExtension.class.getName();
 
 	private final Map<String, JawkExtension> extensions;
 
@@ -104,14 +91,58 @@ public class Awk {
 	 * Create a new instance of Awk without extensions
 	 */
 	public Awk() {
-		this.extensions = Collections.emptyMap();
+		this(Collections.<String, JawkExtension>emptyMap(), true);
 	}
 
 	/**
-	 * Create a new instance of Awk with the specified extensions
+	 * Create a new instance of Awk with the specified extension instances.
+	 *
+	 * @param extensions extension instances implementing {@link JawkExtension}
 	 */
-	public Awk(Map<String, JawkExtension> extensions) {
-		this.extensions = new HashMap<String, JawkExtension>(extensions);
+	public Awk(Collection<? extends JawkExtension> extensions) {
+		this(createKeywordMap(extensions), true);
+	}
+
+	/**
+	 * Create a new instance of Awk with the specified extension instances.
+	 *
+	 * @param extensions extension instances implementing {@link JawkExtension}
+	 */
+	@SafeVarargs
+	public Awk(JawkExtension... extensions) {
+		this(createKeywordMap(Arrays.asList(extensions)), true);
+	}
+
+	private Awk(Map<String, JawkExtension> keywordMap, @SuppressWarnings("unused") boolean alreadyValidated) {
+		this.extensions = keywordMap == null ? Collections.<String, JawkExtension>emptyMap() : keywordMap;
+	}
+
+	static Map<String, JawkExtension> createKeywordMap(Collection<? extends JawkExtension> extensions) {
+		if (extensions == null || extensions.isEmpty()) {
+			return Collections.emptyMap();
+		}
+		Map<String, JawkExtension> keywordMap = new LinkedHashMap<String, JawkExtension>();
+		for (JawkExtension extension : extensions) {
+			if (extension == null) {
+				throw new IllegalArgumentException("Extension instance must not be null");
+			}
+			for (String keyword : extension.extensionKeywords()) {
+				JawkExtension previous = keywordMap.putIfAbsent(keyword, extension);
+				if (previous != null && previous != extension) {
+					throw new IllegalArgumentException(
+							"Keyword '" + keyword + "' already provided by "
+									+ previous.getExtensionName());
+				}
+			}
+		}
+		return Collections.unmodifiableMap(keywordMap);
+	}
+
+	static Map<String, JawkExtension> createKeywordMap(JawkExtension... extensions) {
+		if (extensions == null || extensions.length == 0) {
+			return Collections.emptyMap();
+		}
+		return createKeywordMap(Arrays.asList(extensions));
 	}
 
 	/**
@@ -789,77 +820,13 @@ public class Awk {
 	}
 
 	/**
-	 * Discovers and instantiates the default set of {@link JawkExtension}s used by
-	 * Jawk. Additional extensions can be specified via the
-	 * {@code jawk.extensions} system property, whose value is a {@code #}-separated
-	 * list of fully qualified class names.
+	 * Lists metadata for the {@link JawkExtension} implementations discovered on
+	 * the class path.
 	 *
-	 * @return map of extension keywords to their implementing
-	 *         {@link JawkExtension} instances
+	 * @return list of discovered extension descriptors
 	 */
-	public static Map<String, JawkExtension> getDefaultExtensions() {
-		String extensionsStr = System.getProperty("jawk.extensions", null);
-		if (extensionsStr == null) {
-			// return Collections.emptyMap();
-			extensionsStr = DEFAULT_EXTENSIONS;
-		} else {
-			extensionsStr = DEFAULT_EXTENSIONS + "#" + extensionsStr;
-		}
-
-		// use reflection to obtain extensions
-
-		Set<Class<?>> extensionClasses = new HashSet<Class<?>>();
-		Map<String, JawkExtension> retval = new HashMap<String, JawkExtension>();
-
-		StringTokenizer st = new StringTokenizer(extensionsStr, "#");
-		while (st.hasMoreTokens()) {
-			String cls = st.nextToken();
-			try {
-				Class<?> c = Class.forName(cls);
-				// check if it's a JawkExtension
-				if (!JawkExtension.class.isAssignableFrom(c)) {
-					throw new ClassNotFoundException(cls + " does not implement JawkExtension");
-				}
-				if (extensionClasses.contains(c)) {
-					throw new IllegalArgumentException(
-							"class " + cls + " is multiple times referred in extension class list.");
-				} else {
-					extensionClasses.add(c);
-				}
-
-				// it is...
-				// create a new instance and put it here
-				try {
-					Constructor<?> constructor = c.getDeclaredConstructor(); // Default constructor
-					JawkExtension ji = (JawkExtension) constructor.newInstance();
-					String[] keywords = ji.extensionKeywords();
-					for (String keyword : keywords) {
-						if (retval.get(keyword) != null) {
-							throw new IllegalArgumentException(
-									"keyword collision : "
-											+ keyword
-											+ " for both "
-											+ retval.get(keyword).getExtensionName()
-											+ " and "
-											+ ji.getExtensionName());
-						}
-						retval.put(keyword, ji);
-					}
-				} catch (
-						InstantiationException
-						| IllegalAccessException
-						| NoSuchMethodException
-						| SecurityException
-						| IllegalArgumentException
-						| InvocationTargetException e) {
-					throw new IllegalStateException("Cannot instantiate " + c.getName(), e);
-				}
-			} catch (ClassNotFoundException cnfe) {
-				throw new IllegalStateException("Cannot classload " + cls, cnfe);
-			}
-		}
-
-		return retval;
+	public static Map<String, JawkExtension> listAvailableExtensions() {
+		return ExtensionRegistry.listExtensions();
 	}
 
 }

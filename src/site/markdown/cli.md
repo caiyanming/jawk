@@ -96,12 +96,17 @@ To enhance development and script execution over traditional AWK, **Jawk** also 
 
 * `-t` - Maintain all associated arrays in key-sorted order. This is implemented by using a TreeMap instead of a HashMap as the backing store for the associated array.
 * `-K <filename>` - writes the tuples to `<filename>`, and then halts.
-* `-l <filename>` - load previously compiled tuples from the specified file.
+* `-L <filename>` - load previously compiled tuples from the specified file.
+* `-l <extension>`/`--load <extension>` - load an extension by its registered name, simple class name or fully qualified class name.
+* `--list-ext` - list available extensions and exit. The output contains the registered name followed by the implementing class and can be used as input for `-l`.
+
+When using extension names that contain spaces, wrap them in quotes so the shell passes the value as a single argument (for example `-l "My Custom Extension"`).
+
+You can rely on the JVM `-cp`/`-classpath` option to add directories or JARs containing extensions before launching `java -jar jawk-….jar`.
 * `-o <filename>` - Override the default output filename for extended parameters -S, -s, -z, and -Z.
 * `-S` - Dump the abstract syntax tree (constructed by the front end) to a text readable file. If the -o argument is not provided, the contents will be dumped into the `syntax_tree.lst` file.
 * `-s` - Dump the intermediate code (tuples) to a text readable file. If the -o argument is not provided, the contents will be dumped into the `"avm.lst"` file.
 * `-r` - Allow IllegalFormatExceptions to be thrown when using the java.util.Formatter class for printf/sprintf. If the argument is not provided, the interpreter/compiled result catches IllegalFormatExceptions and silently returns a blank string in its place. If the argument is provided, the interpreter/compiled result will halt by throwing this runtime exception.
-* `-ext` - Enables the parser/AVM to recognize extensions within scripts. Extensions allow for arbitrary Java code to be called as registered AWK functions. Please refer to the [Jawk Extension Facility Description](extensions.html) page for more information.
 * `-h`/`-?` - Displays a usage screen. The screen contains a list of command-line arguments and what each does.
 
 If `-f` is not provided, a script argument is expected here.

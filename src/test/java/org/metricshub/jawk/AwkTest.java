@@ -645,13 +645,13 @@ public class AwkTest {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		settings.setOutputStream(new PrintStream(out, false, StandardCharsets.UTF_8.name()));
 
-		new Awk(Collections.emptyMap()).invoke(tuples, settings);
+		new Awk().invoke(tuples, settings);
 
 		assertEquals("value\n", out.toString(StandardCharsets.UTF_8.name()));
 	}
 
 	/**
-	 * Loads precompiled tuples from disk via the <code>-l</code> option and executes
+	 * Loads precompiled tuples from disk via the <code>-L</code> option and executes
 	 * them through the CLI.
 	 */
 	@Test
@@ -664,7 +664,7 @@ public class AwkTest {
 			oos.writeObject(tuples);
 		}
 
-		Cli cli = Cli.parseCommandLineArguments(new String[] { "-l", tmp.getAbsolutePath() });
+		Cli cli = Cli.parseCommandLineArguments(new String[] { "-L", tmp.getAbsolutePath() });
 		AwkSettings settings = cli.getSettings();
 		settings.setInput(new ByteArrayInputStream("abc\n".getBytes(StandardCharsets.UTF_8)));
 		settings.setDefaultRS("\n");
@@ -686,7 +686,7 @@ public class AwkTest {
 		File tmp = File.createTempFile("jawk", ".tpl");
 		Cli.main(new String[] { "-K", tmp.getAbsolutePath(), "{ print toupper($0) }" });
 
-		Cli cli = Cli.parseCommandLineArguments(new String[] { "-l", tmp.getAbsolutePath() });
+		Cli cli = Cli.parseCommandLineArguments(new String[] { "-L", tmp.getAbsolutePath() });
 		AwkSettings settings = cli.getSettings();
 		settings.setInput(new ByteArrayInputStream("abc\n".getBytes(StandardCharsets.UTF_8)));
 		settings.setDefaultRS("\n");

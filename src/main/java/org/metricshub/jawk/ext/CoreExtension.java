@@ -26,10 +26,14 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.metricshub.jawk.NotImplementedError;
 import org.metricshub.jawk.jrt.AssocArray;
 import org.metricshub.jawk.jrt.AwkRuntimeException;
@@ -197,9 +201,44 @@ import org.metricshub.jawk.jrt.VariableManager;
  */
 public class CoreExtension extends AbstractExtension implements JawkExtension {
 
-	// Singleton instance for this extension
 	private static CoreExtension instance = null;
 	private static final Object INSTANCE_LOCK = new Object();
+
+	public static final CoreExtension INSTANCE = new CoreExtension();
+
+	private static final List<String> KEYWORDS = Collections
+			.unmodifiableList(
+					Arrays
+							.asList(
+									"Array", // i.e. Array(array,1,3,5,7,9,11)
+									"Map", // i.e. Map(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
+									"HashMap", // i.e. HashMap(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
+									"TreeMap", // i.e. TreeMap(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
+									"LinkedMap", // i.e. LinkedMap(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3",
+																// 4))
+									"MapUnion", // i.e. MapUnion(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3",
+															// 4))
+									"MapCopy", // i.e. cnt = MapCopy(aaTarget, aaSource)
+									"TypeOf", // i.e. typestring = TypeOf(item)
+									"String", // i.e. str = String(3)
+									"Double", // i.e. dbl = Double(3)
+									"Halt", // i.e. Halt()
+									"Dereference", // i.e. f(Dereference(r1))
+									"DeRef", // i.e. (see above, but replace Dereference with DeRef)
+									"NewReference", // i.e. ref = NewReference(Map("hi","there"))
+									"NewRef", // i.e. (see above, but replace Reference with Ref)
+									"Unreference", // i.e. b = Unreference(ref)
+									"UnRef", // i.e. (see above, but replace Unreference with UnRef)
+									"InRef", // i.e. while(k = InRef(r2)) [ same as for(k in assocarr) ]
+									"IsInRef", // i.e. if (IsInRef(r1, "key")) [ same as if("key" in assocarr) ]
+									"DumpRefs", // i.e. DumpRefs()
+									"Timeout", // i.e. r = Timeout(300)
+									"Throw", // i.e. Throw("this is an awkruntimeexception")
+									"Version", // i.e. print Version(aa)
+									"Date", // i.e. str = Date()
+									"FileExists" // i.e. b = FileExists("/a/b/c")
+							));
+
 	private int refMapIdx = 0;
 	private Map<String, Object> referenceMap = new HashMap<String, Object>();
 	private Map<AssocArray, Iterator<?>> iterators = new HashMap<AssocArray, Iterator<?>>();
@@ -238,42 +277,16 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 		}
 	}
 
-	/** {@inheritDoc} */
 	@Override
 	public String getExtensionName() {
-		return "Core Extension";
+		return "core";
 	}
 
 	/** {@inheritDoc} */
 	@Override
-	public String[] extensionKeywords() {
-		return new String[] {
-				"Array", // i.e. Array(array,1,3,5,7,9,11)
-				"Map", // i.e. Map(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
-				"HashMap", // i.e. HashMap(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
-				"TreeMap", // i.e. TreeMap(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
-				"LinkedMap", // i.e. LinkedMap(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
-				"MapUnion", // i.e. MapUnion(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
-				"MapCopy", // i.e. cnt = MapCopy(aaTarget, aaSource)
-				"TypeOf", // i.e. typestring = TypeOf(item)
-				"String", // i.e. str = String(3)
-				"Double", // i.e. dbl = Double(3)
-				"Halt", // i.e. Halt()
-				"Dereference", // i.e. f(Dereference(r1))
-				"DeRef", // i.e. (see above, but replace Dereference with DeRef)
-				"NewReference", // i.e. ref = NewReference(Map("hi","there"))
-				"NewRef", // i.e. (see above, but replace Reference with Ref)
-				"Unreference", // i.e. b = Unreference(ref)
-				"UnRef", // i.e. (see above, but replace Unreference with UnRef)
-				"InRef", // i.e. while(k = InRef(r2)) [ same as for(k in assocarr) ]
-				"IsInRef", // i.e. if (IsInRef(r1, "key")) [ same as if("key" in assocarr) ]
-				"DumpRefs", // i.e. DumpRefs()
-				"Timeout", // i.e. r = Timeout(300)
-				"Throw", // i.e. Throw("this is an awkruntimeexception")
-				"Version", // i.e. print Version(aa)
-				"Date", // i.e. str = Date()
-				"FileExists" // i.e. b = FileExists("/a/b/c")
-		};
+	@SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Keywords collection is immutable")
+	public Collection<String> extensionKeywords() {
+		return KEYWORDS;
 	}
 
 	/** {@inheritDoc} */

@@ -26,6 +26,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.metricshub.jawk.NotImplementedError;
@@ -95,6 +100,18 @@ import org.metricshub.jawk.util.AwkSettings;
  */
 public class StdinExtension extends AbstractExtension implements JawkExtension {
 
+	public static final StdinExtension INSTANCE = new StdinExtension();
+
+	private static final List<String> KEYWORDS = Collections
+			.unmodifiableList(
+					Arrays
+							.asList(
+									// keyboard stuff
+									"StdinHasInput", // i.e. b = StdinHasInput()
+									"StdinGetline", // i.e. retcode = StdinGetline() # $0 = the input
+									"StdinBlock" // i.e. StdinBlock(...)
+							));
+
 	private static final Object DONE = new Object();
 
 	private final BlockingQueue<Object> getLineInput = new LinkedBlockingQueue<Object>();
@@ -154,21 +171,16 @@ public class StdinExtension extends AbstractExtension implements JawkExtension {
 		getLineInputThread.start();
 	}
 
-	/** {@inheritDoc} */
 	@Override
 	public String getExtensionName() {
-		return "Stdin Support";
+		return "stdin";
 	}
 
 	/** {@inheritDoc} */
 	@Override
-	public String[] extensionKeywords() {
-		return new String[] {
-				// keyboard stuff
-				"StdinHasInput", // i.e. b = StdinHasInput()
-				"StdinGetline", // i.e. retcode = StdinGetline() # $0 = the input
-				"StdinBlock" // i.e. StdinBlock(...)
-		};
+	@SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Keywords collection is immutable")
+	public Collection<String> extensionKeywords() {
+		return KEYWORDS;
 	}
 
 	/** {@inheritDoc} */

@@ -1,5 +1,7 @@
 package org.metricshub.jawk;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.metricshub.jawk.ext.AbstractExtension;
 import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.jrt.AssocArray;
@@ -10,19 +12,10 @@ import org.metricshub.jawk.util.AwkSettings;
 public class TestExtension extends AbstractExtension implements JawkExtension {
 
 	private static final String MY_EXTENSION_FUNCTION = "myExtensionFunction";
+	private static final Collection<String> KEYWORDS = Collections.singletonList(MY_EXTENSION_FUNCTION);
 
 	@Override
 	public void init(VariableManager vm, JRT jrt, AwkSettings settings) {}
-
-	@Override
-	public String getExtensionName() {
-		return "TestExtension";
-	}
-
-	@Override
-	public String[] extensionKeywords() {
-		return new String[] { MY_EXTENSION_FUNCTION };
-	}
 
 	@Override
 	public int[] getAssocArrayParameterPositions(String extensionKeyword, int numArgs) {
@@ -31,6 +24,16 @@ public class TestExtension extends AbstractExtension implements JawkExtension {
 		} else {
 			return new int[] {};
 		}
+	}
+
+	@Override
+	public String getExtensionName() {
+		return "TestExtension";
+	}
+
+	@Override
+	public Collection<String> extensionKeywords() {
+		return KEYWORDS;
 	}
 
 	@Override
