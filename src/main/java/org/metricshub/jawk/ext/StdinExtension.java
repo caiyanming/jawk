@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.metricshub.jawk.NotImplementedError;
@@ -177,6 +178,7 @@ public class StdinExtension extends AbstractExtension implements JawkExtension {
 
 	/** {@inheritDoc} */
 	@Override
+	@SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Keywords collection is immutable")
 	public Collection<String> extensionKeywords() {
 		return KEYWORDS;
 	}

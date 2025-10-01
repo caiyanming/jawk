@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.metricshub.jawk.NotImplementedError;
 import org.metricshub.jawk.jrt.AssocArray;
 import org.metricshub.jawk.jrt.AwkRuntimeException;
@@ -283,6 +284,7 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 
 	/** {@inheritDoc} */
 	@Override
+	@SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Keywords collection is immutable")
 	public Collection<String> extensionKeywords() {
 		return KEYWORDS;
 	}

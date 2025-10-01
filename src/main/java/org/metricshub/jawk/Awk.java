@@ -91,7 +91,7 @@ public class Awk {
 	 * Create a new instance of Awk without extensions
 	 */
 	public Awk() {
-		this.extensions = Collections.emptyMap();
+		this(Collections.<String, JawkExtension>emptyMap(), true);
 	}
 
 	/**
@@ -100,7 +100,7 @@ public class Awk {
 	 * @param extensions extension instances implementing {@link JawkExtension}
 	 */
 	public Awk(Collection<? extends JawkExtension> extensions) {
-		this.extensions = createKeywordMap(extensions);
+		this(createKeywordMap(extensions), true);
 	}
 
 	/**
@@ -110,7 +110,11 @@ public class Awk {
 	 */
 	@SafeVarargs
 	public Awk(JawkExtension... extensions) {
-		this(Arrays.asList(extensions));
+		this(createKeywordMap(Arrays.asList(extensions)), true);
+	}
+
+	private Awk(Map<String, JawkExtension> keywordMap, @SuppressWarnings("unused") boolean alreadyValidated) {
+		this.extensions = keywordMap == null ? Collections.<String, JawkExtension>emptyMap() : keywordMap;
 	}
 
 	static Map<String, JawkExtension> createKeywordMap(Collection<? extends JawkExtension> extensions) {

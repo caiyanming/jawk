@@ -75,13 +75,23 @@ public final class ExtensionRegistry {
 		if (identifiers != null) {
 			for (String identifier : identifiers) {
 				if (identifier != null && !identifier.isEmpty()) {
-					REGISTERED.putIfAbsent(identifier, extension);
+					JawkExtension existing = REGISTERED.putIfAbsent(identifier, extension);
+					if (existing != null && existing != extension) {
+						throw new IllegalStateException(
+								"Extension identifier '" + identifier + "' already mapped to "
+										+ existing.getClass().getName());
+					}
 				}
 			}
 		}
 		String name = extension.getExtensionName();
 		if (name != null && !name.isEmpty()) {
-			REGISTERED.putIfAbsent(name, extension);
+			JawkExtension existing = REGISTERED.putIfAbsent(name, extension);
+			if (existing != null && existing != extension) {
+				throw new IllegalStateException(
+						"Extension name '" + name + "' already mapped to "
+								+ existing.getClass().getName());
+			}
 		}
 	}
 
