@@ -1,6 +1,7 @@
 package org.metricshub.jawk.intermediate;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.metricshub.jawk.ext.ExtensionFunction;
 
 /*-
  * ╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲
@@ -97,7 +98,18 @@ public class PositionTracker {
 			assert argIdx == 0;
 			return tuple.getAddress();
 		}
+		if (c == ExtensionFunction.class) {
+			assert argIdx == 0;
+			return tuple.getExtensionFunction();
+		}
 		throw new Error("Invalid arg type: " + c + ", arg_idx = " + argIdx + ", tuple = " + tuple);
+	}
+
+	public ExtensionFunction extensionFunctionArg() {
+		if (tuple.getTypes()[0] != ExtensionFunction.class) {
+			throw new Error("Tuple does not contain an extension function: " + tuple);
+		}
+		return tuple.getExtensionFunction();
 	}
 
 	public Address addressArg() {

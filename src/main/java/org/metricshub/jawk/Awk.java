@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.metricshub.jawk.backend.AVM;
+import org.metricshub.jawk.ext.ExtensionFunction;
 import org.metricshub.jawk.ext.ExtensionRegistry;
 import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.frontend.AwkParser;
@@ -80,7 +81,9 @@ import org.metricshub.jawk.util.ScriptSource;
  */
 public class Awk {
 
-	private final Map<String, JawkExtension> extensions;
+	private final Map<String, ExtensionFunction> extensionFunctions;
+
+	private final Map<String, JawkExtension> extensionInstances;
 
 	/**
 	 * The last parsed {@link AstNode} produced during compilation.
@@ -91,7 +94,7 @@ public class Awk {
 	 * Create a new instance of Awk without extensions
 	 */
 	public Awk() {
-		this(Collections.<String, JawkExtension>emptyMap(), true);
+		this(ExtensionSetup.EMPTY);
 	}
 
 	/**
@@ -100,7 +103,7 @@ public class Awk {
 	 * @param extensions extension instances implementing {@link JawkExtension}
 	 */
 	public Awk(Collection<? extends JawkExtension> extensions) {
-		this(createKeywordMap(extensions), true);
+		this(createExtensionSetup(extensions));
 	}
 
 	/**
@@ -110,39 +113,80 @@ public class Awk {
 	 */
 	@SafeVarargs
 	public Awk(JawkExtension... extensions) {
-		this(createKeywordMap(Arrays.asList(extensions)), true);
+		this(createExtensionSetup(Arrays.asList(extensions)));
 	}
 
-	private Awk(Map<String, JawkExtension> keywordMap, @SuppressWarnings("unused") boolean alreadyValidated) {
-		this.extensions = keywordMap == null ? Collections.<String, JawkExtension>emptyMap() : keywordMap;
+	private Awk(ExtensionSetup setup) {
+		this.extensionFunctions = setup.functions;
+		this.extensionInstances = setup.instances;
 	}
 
-	static Map<String, JawkExtension> createKeywordMap(Collection<? extends JawkExtension> extensions) {
-		if (extensions == null || extensions.isEmpty()) {
-			return Collections.emptyMap();
+	static Map<String, ExtensionFunction> createExtensionFunctionMap(Collection<? extends JawkExtension> extensions) {
+		return createExtensionSetup(extensions).functions;
+	}
+
+	static Map<String, JawkExtension> createExtensionInstanceMap(Collection<? extends JawkExtension> extensions) {
+		return createExtensionSetup(extensions).instances;
+	}
+
+	static Map<String, ExtensionFunction> createExtensionFunctionMap(JawkExtension... extensions) {
+		if (extensions == null || extensions.length == 0) {
+			return ExtensionSetup.EMPTY.functions;
 		}
-		Map<String, JawkExtension> keywordMap = new LinkedHashMap<String, JawkExtension>();
+		return createExtensionFunctionMap(Arrays.asList(extensions));
+	}
+
+	static Map<String, JawkExtension> createExtensionInstanceMap(JawkExtension... extensions) {
+		if (extensions == null || extensions.length == 0) {
+			return ExtensionSetup.EMPTY.instances;
+		}
+		return createExtensionInstanceMap(Arrays.asList(extensions));
+	}
+
+	private static ExtensionSetup createExtensionSetup(Collection<? extends JawkExtension> extensions) {
+		if (extensions == null || extensions.isEmpty()) {
+			return ExtensionSetup.EMPTY;
+		}
+		Map<String, ExtensionFunction> keywordMap = new LinkedHashMap<String, ExtensionFunction>();
+		Map<String, JawkExtension> instanceMap = new LinkedHashMap<String, JawkExtension>();
 		for (JawkExtension extension : extensions) {
 			if (extension == null) {
 				throw new IllegalArgumentException("Extension instance must not be null");
 			}
-			for (String keyword : extension.extensionKeywords()) {
-				JawkExtension previous = keywordMap.putIfAbsent(keyword, extension);
-				if (previous != null && previous != extension) {
+			String className = extension.getClass().getName();
+			JawkExtension previousInstance = instanceMap.putIfAbsent(className, extension);
+			if (previousInstance != null) {
+				throw new IllegalArgumentException(
+						"Extension class '" + className + "' was provided multiple times");
+			}
+			for (Map.Entry<String, ExtensionFunction> entry : extension.getExtensionFunctions().entrySet()) {
+				String keyword = entry.getKey();
+				ExtensionFunction previous = keywordMap.putIfAbsent(keyword, entry.getValue());
+				if (previous != null) {
 					throw new IllegalArgumentException(
-							"Keyword '" + keyword + "' already provided by "
-									+ previous.getExtensionName());
+							"Keyword '" + keyword + "' already provided by another extension");
 				}
 			}
 		}
-		return Collections.unmodifiableMap(keywordMap);
+		return new ExtensionSetup(
+				Collections.unmodifiableMap(keywordMap),
+				Collections.unmodifiableMap(instanceMap));
 	}
 
-	static Map<String, JawkExtension> createKeywordMap(JawkExtension... extensions) {
-		if (extensions == null || extensions.length == 0) {
-			return Collections.emptyMap();
+	private static final class ExtensionSetup {
+
+		private static final ExtensionSetup EMPTY = new ExtensionSetup(
+				Collections.<String, ExtensionFunction>emptyMap(),
+				Collections.<String, JawkExtension>emptyMap());
+
+		private final Map<String, ExtensionFunction> functions;
+		private final Map<String, JawkExtension> instances;
+
+		private ExtensionSetup(Map<String, ExtensionFunction> functionsParam,
+				Map<String, JawkExtension> instancesParam) {
+			this.functions = functionsParam;
+			this.instances = instancesParam;
 		}
-		return createKeywordMap(Arrays.asList(extensions));
 	}
 
 	/**
@@ -242,7 +286,7 @@ public class Awk {
 		AVM avm = null;
 		try {
 			// interpret!
-			avm = new AVM(settings, this.extensions);
+			avm = new AVM(settings, this.extensionInstances, this.extensionFunctions);
 			avm.interpret(tuples);
 		} finally {
 			if (avm != null) {
@@ -657,7 +701,7 @@ public class Awk {
 		AwkTuples tuples = new AwkTuples();
 		if (!scripts.isEmpty()) {
 			// Parse all script sources into a single AST
-			AwkParser parser = new AwkParser(this.extensions);
+			AwkParser parser = new AwkParser(this.extensionFunctions);
 			AstNode ast = parser.parse(scripts);
 			lastAst = ast;
 			if (ast != null) {
@@ -693,7 +737,7 @@ public class Awk {
 				new StringReader(expression));
 
 		// Parse the expression
-		AwkParser parser = new AwkParser(this.extensions);
+		AwkParser parser = new AwkParser(this.extensionFunctions);
 		AstNode ast = parser.parseExpression(expressionSource);
 
 		// Create the tuples that we will return
@@ -788,7 +832,7 @@ public class Awk {
 				.setOutputStream(
 						new PrintStream(new ByteArrayOutputStream(), false, StandardCharsets.UTF_8.name()));
 
-		AVM avm = new AVM(settings, this.extensions);
+		AVM avm = new AVM(settings, this.extensionInstances, this.extensionFunctions);
 		return avm.eval(tuples, input);
 	}
 

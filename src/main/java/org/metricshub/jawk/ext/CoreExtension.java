@@ -41,6 +41,8 @@ import org.metricshub.jawk.jrt.BlockObject;
 import org.metricshub.jawk.jrt.IllegalAwkArgumentException;
 import org.metricshub.jawk.jrt.JRT;
 import org.metricshub.jawk.jrt.VariableManager;
+import org.metricshub.jawk.ext.annotations.JawkAssocArray;
+import org.metricshub.jawk.ext.annotations.JawkFunction;
 
 /**
  * Extensions which make developing in Jawk and
@@ -205,40 +207,6 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 	private static final Object INSTANCE_LOCK = new Object();
 
 	public static final CoreExtension INSTANCE = new CoreExtension();
-
-	private static final List<String> KEYWORDS = Collections
-			.unmodifiableList(
-					Arrays
-							.asList(
-									"Array", // i.e. Array(array,1,3,5,7,9,11)
-									"Map", // i.e. Map(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
-									"HashMap", // i.e. HashMap(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
-									"TreeMap", // i.e. TreeMap(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3", 4))
-									"LinkedMap", // i.e. LinkedMap(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3",
-																// 4))
-									"MapUnion", // i.e. MapUnion(assocarray, "hi", "there", "testing", 3, 5, Map("item1", "item2", "i3",
-															// 4))
-									"MapCopy", // i.e. cnt = MapCopy(aaTarget, aaSource)
-									"TypeOf", // i.e. typestring = TypeOf(item)
-									"String", // i.e. str = String(3)
-									"Double", // i.e. dbl = Double(3)
-									"Halt", // i.e. Halt()
-									"Dereference", // i.e. f(Dereference(r1))
-									"DeRef", // i.e. (see above, but replace Dereference with DeRef)
-									"NewReference", // i.e. ref = NewReference(Map("hi","there"))
-									"NewRef", // i.e. (see above, but replace Reference with Ref)
-									"Unreference", // i.e. b = Unreference(ref)
-									"UnRef", // i.e. (see above, but replace Unreference with UnRef)
-									"InRef", // i.e. while(k = InRef(r2)) [ same as for(k in assocarr) ]
-									"IsInRef", // i.e. if (IsInRef(r1, "key")) [ same as if("key" in assocarr) ]
-									"DumpRefs", // i.e. DumpRefs()
-									"Timeout", // i.e. r = Timeout(300)
-									"Throw", // i.e. Throw("this is an awkruntimeexception")
-									"Version", // i.e. print Version(aa)
-									"Date", // i.e. str = Date()
-									"FileExists" // i.e. b = FileExists("/a/b/c")
-							));
-
 	private int refMapIdx = 0;
 	private Map<String, Object> referenceMap = new HashMap<String, Object>();
 	private Map<AssocArray, Iterator<?>> iterators = new HashMap<AssocArray, Iterator<?>>();
@@ -282,125 +250,165 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 		return "core";
 	}
 
-	/** {@inheritDoc} */
-	@Override
-	@SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Keywords collection is immutable")
-	public Collection<String> extensionKeywords() {
-		return KEYWORDS;
+	@JawkFunction("Map")
+	public Object mapFunction(Object... args) {
+		return map("Map", args, AssocArray.MT_HASH);
 	}
 
-	/** {@inheritDoc} */
-	@Override
-	public int[] getAssocArrayParameterPositions(String extensionKeyword, int numArgs) {
-		if ((extensionKeyword.equals("Map")
-				|| extensionKeyword.equals("HashMap")
-				|| extensionKeyword.equals("LinkedMap")
-				|| extensionKeyword.equals("TreeMap"))
-				&&
-				((numArgs & 1) != 0)) {
-			// first argument of a *Map() function
-			// must be an associative array
-			return new int[] { 0 };
-		} else if (extensionKeyword.equals("Array")) {
-			// first argument of Array must be
-			// an associative array
-			return new int[] { 0 };
-		} else if (extensionKeyword.equals("NewReference") || extensionKeyword.equals("NewRef")) {
-			if (numArgs == 1) {
-				return new int[] { 0 };
-			} else {
-				return super.getAssocArrayParameterPositions(extensionKeyword, numArgs);
-			}
-		} else {
-			return super.getAssocArrayParameterPositions(extensionKeyword, numArgs);
-		}
+	@JawkFunction("HashMap")
+	public Object hashMapFunction(Object... args) {
+		return map("HashMap", args, AssocArray.MT_HASH);
 	}
 
-	/** {@inheritDoc} */
-	@Override
-	public Object invoke(String keyword, Object[] args) {
-		if (keyword.equals("Map") || keyword.equals("HashMap")) {
-			return map(args, AssocArray.MT_HASH);
-		} else if (keyword.equals("LinkedMap")) {
-			return map(args, AssocArray.MT_LINKED);
-		} else if (keyword.equals("TreeMap")) {
-			return map(args, AssocArray.MT_TREE);
-		} else if (keyword.equals("MapUnion")) {
-			return mapUnion(args, AssocArray.MT_LINKED);
-		} else if (keyword.equals("MapCopy")) {
-			checkNumArgs(args, 2);
-			return mapCopy(args);
-		} else if (keyword.equals("Array")) {
-			return array(args, getVm());
-		} else if (keyword.equals("TypeOf")) {
-			checkNumArgs(args, 1);
-			return typeOf(args[0]);
-		} else if (keyword.equals("String")) {
-			checkNumArgs(args, 1);
-			return toString(args[0]);
-		} else if (keyword.equals("Double")) {
-			checkNumArgs(args, 1);
-			return toDouble(args[0]);
-		} else if (keyword.equals("Halt")) {
-			if (args.length == 0) {
-				Runtime.getRuntime().halt(0);
-			} else if (args.length == 1) {
-				Runtime.getRuntime().halt((int) JRT.toDouble(args[0]));
-			} else {
-				throw new IllegalAwkArgumentException(keyword + " requires 0 or 1 argument, not " + args.length);
-			}
-		} else if (keyword.equals("NewReference") || keyword.equals("NewRef")) {
-			if (args.length == 1) {
-				return newReference(args[0]);
-			} else if (args.length == 3) {
-				return newReference(toAwkString(args[0]), args[1], args[2]);
-			} else {
-				throw new IllegalAwkArgumentException(keyword + " requires 1 or 3 arguments, not " + args.length);
-			}
-		} else if (keyword.equals("Dereference") || keyword.equals("DeRef")) {
-			if (args.length == 1) {
-				return resolve(dereference(args[0]));
-			} else if (args.length == 2) {
-				return resolve(dereference(toAwkString(args[0]), args[1]));
-			} else {
-				throw new IllegalAwkArgumentException(keyword + " requires 1 or 2 arguments, not " + args.length);
-			}
-		} else if (keyword.equals("Unreference") || keyword.equals("UnRef")) {
-			checkNumArgs(args, 1);
-			return unreference(args[0]);
-		} else if (keyword.equals("InRef")) {
-			checkNumArgs(args, 1);
-			return inref(args[0]);
-		} else if (keyword.equals("IsInRef")) {
-			checkNumArgs(args, 2);
-			return isInRef(args[0], args[1]);
-		} else if (keyword.equals("DumpRefs")) {
-			checkNumArgs(args, 0);
-			dumpRefs();
-		} else if (keyword.equals("Timeout")) {
-			checkNumArgs(args, 1);
-			return timeout((int) JRT.toDouble(args[0]));
-		} else if (keyword.equals("Throw")) {
-			throw new AwkRuntimeException(Arrays.toString(args));
-		} else if (keyword.equals("Version")) {
-			checkNumArgs(args, 1);
-			return version(args[0]);
-		} else if (keyword.equals("Date")) {
-			if (args.length == 0) {
-				return date();
-			} else if (args.length == 1) {
-				return date(toAwkString(args[0]));
-			} else {
-				throw new IllegalAwkArgumentException(keyword + " expects 0 or 1 argument, not " + args.length);
-			}
-		} else if (keyword.equals("FileExists")) {
-			checkNumArgs(args, 1);
-			return fileExists(toAwkString(args[0]));
+	@JawkFunction("LinkedMap")
+	public Object linkedMapFunction(Object... args) {
+		return map("LinkedMap", args, AssocArray.MT_LINKED);
+	}
+
+	@JawkFunction("TreeMap")
+	public Object treeMapFunction(Object... args) {
+		return map("TreeMap", args, AssocArray.MT_TREE);
+	}
+
+	@JawkFunction("MapUnion")
+	public Object mapUnionFunction(Object... args) {
+		return mapUnion("MapUnion", args, AssocArray.MT_LINKED);
+	}
+
+	@JawkFunction("MapCopy")
+	public int mapCopyFunction(@JawkAssocArray AssocArray target, @JawkAssocArray AssocArray source) {
+		return mapCopy(new Object[] { target, source });
+	}
+
+	@JawkFunction("Array")
+	public int arrayFunction(@JawkAssocArray AssocArray target, Object... values) {
+		Object[] args = new Object[values.length + 1];
+		args[0] = target;
+		System.arraycopy(values, 0, args, 1, values.length);
+		return array("Array", args, getVm());
+	}
+
+	@JawkFunction("TypeOf")
+	public String typeOfFunction(Object value) {
+		return typeOf(value);
+	}
+
+	@JawkFunction("String")
+	public String stringFunction(Object value) {
+		return toString(value);
+	}
+
+	@JawkFunction("Double")
+	public Object doubleFunction(Object value) {
+		return toDouble(value);
+	}
+
+	@JawkFunction("Halt")
+	public Object haltFunction(Object... args) {
+		if (args.length == 0) {
+			Runtime.getRuntime().halt(0);
+		} else if (args.length == 1) {
+			Runtime.getRuntime().halt((int) JRT.toDouble(args[0]));
 		} else {
-			throw new NotImplementedError(keyword);
+			throw new IllegalAwkArgumentException("Halt requires 0 or 1 argument, not " + args.length);
 		}
-		// never reached
 		return null;
+	}
+
+	@JawkFunction("NewReference")
+	public Object newReferenceFunction(Object... args) {
+		return handleNewReference("NewReference", args);
+	}
+
+	@JawkFunction("NewRef")
+	public Object newRefFunction(Object... args) {
+		return handleNewReference("NewRef", args);
+	}
+
+	@JawkFunction("Dereference")
+	public Object dereferenceFunction(Object... args) {
+		return handleDereference("Dereference", args);
+	}
+
+	@JawkFunction("DeRef")
+	public Object deRefFunction(Object... args) {
+		return handleDereference("DeRef", args);
+	}
+
+	@JawkFunction("Unreference")
+	public int unreferenceFunction(Object handle) {
+		return unreference(handle);
+	}
+
+	@JawkFunction("UnRef")
+	public int unRefFunction(Object handle) {
+		return unreference(handle);
+	}
+
+	@JawkFunction("InRef")
+	public Object inRefFunction(Object handle) {
+		return inref(handle);
+	}
+
+	@JawkFunction("IsInRef")
+	public int isInRefFunction(Object handle, Object key) {
+		return isInRef(handle, key);
+	}
+
+	@JawkFunction("DumpRefs")
+	public void dumpRefsFunction() {
+		dumpRefs();
+	}
+
+	@JawkFunction("Timeout")
+	public Object timeoutFunction(Object millis) {
+		return timeout((int) JRT.toDouble(millis));
+	}
+
+	@JawkFunction("Throw")
+	public Object throwFunction(Object... args) {
+		throw new AwkRuntimeException(Arrays.toString(args));
+	}
+
+	@JawkFunction("Version")
+	public String versionFunction(Object value) {
+		return version(value);
+	}
+
+	@JawkFunction("Date")
+	public String dateFunction(Object... args) {
+		if (args.length == 0) {
+			return date();
+		}
+		if (args.length == 1) {
+			return date(toAwkString(args[0]));
+		}
+		throw new IllegalAwkArgumentException("Date expects 0 or 1 argument, not " + args.length);
+	}
+
+	@JawkFunction("FileExists")
+	public int fileExistsFunction(Object path) {
+		return fileExists(toAwkString(path));
+	}
+
+	private Object handleNewReference(String keyword, Object... args) {
+		if (args.length == 1) {
+			return newReference(args[0]);
+		}
+		if (args.length == 3) {
+			return newReference(toAwkString(args[0]), args[1], args[2]);
+		}
+		throw new IllegalAwkArgumentException(keyword + " requires 1 or 3 arguments, not " + args.length);
+	}
+
+	private Object handleDereference(String keyword, Object... args) {
+		if (args.length == 1) {
+			return resolve(dereference(args[0]));
+		}
+		if (args.length == 2) {
+			return resolve(dereference(toAwkString(args[0]), args[1]));
+		}
+		throw new IllegalAwkArgumentException(keyword + " requires 1 or 2 arguments, not " + args.length);
 	}
 
 	private Object resolve(Object arg) {
@@ -607,19 +615,25 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 		return aa.get(0);
 	}
 
-	private Object map(Object[] args, int mapType) {
+	private Object map(String keyword, Object[] args, int mapType) {
 		if (args.length % 2 == 0) {
 			return subMap(args, mapType);
-		} else {
-			return topLevelMap(args, mapType, false); // false = map assignment
 		}
+		return topLevelMap(keyword, args, mapType, false); // false = map assignment
 	}
 
-	private Object mapUnion(Object[] args, int mapType) {
-		return topLevelMap(args, mapType, true); // true = map union
+	private Object mapUnion(String keyword, Object[] args, int mapType) {
+		return topLevelMap(keyword, args, mapType, true); // true = map union
 	}
 
-	private int topLevelMap(Object[] args, int mapType, boolean mapUnion) {
+	private int topLevelMap(String keyword, Object[] args, int mapType, boolean mapUnion) {
+		if (args.length == 0) {
+			throw new IllegalAwkArgumentException(keyword + " requires at least one argument.");
+		}
+		if (!(args[0] instanceof AssocArray)) {
+			throw new IllegalAwkArgumentException(
+					keyword + " requires the first argument to be an associative array when assigning to it.");
+		}
 		AssocArray aa = (AssocArray) args[0];
 		if (!mapUnion) {
 			aa.clear();
@@ -657,7 +671,11 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 		return aa;
 	}
 
-	private int array(Object[] args, VariableManager vm) {
+	private int array(String keyword, Object[] args, VariableManager vm) {
+		if (args.length == 0 || !(args[0] instanceof AssocArray)) {
+			throw new IllegalAwkArgumentException(
+					keyword + " requires the first argument to be an associative array.");
+		}
 		AssocArray aa = (AssocArray) args[0];
 		aa.clear();
 		aa.useMapType(AssocArray.MT_TREE);
@@ -673,7 +691,6 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 			} else {
 				aa.put("" + i, o);
 			}
-			// aa.put(args[i], args[i+1]);
 			++cnt;
 		}
 		return cnt;

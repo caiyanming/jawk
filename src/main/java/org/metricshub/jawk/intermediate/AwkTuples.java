@@ -27,12 +27,13 @@ import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.Deque;
+import org.metricshub.jawk.ext.ExtensionFunction;
 
 /**
  * <p>
@@ -1458,8 +1459,8 @@ public class AwkTuples implements Serializable {
 	 * @param paramCount a int
 	 * @param isInitial a boolean
 	 */
-	public void extension(String extensionKeyword, int paramCount, boolean isInitial) {
-		queue.add(new Tuple(Opcode.EXTENSION, extensionKeyword, paramCount, isInitial));
+	public void extension(ExtensionFunction function, int paramCount, boolean isInitial) {
+		queue.add(new Tuple(Opcode.EXTENSION, function, paramCount, isInitial));
 	}
 
 	/**

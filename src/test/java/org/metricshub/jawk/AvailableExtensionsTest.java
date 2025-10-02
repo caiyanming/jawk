@@ -28,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.Map;
 import org.junit.Test;
 import org.metricshub.jawk.ext.CoreExtension;
+import org.metricshub.jawk.ext.ExtensionFunction;
 import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.ext.StdinExtension;
 
@@ -56,16 +57,21 @@ public class AvailableExtensionsTest {
 
 	@Test
 	public void testExtensionKeywords() {
-		Map<String, JawkExtension> keywordMap = Awk
-				.createKeywordMap(
+		Map<String, ExtensionFunction> keywordMap = Awk
+				.createExtensionFunctionMap(
 						CoreExtension.INSTANCE,
 						StdinExtension.INSTANCE);
-		assertTrue(keywordMap.get("Array") instanceof CoreExtension);
-		assertTrue(keywordMap.get("Map") instanceof CoreExtension);
-		assertTrue(keywordMap.get("StdinHasInput") instanceof StdinExtension);
+		assertSame(CoreExtension.class, keywordMap.get("Array").getDeclaringType());
+		assertSame(CoreExtension.class, keywordMap.get("Map").getDeclaringType());
+		assertSame(StdinExtension.class, keywordMap.get("StdinHasInput").getDeclaringType());
 
 		JawkExtension customCore = new CoreExtension();
-		Map<String, JawkExtension> instanceMap = Awk.createKeywordMap(customCore);
-		assertSame(customCore, instanceMap.get("Array"));
+		Map<String, JawkExtension> instanceMap = Awk.createExtensionInstanceMap(customCore);
+		assertSame(customCore, instanceMap.get(CoreExtension.class.getName()));
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testDuplicateExtensionInstancesAreRejected() {
+		Awk.createExtensionInstanceMap(new CoreExtension(), new CoreExtension());
 	}
 }

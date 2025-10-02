@@ -1,55 +1,58 @@
 package org.metricshub.jawk;
 
-import java.util.Collection;
-import java.util.Collections;
 import org.metricshub.jawk.ext.AbstractExtension;
 import org.metricshub.jawk.ext.JawkExtension;
+import org.metricshub.jawk.ext.annotations.JawkAssocArray;
+import org.metricshub.jawk.ext.annotations.JawkFunction;
 import org.metricshub.jawk.jrt.AssocArray;
-import org.metricshub.jawk.jrt.JRT;
-import org.metricshub.jawk.jrt.VariableManager;
-import org.metricshub.jawk.util.AwkSettings;
 
+/**
+ * Test extension used by the unit tests to exercise the annotation-based
+ * extension infrastructure.
+ */
 public class TestExtension extends AbstractExtension implements JawkExtension {
 
-	private static final String MY_EXTENSION_FUNCTION = "myExtensionFunction";
-	private static final Collection<String> KEYWORDS = Collections.singletonList(MY_EXTENSION_FUNCTION);
+	private static final String EXTENSION_NAME = "TestExtension";
 
-	@Override
-	public void init(VariableManager vm, JRT jrt, AwkSettings settings) {}
-
-	@Override
-	public int[] getAssocArrayParameterPositions(String extensionKeyword, int numArgs) {
-		if (MY_EXTENSION_FUNCTION.equals(extensionKeyword)) {
-			return new int[] { 1 };
-		} else {
-			return new int[] {};
-		}
-	}
-
+	/**
+	 * Returns the logical name of the test extension.
+	 */
 	@Override
 	public String getExtensionName() {
-		return "TestExtension";
+		return EXTENSION_NAME;
 	}
 
-	@Override
-	public Collection<String> extensionKeywords() {
-		return KEYWORDS;
-	}
-
-	@Override
-	public Object invoke(String keyword, Object[] args) {
-		if (MY_EXTENSION_FUNCTION.equals(keyword)) {
-			StringBuilder result = new StringBuilder();
-			int count = ((Long) args[0]).intValue();
-			AssocArray array = (AssocArray) args[1];
-			for (int i = 0; i < count; i++) {
-				for (Object item : array.keySet()) {
-					result.append((String) array.get(item));
-				}
+	/**
+	 * Concatenates the associative array values {@code count} times.
+	 *
+	 * @param count number of concatenations to perform
+	 * @param array associative array providing the fragments to concatenate
+	 * @return concatenated string
+	 */
+	@JawkFunction("myExtensionFunction")
+	public String myExtensionFunction(Number count, @JawkAssocArray AssocArray array) {
+		StringBuilder result = new StringBuilder();
+		int iterations = count.intValue();
+		for (int i = 0; i < iterations; i++) {
+			for (Object key : array.keySet()) {
+				result.append(array.get(key));
 			}
-			return result.toString();
-		} else {
-			throw new NotImplementedError(keyword + " is not implemented by " + getExtensionName());
 		}
+		return result.toString();
+	}
+
+	/**
+	 * Counts the number of keys present in the provided associative arrays.
+	 *
+	 * @param arrays associative arrays whose key counts should be aggregated
+	 * @return total number of keys across all arrays
+	 */
+	@JawkFunction("varArgAssoc")
+	public int varArgAssoc(@JawkAssocArray AssocArray... arrays) {
+		int total = 0;
+		for (AssocArray array : arrays) {
+			total += array.keySet().size();
+		}
+		return total;
 	}
 }

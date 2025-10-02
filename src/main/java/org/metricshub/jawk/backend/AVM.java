@@ -37,11 +37,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.LinkedHashSet;
 import java.util.StringTokenizer;
 import java.util.Deque;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.metricshub.jawk.ExitException;
+import org.metricshub.jawk.ext.AbstractExtension;
+import org.metricshub.jawk.ext.ExtensionFunction;
 import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.frontend.AstNode;
 import org.metricshub.jawk.intermediate.Address;
@@ -109,7 +112,9 @@ public class AVM implements VariableManager {
 	private boolean trapIllegalFormatExceptions;
 	private JRT jrt;
 	private final Locale locale;
-	private Map<String, JawkExtension> extensions;
+	private Map<String, JawkExtension> extensionInstances;
+
+	private Map<String, ExtensionFunction> extensionFunctions;
 
 	// stack methods
 	// private Object pop() { return operandStack.removeFirst(); }
@@ -139,7 +144,8 @@ public class AVM implements VariableManager {
 		trapIllegalFormatExceptions = false;
 		jrt = new JRT(this); // this = VariableManager
 		locale = Locale.getDefault();
-		this.extensions = Collections.emptyMap();
+		this.extensionInstances = Collections.emptyMap();
+		this.extensionFunctions = Collections.emptyMap();
 	}
 
 	/**
@@ -148,10 +154,13 @@ public class AVM implements VariableManager {
 	 *
 	 * @param parameters The parameters affecting the behavior of the
 	 *        interpreter.
-	 * @param extensions Map of the extensions to load
+	 * @param extensionInstances Map of the extensions to load
+	 * @param extensionFunctions Map of extension functions available for parsing
 	 */
 	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "constructor stores provided settings and extension map for later use")
-	public AVM(final AwkInterpreteSettings parameters, final Map<String, JawkExtension> extensions) {
+	public AVM(final AwkInterpreteSettings parameters,
+			final Map<String, JawkExtension> extensionInstances,
+			final Map<String, ExtensionFunction> extensionFunctions) {
 		if (parameters != null) {
 			this.settings = parameters;
 			locale = settings.getLocale();
@@ -160,7 +169,8 @@ public class AVM implements VariableManager {
 			initialVariables = parameters.getVariables();
 			initialFsValue = parameters.getFieldSeparator();
 			trapIllegalFormatExceptions = parameters.isCatchIllegalFormatExceptions();
-			this.extensions = extensions;
+			this.extensionInstances = extensionInstances;
+			this.extensionFunctions = extensionFunctions;
 		} else {
 			this.settings = null;
 			locale = Locale.getDefault();
@@ -169,15 +179,26 @@ public class AVM implements VariableManager {
 			initialVariables = new HashMap<String, Object>();
 			initialFsValue = null;
 			trapIllegalFormatExceptions = false;
-			this.extensions = Collections.emptyMap();
+			this.extensionInstances = Collections.emptyMap();
+			this.extensionFunctions = Collections.emptyMap();
 		}
 
 		jrt = new JRT(this); // this = VariableManager
 		if (settings != null) {
 			jrt.setStreams(settings.getOutputStream(), System.err);
 		}
-		for (JawkExtension ext : this.extensions.values()) {
-			ext.init(this, jrt, (AwkSettings) settings); // this = VariableManager
+		initExtensions();
+	}
+
+	private void initExtensions() {
+		if (extensionInstances.isEmpty()) {
+			return;
+		}
+		Set<JawkExtension> initialized = new LinkedHashSet<JawkExtension>();
+		for (JawkExtension extension : extensionInstances.values()) {
+			if (initialized.add(extension)) {
+				extension.init(this, jrt, (AwkSettings) settings); // this = VariableManager
+			}
 		}
 	}
 
@@ -1929,7 +1950,7 @@ public class AVM implements VariableManager {
 							.add(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, new StringReader(awkCode)));
 
 					org.metricshub.jawk.frontend.AwkParser ap = new org.metricshub.jawk.frontend.AwkParser(
-							extensions);
+							extensionFunctions);
 					try {
 						AstNode ast = ap.parse(scriptSources);
 						if (ast != null) {
@@ -1940,7 +1961,7 @@ public class AVM implements VariableManager {
 							assert result == 0;
 							newTuples.postProcess();
 							ap.populateGlobalVariableNameToOffsetMappings(newTuples);
-							AVM newAvm = new AVM(settings, extensions);
+							AVM newAvm = new AVM(settings, extensionInstances, extensionFunctions);
 							int subScriptExitCode = 0;
 							try {
 								newAvm.interpret(newTuples);
@@ -1959,28 +1980,39 @@ public class AVM implements VariableManager {
 					break;
 				}
 				case EXTENSION: {
-					// arg[0] = extension keyword
+					// arg[0] = extension function metadata
 					// arg[1] = # of args on the stack
 					// arg[2] = true if parent is NOT an extension function call
 					// (i.e., initial extension in calling expression)
 					// stack[0] = first actual parameter
 					// stack[1] = second actual parameter
 					// etc.
-					String extensionKeyword = position.arg(0).toString();
+					ExtensionFunction function = position.extensionFunctionArg();
 					long numArgs = position.intArg(1);
 					boolean isInitial = position.boolArg(2);
-
-					JawkExtension extension = extensions.get(extensionKeyword);
-					if (extension == null) {
-						throw new AwkRuntimeException("Extension for '" + extensionKeyword + "' not found.");
-					}
 
 					Object[] args = new Object[(int) numArgs];
 					for (int i = (int) numArgs - 1; i >= 0; i--) {
 						args[i] = pop();
 					}
 
-					Object retval = extension.invoke(extensionKeyword, args);
+					String extensionClassName = function.getExtensionClassName();
+					JawkExtension extension = extensionInstances.get(extensionClassName);
+					if (extension == null) {
+						throw new AwkRuntimeException(
+								position.lineNumber(),
+								"Extension instance for class '" + extensionClassName
+										+ "' is not registered");
+					}
+					if (!(extension instanceof AbstractExtension)) {
+						throw new AwkRuntimeException(
+								position.lineNumber(),
+								"Extension instance for class '" + extensionClassName
+										+ "' does not extend "
+										+ AbstractExtension.class.getName());
+					}
+
+					Object retval = function.invoke((AbstractExtension) extension, args);
 
 					// block if necessary
 					// (convert retval into the return value
