@@ -27,12 +27,13 @@ import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.Deque;
+import org.metricshub.jawk.ext.ExtensionFunction;
 
 /**
  * <p>
@@ -1441,33 +1442,27 @@ public class AwkTuples implements Serializable {
 	}
 
 	/**
-	 * <p>
-	 * scriptThis.
-	 * </p>
+	 * Emits a tuple that pushes the current script context onto the stack.
 	 */
 	public void scriptThis() {
 		queue.add(new Tuple(Opcode.THIS));
 	}
 
 	/**
-	 * <p>
-	 * extension.
-	 * </p>
+	 * Emits an extension invocation tuple.
 	 *
-	 * @param extensionKeyword a {@link java.lang.String} object
-	 * @param paramCount a int
-	 * @param isInitial a boolean
+	 * @param function metadata describing the extension method to invoke
+	 * @param paramCount number of arguments supplied for the call
+	 * @param isInitial {@code true} when this tuple opens an extension call sequence
 	 */
-	public void extension(String extensionKeyword, int paramCount, boolean isInitial) {
-		queue.add(new Tuple(Opcode.EXTENSION, extensionKeyword, paramCount, isInitial));
+	public void extension(ExtensionFunction function, int paramCount, boolean isInitial) {
+		queue.add(new Tuple(Opcode.EXTENSION, function, paramCount, isInitial));
 	}
 
 	/**
-	 * <p>
-	 * dump.
-	 * </p>
+	 * Dumps the queued tuples to the provided {@link PrintStream}.
 	 *
-	 * @param ps a {@link java.io.PrintStream} object
+	 * @param ps destination stream for the tuple listing
 	 */
 	public void dump(PrintStream ps) {
 		ps.println("(" + versionManager + ")");

@@ -149,11 +149,39 @@ public class FileExtension extends AbstractExtension implements JawkExtension {
 }
 ```
 
-Most of the code registering itself to Jawk via the JawkExtension interface is fairly easy to follow. The `extensionKeywords()` method returns the set of extension functions to be accepted by the Jawk parser and the `invoke()` method maps extension keywords to Java methods which do the work. init() and getAssocArrayParameterPositions() require some context with regard to FileCreationBlock and will be discussed below.
+Jawk also supports annotating extension methods so that the runtime can expose
+them automatically. The previous example can be rewritten as:
 
-Likewise, the code handling "FileInfo" is easy to follow. "FileInfo" maps to the fileinfo() function via invoke. The fileinfo() method, then, computes `File.lastModified()` for the specified file and populates this result into an associative array. Then, 1 is returned if successful, 0 is returned otherwise (i.e., when lastModified() returns 0L).
+```java
+@JawkFunction("FileInfo")
+public int fileinfo(@JawkAssocArray AssocArray info, String filename) {
+    File file = new File(filename);
+    long last_modified = file.lastModified();
+    if (last_modified 0L) {
+        Date date = new Date(last_modified);
+        info.put("last modified", date.toString());
+        return 1;
+    } else {
+        info.put("last modified", "");
+        return 0;
+    }
+}
+```
 
-How did invoke() know the first parameter is an associative array? getAssocArrayParameterPositions() enforces this by returning int[] {0} for the "FileInfo" extension, telling the Jawk parser to treat the first (0th) argument as an associative array. As a result, passing in a string as the first parameter causes a SemanticException. Note that for all other extension keywords, getAssocArrayParameterPositions() refers to the superclass implementation, which simply returns an empty array (meaning, there are no assumptions on which parameters are associative arrays).
+Annotating a method with `@JawkFunction` automatically registers the Awk keyword
+and maps it to the Java method. Use `@JawkAssocArray` to mark parameters that
+must be associative arrays. When these annotations are used, Jawk validates the
+number of arguments at compile time and no longer requires overriding
+`extensionKeywords()`, `invoke()` or `getAssocArrayParameterPositions()` for the
+annotated functions. The explicit method implementations remain available for
+extensions that need to perform custom dispatching or dynamic keyword
+resolution.
+
+ Most of the code registering itself to Jawk via the `JawkExtension` interface now relies on annotation scanning. Jawk inspects the extension instance once during startup, discovers the annotated functions, and records their metadata for the parser and runtime to use. The traditional `invoke()` dispatch method is still available when an extension needs to handle keywords dynamically, but most extensions can simply annotate their handler methods.
+
+ Likewise, the code handling "FileInfo" is easy to follow. "FileInfo" maps to the fileinfo() function via invoke. The fileinfo() method, then, computes `File.lastModified()` for the specified file and populates this result into an associative array. Then, 1 is returned if successful, 0 is returned otherwise (i.e., when lastModified() returns 0L).
+
+How does Jawk know the first parameter is an associative array? Annotating the parameter with `@JawkAssocArray` records the requirement so that the semantic analyzer can enforce it. As a result, passing in a string as the first parameter causes a `SemanticException`. Parameters without the annotation make no implication as to whether the argument is scalar or associative.
 
 Walking through the code for "FileCreationBlock", on the other hand, is more involved because "FileCreationBlock" requires the following supporting containers and classes:
 

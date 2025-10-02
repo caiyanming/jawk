@@ -26,18 +26,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import org.metricshub.jawk.NotImplementedError;
 import org.metricshub.jawk.jrt.BlockObject;
+import org.metricshub.jawk.jrt.IllegalAwkArgumentException;
 import org.metricshub.jawk.jrt.JRT;
 import org.metricshub.jawk.jrt.VariableManager;
 import org.metricshub.jawk.util.AwkSettings;
+import org.metricshub.jawk.ext.annotations.JawkFunction;
 
 /**
  * Enable stdin processing in Jawk, to be used in conjunction with the -ni parameter.
@@ -101,17 +97,6 @@ import org.metricshub.jawk.util.AwkSettings;
 public class StdinExtension extends AbstractExtension implements JawkExtension {
 
 	public static final StdinExtension INSTANCE = new StdinExtension();
-
-	private static final List<String> KEYWORDS = Collections
-			.unmodifiableList(
-					Arrays
-							.asList(
-									// keyboard stuff
-									"StdinHasInput", // i.e. b = StdinHasInput()
-									"StdinGetline", // i.e. retcode = StdinGetline() # $0 = the input
-									"StdinBlock" // i.e. StdinBlock(...)
-							));
-
 	private static final Object DONE = new Object();
 
 	private final BlockingQueue<Object> getLineInput = new LinkedBlockingQueue<Object>();
@@ -176,35 +161,33 @@ public class StdinExtension extends AbstractExtension implements JawkExtension {
 		return "stdin";
 	}
 
-	/** {@inheritDoc} */
-	@Override
-	@SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Keywords collection is immutable")
-	public Collection<String> extensionKeywords() {
-		return KEYWORDS;
+	@JawkFunction("StdinHasInput")
+	public int stdinHasInputFunction() {
+		return stdInHasInput();
 	}
 
-	/** {@inheritDoc} */
-	@Override
-	public Object invoke(String keyword, Object[] args) {
-		if (keyword.equals("StdinHasInput")) {
-			checkNumArgs(args, 0);
-			return stdInHasInput();
-		} else if (keyword.equals("StdinGetline")) {
-			checkNumArgs(args, 0);
-			return stdInGetLine();
-		} else if (keyword.equals("StdinBlock")) {
-			if (args.length == 0) {
-				return stdInBlock();
-			} else if (args.length == 1) {
-				return stdInBlock((BlockObject) args[0]);
-			} else {
-				throw new IllegalArgumentException("StdinBlock accepts 0 or 1 args.");
-			}
-		} else {
-			throw new NotImplementedError(keyword);
+	@JawkFunction("StdinGetline")
+	public Object stdinGetlineFunction() {
+		return stdInGetLine();
+	}
+
+	@JawkFunction("StdinBlock")
+	public BlockObject stdinBlockFunction(Object... args) {
+		if (args.length == 0) {
+			return stdInBlock();
 		}
+		if (args.length == 1) {
+			Object candidate = args[0];
+			if (!(candidate instanceof BlockObject)) {
+				throw new IllegalAwkArgumentException(
+						"StdinBlock chaining argument must be a BlockObject.");
+			}
+			return stdInBlock((BlockObject) candidate);
+		}
+		throw new IllegalAwkArgumentException("StdinBlock accepts 0 or 1 arguments, not " + args.length + ".");
 	}
 
+	/** {@inheritDoc} */
 	private int stdInHasInput() {
 		if (isEof) {
 			// upon eof, always "don't block" !
