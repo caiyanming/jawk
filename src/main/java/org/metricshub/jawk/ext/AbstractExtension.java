@@ -26,7 +26,6 @@ import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.metricshub.jawk.ext.annotations.JawkFunction;
 import org.metricshub.jawk.jrt.IllegalAwkArgumentException;

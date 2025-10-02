@@ -722,8 +722,7 @@ public class Awk {
 	}
 
 	/**
-	 * Compile an expression to evaluate (not a full script)
-	 * <p>
+	 * Compile an expression to evaluate (not a full script).
 	 *
 	 * @param expression AWK expression to compile to AwkTuples
 	 * @return AwkTuples to be interpreted by AVM
@@ -765,7 +764,6 @@ public class Awk {
 	/**
 	 * Evaluates the specified AWK expression (not a full script, just an expression)
 	 * and returns the value of this expression.
-	 * <p>
 	 *
 	 * @param expression Expression to evaluate (e.g. <code>2+3</code>)
 	 * @return the value of the specified expression
@@ -778,7 +776,6 @@ public class Awk {
 	/**
 	 * Evaluates the specified AWK expression (not a full script, just an expression)
 	 * and returns the value of this expression.
-	 * <p>
 	 *
 	 * @param expression Expression to evaluate (e.g. <code>2+3</code> or <code>$2 "-" $3</code>
 	 * @param input Optional text input (that will be available as $0, and tokenized as $1, $2, etc.)
@@ -792,7 +789,6 @@ public class Awk {
 	/**
 	 * Evaluates the specified AWK expression (not a full script, just an expression)
 	 * and returns the value of this expression.
-	 * <p>
 	 *
 	 * @param expression Expression to evaluate (e.g. <code>2+3</code> or <code>$2 "-" $3</code>
 	 * @param input Optional text input (that will be available as $0, and tokenized as $1, $2, etc.)
@@ -807,7 +803,6 @@ public class Awk {
 	/**
 	 * Evaluates the specified AWK tuples, i.e. the result of the execution of the
 	 * TERNARY_EXPRESSION AST (the value that has been pushed in the stack).
-	 * <p>
 	 *
 	 * @param tuples Tuples returned by {@link Awk#compileForEval(String)}
 	 * @param input Optional text input (that will be available as $0, and tokenized as $1, $2, etc.)
