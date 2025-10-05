@@ -1042,7 +1042,7 @@ public class JRT {
 	 * @param append true to append to the file, false to overwrite the file.
 	 * @return a {@link java.io.PrintStream} object
 	 */
-	public final PrintStream jrtGetPrintStream(String filename, boolean append) {
+	public PrintStream jrtGetPrintStream(String filename, boolean append) {
 		PrintStream ps = outputFiles.get(filename);
 		if (ps == null) {
 			try {

@@ -28,6 +28,7 @@ import org.metricshub.jawk.frontend.ast.ParserException;
 import org.metricshub.jawk.intermediate.AwkTuples;
 import org.metricshub.jawk.util.AwkSettings;
 import org.metricshub.jawk.Cli;
+import org.metricshub.jawk.AwkSandboxException;
 
 public class AwkTest {
 
@@ -726,4 +727,51 @@ public class AwkTest {
 								new PrintStream(new ByteArrayOutputStream(), false, StandardCharsets.UTF_8.name()),
 								new PrintStream(new ByteArrayOutputStream(), false, StandardCharsets.UTF_8.name())));
 	}
+
+	@Test
+	public void sandboxRejectsSystemFunction() {
+		Awk awk = new SandboxedAwk();
+		assertThrows(
+				AwkSandboxException.class,
+				() -> awk.compile("BEGIN { system(\"true\") }"));
+	}
+
+	@Test
+	public void sandboxRejectsOutputRedirectionDuringCompile() {
+		Awk awk = new SandboxedAwk();
+		assertThrows(
+				AwkSandboxException.class,
+				() -> awk.compile("{ print \"hi\" > \"file\" }"));
+	}
+
+	@Test
+	public void sandboxRejectsInputRedirectionDuringCompile() {
+		Awk awk = new SandboxedAwk();
+		assertThrows(
+				AwkSandboxException.class,
+				() -> awk.compile("BEGIN { getline x < \"file\" }"));
+	}
+
+	@Test
+	public void sandboxRejectsRedirectionAtRuntime() throws Exception {
+		Awk nonSandboxAwk = new Awk();
+		AwkTuples tuples = nonSandboxAwk.compile("BEGIN { print \"hi\" > \"sandbox_out.txt\" } ");
+
+		Awk sandboxAwk = new SandboxedAwk();
+		AwkSettings settings = new AwkSettings();
+		settings.setInput(new ByteArrayInputStream(new byte[0]));
+		settings.setDefaultRS("\n");
+		settings.setDefaultORS("\n");
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		settings.setOutputStream(new PrintStream(out, false, StandardCharsets.UTF_8.name()));
+
+		assertThrows(AwkSandboxException.class, () -> sandboxAwk.invoke(tuples, settings));
+	}
+
+	@Test
+	public void cliEnablesSandboxMode() {
+		Cli cli = Cli.parseCommandLineArguments(new String[] { "-S", "{ print }" });
+		assertTrue(cli.isSandbox());
+	}
+
 }

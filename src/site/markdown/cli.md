@@ -103,8 +103,9 @@ To enhance development and script execution over traditional AWK, **Jawk** also 
 When using extension names that contain spaces, wrap them in quotes so the shell passes the value as a single argument (for example `-l "My Custom Extension"`).
 
 You can rely on the JVM `-cp`/`-classpath` option to add directories or JARs containing extensions before launching `java -jar jawk-….jar`.
-* `-o <filename>` - Override the default output filename for extended parameters -S, -s, -z, and -Z.
-* `-S` - Dump the abstract syntax tree (constructed by the front end) to a text readable file. If the -o argument is not provided, the contents will be dumped into the `syntax_tree.lst` file.
+* `-o <filename>` - Override the default output filename for extended parameters --dump-syntax, -s, -z, and -Z.
+* `-S`/`--sandbox` - Run Jawk in sandbox mode, disabling `system()`, redirections (`getline < file`, `print > file`, etc.), command pipelines, and loading dynamic extensions.
+* `--dump-syntax` - Dump the abstract syntax tree (constructed by the front end) to a text readable file. If the -o argument is not provided, the contents will be dumped into the `syntax_tree.lst` file.
 * `-s` - Dump the intermediate code (tuples) to a text readable file. If the -o argument is not provided, the contents will be dumped into the `"avm.lst"` file.
 * `-r` - Allow IllegalFormatExceptions to be thrown when using the java.util.Formatter class for printf/sprintf. If the argument is not provided, the interpreter/compiled result catches IllegalFormatExceptions and silently returns a blank string in its place. If the argument is provided, the interpreter/compiled result will halt by throwing this runtime exception.
 * `-h`/`-?` - Displays a usage screen. The screen contains a list of command-line arguments and what each does.
@@ -118,7 +119,7 @@ Finally, one or more of the following parameters are consumed by **Jawk** and pr
 
 If the parameter contains an `=`, **Jawk** treats it like a variable assignment. Otherwise, it's a filename.
 
-> **Note:** Parameters passed into the command-line which result in non-execution of the script (i.e., -S, -s, -h, -? and -z) cause **Jawk** to ignore filename and name=value parameters._
+> **Note:** Parameters passed into the command-line which result in non-execution of the script (i.e., --dump-syntax, -s, -h, -? and -z) cause **Jawk** to ignore filename and name=value parameters._
 
 **Jawk** parses command-line parameters via the [`Cli`](apidocs/org/metricshub/jawk/Cli.html) class.
 

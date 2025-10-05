@@ -47,7 +47,6 @@ import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.frontend.AwkParser;
 import org.metricshub.jawk.frontend.AstNode;
 import org.metricshub.jawk.intermediate.AwkTuples;
-import org.metricshub.jawk.util.AwkInterpreteSettings;
 import org.metricshub.jawk.util.AwkSettings;
 import org.metricshub.jawk.util.ScriptSource;
 
@@ -116,9 +115,17 @@ public class Awk {
 		this(createExtensionSetup(Arrays.asList(extensions)));
 	}
 
-	private Awk(ExtensionSetup setup) {
+	protected Awk(ExtensionSetup setup) {
 		this.extensionFunctions = setup.functions;
 		this.extensionInstances = setup.instances;
+	}
+
+	protected Map<String, ExtensionFunction> getExtensionFunctions() {
+		return extensionFunctions;
+	}
+
+	protected Map<String, JawkExtension> getExtensionInstances() {
+		return extensionInstances;
 	}
 
 	static Map<String, ExtensionFunction> createExtensionFunctionMap(Collection<? extends JawkExtension> extensions) {
@@ -268,7 +275,7 @@ public class Awk {
 
 	/**
 	 * Interprets the specified precompiled {@link AwkTuples} using the provided
-	 * {@link AwkInterpreteSettings}.
+	 * {@link AwkSettings}.
 	 *
 	 * @param tuples precompiled tuples to interpret
 	 * @param settings runtime settings
@@ -276,7 +283,7 @@ public class Awk {
 	 * @throws ExitException if interpretation is requested, and a specific exit
 	 *         code is requested
 	 */
-	public void invoke(AwkTuples tuples, AwkInterpreteSettings settings)
+	public void invoke(AwkTuples tuples, AwkSettings settings)
 			throws IOException,
 			ExitException {
 		if (tuples == null) {
@@ -285,8 +292,8 @@ public class Awk {
 
 		AVM avm = null;
 		try {
-			// interpret!
-			avm = new AVM(settings, this.extensionInstances, this.extensionFunctions);
+// interpret!
+			avm = createAvm(settings);
 			avm.interpret(tuples);
 		} finally {
 			if (avm != null) {
@@ -656,12 +663,10 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 */
 	public AwkTuples compile(String script) throws IOException, ClassNotFoundException {
-		return compile(
-				Collections
-						.singletonList(
-								new ScriptSource(
-										ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
-										new StringReader(script))));
+		ScriptSource source = new ScriptSource(
+				ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
+				new StringReader(script));
+		return compile(Collections.singletonList(source));
 	}
 
 	/**
@@ -674,12 +679,10 @@ public class Awk {
 	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 */
 	public AwkTuples compile(Reader script) throws IOException, ClassNotFoundException {
-		return compile(
-				Collections
-						.singletonList(
-								new ScriptSource(
-										ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
-										script)));
+		ScriptSource source = new ScriptSource(
+				ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
+				script);
+		return compile(Collections.singletonList(source));
 	}
 
 	/**
@@ -698,7 +701,7 @@ public class Awk {
 			ClassNotFoundException {
 
 		lastAst = null;
-		AwkTuples tuples = new AwkTuples();
+		AwkTuples tuples = createTuples();
 		if (!scripts.isEmpty()) {
 			// Parse all script sources into a single AST
 			AwkParser parser = new AwkParser(this.extensionFunctions);
@@ -740,7 +743,7 @@ public class Awk {
 		AstNode ast = parser.parseExpression(expressionSource);
 
 		// Create the tuples that we will return
-		AwkTuples tuples = new AwkTuples();
+		AwkTuples tuples = createTuples();
 
 		// Attempt to traverse the syntax tree and build
 		// the intermediate code
@@ -827,8 +830,16 @@ public class Awk {
 				.setOutputStream(
 						new PrintStream(new ByteArrayOutputStream(), false, StandardCharsets.UTF_8.name()));
 
-		AVM avm = new AVM(settings, this.extensionInstances, this.extensionFunctions);
+		AVM avm = createAvm(settings);
 		return avm.eval(tuples, input);
+	}
+
+	protected AwkTuples createTuples() {
+		return new AwkTuples();
+	}
+
+	protected AVM createAvm(AwkSettings settings) {
+		return new AVM(settings, this.extensionInstances, this.extensionFunctions);
 	}
 
 	/**
