@@ -4716,10 +4716,10 @@ public class AwkParser {
 			if (getAst1() != null) {
 				int ast1Result = getAst1().populateTuples(tuples);
 				assert ast1Result == 1;
-				// stack has getAst1() (i.e., "command")
+// stack has getAst1() (i.e., "command")
 				tuples.useAsCommandInput();
 			} else if (getAst3() != null) {
-				// getline ... < getAst3()
+// getline ... < getAst3()
 				int ast3Result = getAst3().populateTuples(tuples);
 				assert ast3Result == 1;
 				// stack has getAst3() (i.e., "filename")

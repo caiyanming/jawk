@@ -23,6 +23,13 @@ Use `--list-ext` to display available extensions (with their human readable
 names) and `-l <extension>` or `--load <extension>` to load them by extension
 name, simple class name, or fully qualified class name.
 
+Enable sandbox mode with `-S` or `--sandbox` to disable the `system()`
+function, all input/output redirection, command pipelines, and loading
+dynamic extensions during script execution.
+
+When embedding Jawk, instantiate `SandboxedAwk` to apply the same sandbox
+restrictions programmatically.
+
 ## Run AWK inside Java
 
 Execute a script in just one line using the convenience methods on `Awk`:

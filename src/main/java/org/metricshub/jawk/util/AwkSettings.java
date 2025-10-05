@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A simple container for the parameters of a single AWK invocation.
@@ -39,7 +40,12 @@ import java.util.Map;
  *
  * @author Danny Daglas
  */
-public class AwkSettings implements AwkInterpreteSettings {
+public class AwkSettings {
+
+	/**
+	 * Shared immutable settings instance representing the default configuration.
+	 */
+	public static final AwkSettings DEFAULT_SETTINGS = new ImmutableAwkSettings();
 
 	/**
 	 * Where input is read from.
@@ -142,7 +148,6 @@ public class AwkSettings implements AwkInterpreteSettings {
 		if (isCatchIllegalFormatExceptions()) {
 			extensions.append(", IllegalFormatExceptions NOT trapped");
 		}
-
 		if (extensions.length() > 0) {
 			return "{extensions: " + extensions.substring(2) + "}";
 		} else {
@@ -188,7 +193,7 @@ public class AwkSettings implements AwkInterpreteSettings {
 	 * @param input the input to set
 	 */
 	public void setInput(InputStream input) {
-		this.input = input;
+		this.input = Objects.requireNonNull(input, "input");
 	}
 
 	/**
@@ -302,9 +307,8 @@ public class AwkSettings implements AwkInterpreteSettings {
 	 *
 	 * @param pOutputStream OutputStream to use for print statements
 	 */
-	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Caller-supplied PrintStream must be used directly; no defensive copy possible.")
 	public void setOutputStream(PrintStream pOutputStream) {
-		outputStream = pOutputStream;
+		outputStream = Objects.requireNonNull(pOutputStream, "outputStream");
 	}
 
 	/**
@@ -366,7 +370,7 @@ public class AwkSettings implements AwkInterpreteSettings {
 	 * @param rs The regular expression that separates records
 	 */
 	public void setDefaultRS(String rs) {
-		defaultRS = rs;
+		defaultRS = Objects.requireNonNull(rs, "defaultRS");
 	}
 
 	/**
@@ -386,6 +390,72 @@ public class AwkSettings implements AwkInterpreteSettings {
 	 * @param ors The string that separates output records (with the print statement)
 	 */
 	public void setDefaultORS(String ors) {
-		defaultORS = ors;
+		defaultORS = Objects.requireNonNull(ors, "defaultORS");
+	}
+
+	private static final class ImmutableAwkSettings extends AwkSettings {
+
+		private ImmutableAwkSettings() {
+			super();
+		}
+
+		@Override
+		public void setInput(InputStream input) {
+			throw unsupported();
+		}
+
+		@Override
+		public void setVariables(Map<String, Object> variables) {
+			throw unsupported();
+		}
+
+		@Override
+		public void putVariable(String name, Object value) {
+			throw unsupported();
+		}
+
+		@Override
+		public void addNameValueOrFileName(String entry) {
+			throw unsupported();
+		}
+
+		@Override
+		public void setFieldSeparator(String fieldSeparator) {
+			throw unsupported();
+		}
+
+		@Override
+		public void setUseSortedArrayKeys(boolean useSortedArrayKeys) {
+			throw unsupported();
+		}
+
+		@Override
+		public void setOutputStream(PrintStream pOutputStream) {
+			throw unsupported();
+		}
+
+		@Override
+		public void setCatchIllegalFormatExceptions(boolean catchIllegalFormatExceptions) {
+			throw unsupported();
+		}
+
+		@Override
+		public void setLocale(Locale pLocale) {
+			throw unsupported();
+		}
+
+		@Override
+		public void setDefaultRS(String rs) {
+			throw unsupported();
+		}
+
+		@Override
+		public void setDefaultORS(String ors) {
+			throw unsupported();
+		}
+
+		private UnsupportedOperationException unsupported() {
+			return new UnsupportedOperationException("DEFAULT_SETTINGS is immutable");
+		}
 	}
 }

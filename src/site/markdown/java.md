@@ -35,6 +35,17 @@ Awk awk = new Awk();
 String result = awk.run("{ print toupper($0) }", "hello world");
 ```
 
+### Enforce sandbox restrictions
+
+```java
+Awk awk = new SandboxedAwk();
+awk.run("{ print \"safe\" }", "input");
+```
+
+`SandboxedAwk` uses sandbox-specific tuples and runtime components so
+programmatic invocations honor the same restrictions as the CLI `-S`
+option.
+
 ### Compile and invoke scripts
 
 ```java

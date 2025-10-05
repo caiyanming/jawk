@@ -80,6 +80,7 @@ public final class Cli {
 	private String dumpOutputFilename;
 	private File compileOutputFile;
 	private boolean printUsage;
+	private boolean sandbox;
 
 	/**
 	 * Creates a CLI instance wired to the standard input and output streams.
@@ -112,6 +113,10 @@ public final class Cli {
 	@SuppressFBWarnings("EI_EXPOSE_REP")
 	public AwkSettings getSettings() {
 		return settings;
+	}
+
+	public boolean isSandbox() {
+		return sandbox;
 	}
 
 	/**
@@ -188,8 +193,11 @@ public final class Cli {
 				// -o filename : direct debug output to file
 				checkParameterHasArgument(args, argIdx);
 				dumpOutputFilename = args[++argIdx];
-			} else if (arg.equals("-S")) {
-				// -S : dump syntax tree to file
+			} else if (arg.equals("-S") || arg.equals("--sandbox")) {
+// -S/--sandbox : enable sandbox mode
+				sandbox = true;
+			} else if (arg.equals("--dump-syntax")) {
+// --dump-syntax : dump syntax tree to file
 				dumpSyntaxTree = true;
 			} else if (arg.equals("-s")) {
 				// -s : dump intermediate tuples to file
@@ -329,7 +337,12 @@ public final class Cli {
 			extensions.add(extension);
 		}
 
-		Awk awk = extensions.isEmpty() ? new Awk() : new Awk(extensions);
+		Awk awk;
+		if (sandbox) {
+			awk = extensions.isEmpty() ? new SandboxedAwk() : new SandboxedAwk(extensions);
+		} else {
+			awk = extensions.isEmpty() ? new Awk() : new Awk(extensions);
+		}
 		// Use precompiled tuples if provided; otherwise compile the scripts now
 		AwkTuples tuples = precompiledTuples != null ? precompiledTuples : awk.compile(scriptSources);
 		if (dumpSyntaxTree) {
@@ -384,7 +397,8 @@ public final class Cli {
 								" [-L tuples-filename]" +
 								" [-K tuples-filename]" +
 								" [-o output-filename]" +
-								" [-S]" +
+								" [-S|--sandbox]" +
+								" [--dump-syntax]" +
 								" [-s]" +
 								" [-r]" +
 								" [--locale locale]" +
@@ -407,7 +421,11 @@ public final class Cli {
 		dest.println(" -t = (extension) Maintain array keys in sorted order.");
 		dest.println(" -K filename = Compile to tuples file and halt.");
 		dest.println(" -o = (extension) Specify output file.");
-		dest.println(" -S = (extension) Write the syntax tree to file. (default: syntax_tree.lst)");
+		dest
+				.println(
+						" -S, --sandbox = (extension) Enable sandbox mode (no system(), redirection, pipelines, or"
+								+ " dynamic extensions).");
+		dest.println(" --dump-syntax = (extension) Write the syntax tree to file. (default: syntax_tree.lst)");
 		dest.println(" -s = (extension) Write the intermediate code to file. (default: avm.lst)");
 		dest.println(" -r = (extension) Do NOT hide IllegalFormatExceptions for [s]printf.");
 		dest.println(" --locale Locale = (extension) Specify a locale to be used instead of US-English");
