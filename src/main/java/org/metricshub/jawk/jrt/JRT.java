@@ -181,6 +181,9 @@ public class JRT {
 	 * @param locale a {@link java.util.Locale} object
 	 */
 	public static String toAwkString(Object o, String convfmt, Locale locale) {
+		if (o == null) {
+			return "";
+		}
 		if (o instanceof Number) {
 			// It is a number, some processing is required here
 			double d = ((Number) o).doubleValue();
