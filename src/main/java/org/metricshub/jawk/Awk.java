@@ -661,7 +661,7 @@ public class Awk {
 	 * @return compiled {@link AwkTuples}
 	 * @throws IOException if an I/O error occurs during compilation
 	 */
-	public AwkTuples compile(String script) throws IOException, ClassNotFoundException {
+	public AwkTuples compile(String script) throws IOException {
 		ScriptSource source = new ScriptSource(
 				ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
 				new StringReader(script));
