@@ -660,7 +660,6 @@ public class Awk {
 	 * @param script AWK script to compile
 	 * @return compiled {@link AwkTuples}
 	 * @throws IOException if an I/O error occurs during compilation
-	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 */
 	public AwkTuples compile(String script) throws IOException, ClassNotFoundException {
 		ScriptSource source = new ScriptSource(
@@ -676,9 +675,8 @@ public class Awk {
 	 * @param script AWK script to compile (as a {@link Reader})
 	 * @return compiled {@link AwkTuples}
 	 * @throws IOException if an I/O error occurs during compilation
-	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 */
-	public AwkTuples compile(Reader script) throws IOException, ClassNotFoundException {
+	public AwkTuples compile(Reader script) throws IOException {
 		ScriptSource source = new ScriptSource(
 				ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
 				script);
@@ -693,12 +691,9 @@ public class Awk {
 	 * @return compiled {@link AwkTuples}
 	 * @throws IOException if an I/O error occurs while reading the
 	 *         scripts
-	 * @throws ClassNotFoundException if a referenced class cannot be found during
-	 *         compilation
 	 */
 	public AwkTuples compile(List<ScriptSource> scripts)
-			throws IOException,
-			ClassNotFoundException {
+			throws IOException {
 
 		lastAst = null;
 		AwkTuples tuples = createTuples();
