@@ -34,7 +34,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.metricshub.jawk.NotImplementedError;
 import org.metricshub.jawk.backend.AVM;
 import org.metricshub.jawk.ext.JawkExtension;
@@ -381,7 +380,6 @@ public class AwkParser {
 	 *
 	 * @throws IOException
 	 */
-	@SuppressFBWarnings(value = "SF_SWITCH_FALLTHROUGH", justification = "intentional for escape sequence parsing")
 	private void readString() throws IOException {
 		string.setLength(0);
 
