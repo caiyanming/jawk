@@ -1,4 +1,4 @@
-package org.metricshub.jawk.util;
+package org.metricshub.jawk;
 
 /*-
  * ╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲
@@ -22,34 +22,29 @@ package org.metricshub.jawk.util;
  * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
  */
 
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
 /**
- * Settings used during interpretation of AWK tuples.
+ * Exception thrown when an operation is not permitted in sandbox mode.
  */
-public interface AwkInterpreteSettings {
+public class AwkSandboxException extends RuntimeException {
 
-	InputStream getInput();
+	private static final long serialVersionUID = 1L;
 
-	Map<String, Object> getVariables();
+	/**
+	 * Creates a new sandbox exception with the provided message.
+	 *
+	 * @param message description of the sandbox violation
+	 */
+	public AwkSandboxException(String message) {
+		super(message);
+	}
 
-	List<String> getNameValueOrFileNames();
-
-	String getFieldSeparator();
-
-	boolean isUseSortedArrayKeys();
-
-	boolean isCatchIllegalFormatExceptions();
-
-	PrintStream getOutputStream();
-
-	Locale getLocale();
-
-	String getDefaultRS();
-
-	String getDefaultORS();
+	/**
+	 * Creates a new sandbox exception with the provided message and cause.
+	 *
+	 * @param message description of the sandbox violation
+	 * @param cause underlying cause of the violation
+	 */
+	public AwkSandboxException(String message, Throwable cause) {
+		super(message, cause);
+	}
 }

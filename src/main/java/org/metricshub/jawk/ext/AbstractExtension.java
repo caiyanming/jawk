@@ -22,7 +22,12 @@ package org.metricshub.jawk.ext;
  * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
  */
 
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.metricshub.jawk.ext.annotations.JawkFunction;
 import org.metricshub.jawk.jrt.IllegalAwkArgumentException;
 import org.metricshub.jawk.jrt.JRT;
 import org.metricshub.jawk.jrt.VariableManager;
@@ -42,6 +47,13 @@ public abstract class AbstractExtension implements JawkExtension {
 	private JRT jrt;
 	private VariableManager vm;
 	private AwkSettings settings;
+	private Map<String, ExtensionFunction> annotatedFunctions;
+
+	/** {@inheritDoc} */
+	@Override
+	public String getExtensionName() {
+		return getClass().getSimpleName();
+	}
 
 	/** {@inheritDoc} */
 	@Override
@@ -62,16 +74,6 @@ public abstract class AbstractExtension implements JawkExtension {
 	 */
 	protected final String toAwkString(Object obj) {
 		return JRT.toAwkString(obj, getVm().getCONVFMT().toString(), settings.getLocale());
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * Assume no guarantee of any extension parameter being an
-	 * associative array.
-	 */
-	@Override
-	public int[] getAssocArrayParameterPositions(String extensionKeyword, int argCount) {
-		return new int[0];
 	}
 
 	/**
@@ -126,5 +128,36 @@ public abstract class AbstractExtension implements JawkExtension {
 	 */
 	protected AwkSettings getSettings() {
 		return settings;
+	}
+
+	private Map<String, ExtensionFunction> getAnnotatedFunctions() {
+		if (annotatedFunctions == null) {
+			annotatedFunctions = Collections.unmodifiableMap(scanAnnotatedFunctions());
+		}
+		return annotatedFunctions;
+	}
+
+	private Map<String, ExtensionFunction> scanAnnotatedFunctions() {
+		Map<String, ExtensionFunction> discovered = new LinkedHashMap<String, ExtensionFunction>();
+		Class<? extends AbstractExtension> type = getClass();
+		for (Method method : type.getMethods()) {
+			JawkFunction function = method.getAnnotation(JawkFunction.class);
+			if (function == null) {
+				continue;
+			}
+			String keyword = function.value();
+			ExtensionFunction existing = discovered.put(keyword, new ExtensionFunction(keyword, method));
+			if (existing != null) {
+				throw new IllegalStateException(
+						"Duplicate @JawkFunction mapping for keyword '" + keyword + "' in " + type.getName());
+			}
+		}
+		return discovered;
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public Map<String, ExtensionFunction> getExtensionFunctions() {
+		return getAnnotatedFunctions();
 	}
 }

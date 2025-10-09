@@ -22,6 +22,7 @@ package org.metricshub.jawk.ext;
  * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
  */
 
+import java.util.Map;
 import org.metricshub.jawk.jrt.JRT;
 import org.metricshub.jawk.jrt.VariableManager;
 import org.metricshub.jawk.util.AwkSettings;
@@ -88,40 +89,10 @@ public interface JawkExtension {
 	String getExtensionName();
 
 	/**
-	 * All the extended keywords supported
-	 * by this extension.
-	 * <p>
-	 * <strong>Note:</strong> Jawk will
-	 * throw a runtime exception if the
-	 * keyword collides with any other keyword
-	 * in the system, extension or otherwise.
+	 * Returns the mapping between Awk keywords and the functions implemented by this
+	 * extension. The returned map must be unmodifiable.
 	 *
-	 * @return the list of keywords the extension provides support for
+	 * @return mapping from keyword to {@link ExtensionFunction}
 	 */
-	String[] extensionKeywords();
-
-	/**
-	 * Define the parameters which are <strong>expected</strong> to be
-	 * associative arrays. This is used by the semantic analyzer
-	 * to enforce type checking and correct Jawk variable allocation
-	 * (which is done at the beginning of script execution).
-	 *
-	 * @param extensionKeyword The extension keyword to check.
-	 * @param numArgs How many actual parameters are used in the call.
-	 * @return An array of parameter indexes containing associative arrays.
-	 *         <strong>Note:</strong> non-inclusion of a parameter index
-	 *         into this array makes no implication as to whether the
-	 *         parameter is a scalar or an associative array. It means
-	 *         that its type is not guaranteed to be an associative array.
-	 */
-	int[] getAssocArrayParameterPositions(String extensionKeyword, int numArgs);
-
-	/**
-	 * Invoke extension as a method.
-	 *
-	 * @param keyword The extension keyword.
-	 * @param args Arguments to the extension.
-	 * @return The return value (result) of the extension.
-	 */
-	Object invoke(String keyword, Object[] args);
+	Map<String, ExtensionFunction> getExtensionFunctions();
 }

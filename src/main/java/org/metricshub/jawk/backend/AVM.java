@@ -22,10 +22,8 @@ package org.metricshub.jawk.backend;
  * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
  */
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import java.io.StringReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -37,11 +35,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.LinkedHashSet;
 import java.util.StringTokenizer;
 import java.util.Deque;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.metricshub.jawk.AwkSandboxException;
 import org.metricshub.jawk.ExitException;
+import org.metricshub.jawk.ext.AbstractExtension;
+import org.metricshub.jawk.ext.ExtensionFunction;
 import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.frontend.AstNode;
 import org.metricshub.jawk.intermediate.Address;
@@ -60,12 +62,10 @@ import java.util.ArrayDeque;
 import org.metricshub.jawk.jrt.RegexTokenizer;
 import org.metricshub.jawk.jrt.SingleCharacterTokenizer;
 import org.metricshub.jawk.jrt.VariableManager;
-import org.metricshub.jawk.util.AwkInterpreteSettings;
 import org.metricshub.jawk.util.AwkSettings;
 import org.metricshub.jawk.util.ScriptSource;
 import org.metricshub.jawk.jrt.BSDRandom;
 import org.metricshub.printf4j.Printf4J;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * The Jawk interpreter.
@@ -80,12 +80,12 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * The interpreter runs completely independent of the frontend/intermediate step.
  * In fact, an intermediate file produced by Jawk is sufficient to
  * execute on this interpreter. The binding data-structure is
- * the AwkInterpreteSettings, which can contain options pertinent to
+ * the {@link AwkSettings}, which can contain options pertinent to
  * the interpreter. For example, the interpreter must know about
  * the -v command line argument values, as well as the file/variable list
  * parameter values (ARGC/ARGV) after the script on the command line.
  * However, if programmatic access to the AVM is required, meaningful
- * AwkInterpreteSettings are not required.
+ * {@link AwkSettings} are not required.
  * <p>
  * Semantic analysis has occurred prior to execution of the interpreter.
  * Therefore, the interpreter throws AwkRuntimeExceptions upon most
@@ -109,7 +109,9 @@ public class AVM implements VariableManager {
 	private boolean trapIllegalFormatExceptions;
 	private JRT jrt;
 	private final Locale locale;
-	private Map<String, JawkExtension> extensions;
+	private Map<String, JawkExtension> extensionInstances;
+
+	private Map<String, ExtensionFunction> extensionFunctions;
 
 	// stack methods
 	// private Object pop() { return operandStack.removeFirst(); }
@@ -122,7 +124,7 @@ public class AVM implements VariableManager {
 		operandStack.push(o);
 	}
 
-	private final AwkInterpreteSettings settings;
+	private final AwkSettings settings;
 
 	/**
 	 * Construct the interpreter.
@@ -131,15 +133,7 @@ public class AVM implements VariableManager {
 	 * outside of the framework which is used by Jawk.
 	 */
 	public AVM() {
-		settings = null;
-		arguments = new ArrayList<String>();
-		sortedArrayKeys = false;
-		initialVariables = new HashMap<String, Object>();
-		initialFsValue = null;
-		trapIllegalFormatExceptions = false;
-		jrt = new JRT(this); // this = VariableManager
-		locale = Locale.getDefault();
-		this.extensions = Collections.emptyMap();
+		this(null, Collections.<String, JawkExtension>emptyMap(), Collections.<String, ExtensionFunction>emptyMap());
 	}
 
 	/**
@@ -148,36 +142,56 @@ public class AVM implements VariableManager {
 	 *
 	 * @param parameters The parameters affecting the behavior of the
 	 *        interpreter.
-	 * @param extensions Map of the extensions to load
+	 * @param extensionInstances Map of the extensions to load
+	 * @param extensionFunctions Map of extension functions available for parsing
 	 */
-	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "constructor stores provided settings and extension map for later use")
-	public AVM(final AwkInterpreteSettings parameters, final Map<String, JawkExtension> extensions) {
-		if (parameters != null) {
-			this.settings = parameters;
-			locale = settings.getLocale();
-			arguments = parameters.getNameValueOrFileNames();
-			sortedArrayKeys = parameters.isUseSortedArrayKeys();
-			initialVariables = parameters.getVariables();
-			initialFsValue = parameters.getFieldSeparator();
-			trapIllegalFormatExceptions = parameters.isCatchIllegalFormatExceptions();
-			this.extensions = extensions;
-		} else {
-			this.settings = null;
-			locale = Locale.getDefault();
-			arguments = new ArrayList<String>();
-			sortedArrayKeys = false;
-			initialVariables = new HashMap<String, Object>();
-			initialFsValue = null;
-			trapIllegalFormatExceptions = false;
-			this.extensions = Collections.emptyMap();
-		}
+	public AVM(final AwkSettings parameters,
+			final Map<String, JawkExtension> extensionInstances,
+			final Map<String, ExtensionFunction> extensionFunctions) {
+		boolean hasProvidedSettings = parameters != null;
+		this.settings = hasProvidedSettings ? parameters : AwkSettings.DEFAULT_SETTINGS;
+		this.extensionInstances = extensionInstances == null ?
+				Collections.<String, JawkExtension>emptyMap() : extensionInstances;
+		this.extensionFunctions = extensionFunctions == null ?
+				Collections.<String, ExtensionFunction>emptyMap() : extensionFunctions;
 
-		jrt = new JRT(this); // this = VariableManager
-		if (settings != null) {
-			jrt.setStreams(settings.getOutputStream(), System.err);
+		locale = this.settings.getLocale();
+		arguments = this.settings.getNameValueOrFileNames();
+		sortedArrayKeys = this.settings.isUseSortedArrayKeys();
+		initialVariables = this.settings.getVariables();
+		initialFsValue = this.settings.getFieldSeparator();
+		trapIllegalFormatExceptions = hasProvidedSettings
+				&& this.settings.isCatchIllegalFormatExceptions();
+
+		jrt = createJrt();
+		jrt.setStreams(settings.getOutputStream(), System.err);
+		initExtensions();
+	}
+
+	protected JRT createJrt() {
+		return new JRT(this);
+	}
+
+	protected AwkTuples createTuples() {
+		return new AwkTuples();
+	}
+
+	protected AVM createSubAvm(
+			AwkSettings parameters,
+			Map<String, JawkExtension> subExtensionInstances,
+			Map<String, ExtensionFunction> subExtensionFunctions) {
+		return new AVM(parameters, subExtensionInstances, subExtensionFunctions);
+	}
+
+	private void initExtensions() {
+		if (extensionInstances.isEmpty()) {
+			return;
 		}
-		for (JawkExtension ext : this.extensions.values()) {
-			ext.init(this, jrt, (AwkSettings) settings); // this = VariableManager
+		Set<JawkExtension> initialized = new LinkedHashSet<JawkExtension>();
+		for (JawkExtension extension : extensionInstances.values()) {
+			if (initialized.add(extension)) {
+				extension.init(this, jrt, settings); // this = VariableManager
+			}
 		}
 	}
 
@@ -365,7 +379,7 @@ public class AVM implements VariableManager {
 					break;
 				}
 				case PRINT_TO_FILE: {
-					// arg[0] = # of items to print on the stack
+// arg[0] = # of items to print on the stack
 					// arg[1] = true=append, false=overwrite
 					// stack[0] = output filename
 					// stack[1] = item 1
@@ -374,27 +388,13 @@ public class AVM implements VariableManager {
 					long numArgs = position.intArg(0);
 					boolean append = position.boolArg(1);
 					String key = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
-					PrintStream ps = jrt.getOutputFiles().get(key);
-					if (ps == null) {
-						try {
-							ps = new PrintStream(
-									new FileOutputStream(key, append),
-									true,
-									StandardCharsets.UTF_8.name());
-							// = autoflush
-							jrt.getOutputFiles().put(key, ps);
-						} catch (IOException ioe) {
-							throw new AwkRuntimeException(
-									position.lineNumber(),
-									"Cannot open " + key + " for writing: " + ioe);
-						}
-					}
+					PrintStream ps = jrt.jrtGetPrintStream(key, append);
 					printTo(ps, numArgs);
 					position.next();
 					break;
 				}
 				case PRINT_TO_PIPE: {
-					// arg[0] = # of items to print on the stack
+// arg[0] = # of items to print on the stack
 					// stack[0] = command to execute
 					// stack[1] = item 1
 					// stack[2] = item 2
@@ -417,7 +417,7 @@ public class AVM implements VariableManager {
 					break;
 				}
 				case PRINTF_TO_FILE: {
-					// arg[0] = # of items to print on the stack (includes format string)
+// arg[0] = # of items to print on the stack (includes format string)
 					// arg[1] = true=append, false=overwrite
 					// stack[0] = output filename
 					// stack[1] = format string
@@ -426,27 +426,13 @@ public class AVM implements VariableManager {
 					long numArgs = position.intArg(0);
 					boolean append = position.boolArg(1);
 					String key = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
-					PrintStream ps = jrt.getOutputFiles().get(key);
-					if (ps == null) {
-						try {
-							ps = new PrintStream(
-									new FileOutputStream(key, append),
-									true,
-									StandardCharsets.UTF_8.name());
-							// = autoflush
-							jrt.getOutputFiles().put(key, ps);
-						} catch (IOException ioe) {
-							throw new AwkRuntimeException(
-									position.lineNumber(),
-									"Cannot open " + key + " for writing: " + ioe);
-						}
-					}
+					PrintStream ps = jrt.jrtGetPrintStream(key, append);
 					printfTo(ps, numArgs);
 					position.next();
 					break;
 				}
 				case PRINTF_TO_PIPE: {
-					// arg[0] = # of items to print on the stack (includes format string)
+// arg[0] = # of items to print on the stack (includes format string)
 					// stack[0] = command to execute
 					// stack[1] = format string
 					// stack[2] = item 1
@@ -1267,7 +1253,7 @@ public class AVM implements VariableManager {
 					break;
 				}
 				case SYSTEM: {
-					// stack[0] = command string
+// stack[0] = command string
 					String s = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
 					push(jrt.jrtSystem(s));
 					position.next();
@@ -1517,14 +1503,14 @@ public class AVM implements VariableManager {
 					break;
 				}
 				case USE_AS_FILE_INPUT: {
-					// stack[0] = filename
+// stack[0] = filename
 					String s = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
 					avmConsumeFileInputForGetline(s);
 					position.next();
 					break;
 				}
 				case USE_AS_COMMAND_INPUT: {
-					// stack[0] = command line
+// stack[0] = command line
 					String s = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
 					avmConsumeCommandInputForGetline(s);
 					position.next();
@@ -1929,18 +1915,21 @@ public class AVM implements VariableManager {
 							.add(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, new StringReader(awkCode)));
 
 					org.metricshub.jawk.frontend.AwkParser ap = new org.metricshub.jawk.frontend.AwkParser(
-							extensions);
+							extensionFunctions);
 					try {
 						AstNode ast = ap.parse(scriptSources);
 						if (ast != null) {
 							ast.semanticAnalysis();
 							ast.semanticAnalysis();
-							AwkTuples newTuples = new AwkTuples();
+							AwkTuples newTuples = createTuples();
 							int result = ast.populateTuples(newTuples);
 							assert result == 0;
 							newTuples.postProcess();
 							ap.populateGlobalVariableNameToOffsetMappings(newTuples);
-							AVM newAvm = new AVM(settings, extensions);
+							AVM newAvm = createSubAvm(
+									settings,
+									extensionInstances,
+									extensionFunctions);
 							int subScriptExitCode = 0;
 							try {
 								newAvm.interpret(newTuples);
@@ -1959,28 +1948,39 @@ public class AVM implements VariableManager {
 					break;
 				}
 				case EXTENSION: {
-					// arg[0] = extension keyword
+					// arg[0] = extension function metadata
 					// arg[1] = # of args on the stack
 					// arg[2] = true if parent is NOT an extension function call
 					// (i.e., initial extension in calling expression)
 					// stack[0] = first actual parameter
 					// stack[1] = second actual parameter
 					// etc.
-					String extensionKeyword = position.arg(0).toString();
+					ExtensionFunction function = position.extensionFunctionArg();
 					long numArgs = position.intArg(1);
 					boolean isInitial = position.boolArg(2);
-
-					JawkExtension extension = extensions.get(extensionKeyword);
-					if (extension == null) {
-						throw new AwkRuntimeException("Extension for '" + extensionKeyword + "' not found.");
-					}
 
 					Object[] args = new Object[(int) numArgs];
 					for (int i = (int) numArgs - 1; i >= 0; i--) {
 						args[i] = pop();
 					}
 
-					Object retval = extension.invoke(extensionKeyword, args);
+					String extensionClassName = function.getExtensionClassName();
+					JawkExtension extension = extensionInstances.get(extensionClassName);
+					if (extension == null) {
+						throw new AwkRuntimeException(
+								position.lineNumber(),
+								"Extension instance for class '" + extensionClassName
+										+ "' is not registered");
+					}
+					if (!(extension instanceof AbstractExtension)) {
+						throw new AwkRuntimeException(
+								position.lineNumber(),
+								"Extension instance for class '" + extensionClassName
+										+ "' does not extend "
+										+ AbstractExtension.class.getName());
+					}
+
+					Object retval = function.invoke((AbstractExtension) extension, args);
 
 					// block if necessary
 					// (convert retval into the return value
@@ -2025,6 +2025,9 @@ public class AVM implements VariableManager {
 			runtimeStack.popAllFrames();
 // clear operand stack
 			operandStack.clear();
+			if (re instanceof AwkSandboxException) {
+				throw re;
+			}
 			throw new AwkRuntimeException(position.lineNumber(), re.getMessage(), re);
 		} catch (AssertionError ae) {
 // clear runtime stack

@@ -1,0 +1,62 @@
+package org.metricshub.jawk.backend;
+
+/*-
+ * ╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲
+ * Jawk
+ * ჻჻჻჻჻჻
+ * Copyright (C) 2006 - 2025 MetricsHub
+ * ჻჻჻჻჻჻
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Lesser Public License for more details.
+ *
+ * You should have received a copy of the GNU General Lesser Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/lgpl-3.0.html>.
+ * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
+ */
+
+import java.util.Map;
+import org.metricshub.jawk.ext.ExtensionFunction;
+import org.metricshub.jawk.ext.JawkExtension;
+import org.metricshub.jawk.intermediate.AwkTuples;
+import org.metricshub.jawk.intermediate.SandboxedAwkTuples;
+import org.metricshub.jawk.jrt.JRT;
+import org.metricshub.jawk.jrt.SandboxedJRT;
+import org.metricshub.jawk.util.AwkSettings;
+
+/**
+ * {@link AVM} variant enforcing sandbox restrictions at runtime.
+ */
+public class SandboxedAVM extends AVM {
+
+	public SandboxedAVM(AwkSettings parameters,
+			Map<String, JawkExtension> extensionInstances,
+			Map<String, ExtensionFunction> extensionFunctions) {
+		super(parameters, extensionInstances, extensionFunctions);
+	}
+
+	@Override
+	protected JRT createJrt() {
+		return new SandboxedJRT(this);
+	}
+
+	@Override
+	protected AwkTuples createTuples() {
+		return new SandboxedAwkTuples();
+	}
+
+	@Override
+	protected AVM createSubAvm(
+			AwkSettings parameters,
+			Map<String, JawkExtension> subExtensionInstances,
+			Map<String, ExtensionFunction> subExtensionFunctions) {
+		return new SandboxedAVM(parameters, subExtensionInstances, subExtensionFunctions);
+	}
+}

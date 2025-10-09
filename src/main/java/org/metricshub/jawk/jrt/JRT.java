@@ -181,6 +181,9 @@ public class JRT {
 	 * @param locale a {@link java.util.Locale} object
 	 */
 	public static String toAwkString(Object o, String convfmt, Locale locale) {
+		if (o == null) {
+			return "";
+		}
 		if (o instanceof Number) {
 			// It is a number, some processing is required here
 			double d = ((Number) o).doubleValue();
@@ -1042,7 +1045,7 @@ public class JRT {
 	 * @param append true to append to the file, false to overwrite the file.
 	 * @return a {@link java.io.PrintStream} object
 	 */
-	public final PrintStream jrtGetPrintStream(String filename, boolean append) {
+	public PrintStream jrtGetPrintStream(String filename, boolean append) {
 		PrintStream ps = outputFiles.get(filename);
 		if (ps == null) {
 			try {

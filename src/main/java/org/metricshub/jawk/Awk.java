@@ -32,23 +32,21 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.io.StringReader;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.metricshub.jawk.backend.AVM;
+import org.metricshub.jawk.ext.ExtensionFunction;
+import org.metricshub.jawk.ext.ExtensionRegistry;
 import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.frontend.AwkParser;
 import org.metricshub.jawk.frontend.AstNode;
 import org.metricshub.jawk.intermediate.AwkTuples;
-import org.metricshub.jawk.util.AwkInterpreteSettings;
 import org.metricshub.jawk.util.AwkSettings;
 import org.metricshub.jawk.util.ScriptSource;
 
@@ -73,27 +71,18 @@ import org.metricshub.jawk.util.ScriptSource;
  * And the number of times tuples are traversed is depends
  * on whether interpretation or compilation takes place.
  * <p>
- * By default a minimal set of extensions are automatically
- * included. Please refer to the EXTENSION_PREFIX static field
- * contents for an up-to-date list. As of the initial release
- * of the extension system, the prefix defines the following
- * extensions:
- * <ul>
- * <li>CoreExtension
- * <li>SocketExtension
- * <li>StdinExtension
- * </ul>
+ * The engine does not enable any extensions automatically. Extensions can be
+ * provided programmatically via the {@link Awk#Awk(Collection)} constructors or
+ * via the command line when using the CLI entry point.
  *
  * @see org.metricshub.jawk.backend.AVM
  * @author Danny Daglas
  */
 public class Awk {
 
-	private static final String DEFAULT_EXTENSIONS = org.metricshub.jawk.ext.CoreExtension.class.getName()
-			+ "#"
-			+ org.metricshub.jawk.ext.StdinExtension.class.getName();
+	private final Map<String, ExtensionFunction> extensionFunctions;
 
-	private final Map<String, JawkExtension> extensions;
+	private final Map<String, JawkExtension> extensionInstances;
 
 	/**
 	 * The last parsed {@link AstNode} produced during compilation.
@@ -104,14 +93,107 @@ public class Awk {
 	 * Create a new instance of Awk without extensions
 	 */
 	public Awk() {
-		this.extensions = Collections.emptyMap();
+		this(ExtensionSetup.EMPTY);
 	}
 
 	/**
-	 * Create a new instance of Awk with the specified extensions
+	 * Create a new instance of Awk with the specified extension instances.
+	 *
+	 * @param extensions extension instances implementing {@link JawkExtension}
 	 */
-	public Awk(Map<String, JawkExtension> extensions) {
-		this.extensions = new HashMap<String, JawkExtension>(extensions);
+	public Awk(Collection<? extends JawkExtension> extensions) {
+		this(createExtensionSetup(extensions));
+	}
+
+	/**
+	 * Create a new instance of Awk with the specified extension instances.
+	 *
+	 * @param extensions extension instances implementing {@link JawkExtension}
+	 */
+	@SafeVarargs
+	public Awk(JawkExtension... extensions) {
+		this(createExtensionSetup(Arrays.asList(extensions)));
+	}
+
+	protected Awk(ExtensionSetup setup) {
+		this.extensionFunctions = setup.functions;
+		this.extensionInstances = setup.instances;
+	}
+
+	protected Map<String, ExtensionFunction> getExtensionFunctions() {
+		return extensionFunctions;
+	}
+
+	protected Map<String, JawkExtension> getExtensionInstances() {
+		return extensionInstances;
+	}
+
+	static Map<String, ExtensionFunction> createExtensionFunctionMap(Collection<? extends JawkExtension> extensions) {
+		return createExtensionSetup(extensions).functions;
+	}
+
+	static Map<String, JawkExtension> createExtensionInstanceMap(Collection<? extends JawkExtension> extensions) {
+		return createExtensionSetup(extensions).instances;
+	}
+
+	static Map<String, ExtensionFunction> createExtensionFunctionMap(JawkExtension... extensions) {
+		if (extensions == null || extensions.length == 0) {
+			return ExtensionSetup.EMPTY.functions;
+		}
+		return createExtensionFunctionMap(Arrays.asList(extensions));
+	}
+
+	static Map<String, JawkExtension> createExtensionInstanceMap(JawkExtension... extensions) {
+		if (extensions == null || extensions.length == 0) {
+			return ExtensionSetup.EMPTY.instances;
+		}
+		return createExtensionInstanceMap(Arrays.asList(extensions));
+	}
+
+	private static ExtensionSetup createExtensionSetup(Collection<? extends JawkExtension> extensions) {
+		if (extensions == null || extensions.isEmpty()) {
+			return ExtensionSetup.EMPTY;
+		}
+		Map<String, ExtensionFunction> keywordMap = new LinkedHashMap<String, ExtensionFunction>();
+		Map<String, JawkExtension> instanceMap = new LinkedHashMap<String, JawkExtension>();
+		for (JawkExtension extension : extensions) {
+			if (extension == null) {
+				throw new IllegalArgumentException("Extension instance must not be null");
+			}
+			String className = extension.getClass().getName();
+			JawkExtension previousInstance = instanceMap.putIfAbsent(className, extension);
+			if (previousInstance != null) {
+				throw new IllegalArgumentException(
+						"Extension class '" + className + "' was provided multiple times");
+			}
+			for (Map.Entry<String, ExtensionFunction> entry : extension.getExtensionFunctions().entrySet()) {
+				String keyword = entry.getKey();
+				ExtensionFunction previous = keywordMap.putIfAbsent(keyword, entry.getValue());
+				if (previous != null) {
+					throw new IllegalArgumentException(
+							"Keyword '" + keyword + "' already provided by another extension");
+				}
+			}
+		}
+		return new ExtensionSetup(
+				Collections.unmodifiableMap(keywordMap),
+				Collections.unmodifiableMap(instanceMap));
+	}
+
+	private static final class ExtensionSetup {
+
+		private static final ExtensionSetup EMPTY = new ExtensionSetup(
+				Collections.<String, ExtensionFunction>emptyMap(),
+				Collections.<String, JawkExtension>emptyMap());
+
+		private final Map<String, ExtensionFunction> functions;
+		private final Map<String, JawkExtension> instances;
+
+		private ExtensionSetup(Map<String, ExtensionFunction> functionsParam,
+				Map<String, JawkExtension> instancesParam) {
+			this.functions = functionsParam;
+			this.instances = instancesParam;
+		}
 	}
 
 	/**
@@ -193,7 +275,7 @@ public class Awk {
 
 	/**
 	 * Interprets the specified precompiled {@link AwkTuples} using the provided
-	 * {@link AwkInterpreteSettings}.
+	 * {@link AwkSettings}.
 	 *
 	 * @param tuples precompiled tuples to interpret
 	 * @param settings runtime settings
@@ -201,7 +283,7 @@ public class Awk {
 	 * @throws ExitException if interpretation is requested, and a specific exit
 	 *         code is requested
 	 */
-	public void invoke(AwkTuples tuples, AwkInterpreteSettings settings)
+	public void invoke(AwkTuples tuples, AwkSettings settings)
 			throws IOException,
 			ExitException {
 		if (tuples == null) {
@@ -210,8 +292,8 @@ public class Awk {
 
 		AVM avm = null;
 		try {
-			// interpret!
-			avm = new AVM(settings, this.extensions);
+// interpret!
+			avm = createAvm(settings);
 			avm.interpret(tuples);
 		} finally {
 			if (avm != null) {
@@ -578,15 +660,12 @@ public class Awk {
 	 * @param script AWK script to compile
 	 * @return compiled {@link AwkTuples}
 	 * @throws IOException if an I/O error occurs during compilation
-	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 */
 	public AwkTuples compile(String script) throws IOException, ClassNotFoundException {
-		return compile(
-				Collections
-						.singletonList(
-								new ScriptSource(
-										ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
-										new StringReader(script))));
+		ScriptSource source = new ScriptSource(
+				ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
+				new StringReader(script));
+		return compile(Collections.singletonList(source));
 	}
 
 	/**
@@ -596,15 +675,12 @@ public class Awk {
 	 * @param script AWK script to compile (as a {@link Reader})
 	 * @return compiled {@link AwkTuples}
 	 * @throws IOException if an I/O error occurs during compilation
-	 * @throws ClassNotFoundException if intermediate code cannot be loaded
 	 */
-	public AwkTuples compile(Reader script) throws IOException, ClassNotFoundException {
-		return compile(
-				Collections
-						.singletonList(
-								new ScriptSource(
-										ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
-										script)));
+	public AwkTuples compile(Reader script) throws IOException {
+		ScriptSource source = new ScriptSource(
+				ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
+				script);
+		return compile(Collections.singletonList(source));
 	}
 
 	/**
@@ -615,18 +691,15 @@ public class Awk {
 	 * @return compiled {@link AwkTuples}
 	 * @throws IOException if an I/O error occurs while reading the
 	 *         scripts
-	 * @throws ClassNotFoundException if a referenced class cannot be found during
-	 *         compilation
 	 */
 	public AwkTuples compile(List<ScriptSource> scripts)
-			throws IOException,
-			ClassNotFoundException {
+			throws IOException {
 
 		lastAst = null;
-		AwkTuples tuples = new AwkTuples();
+		AwkTuples tuples = createTuples();
 		if (!scripts.isEmpty()) {
 			// Parse all script sources into a single AST
-			AwkParser parser = new AwkParser(this.extensions);
+			AwkParser parser = new AwkParser(this.extensionFunctions);
 			AstNode ast = parser.parse(scripts);
 			lastAst = ast;
 			if (ast != null) {
@@ -647,8 +720,7 @@ public class Awk {
 	}
 
 	/**
-	 * Compile an expression to evaluate (not a full script)
-	 * <p>
+	 * Compile an expression to evaluate (not a full script).
 	 *
 	 * @param expression AWK expression to compile to AwkTuples
 	 * @return AwkTuples to be interpreted by AVM
@@ -662,11 +734,11 @@ public class Awk {
 				new StringReader(expression));
 
 		// Parse the expression
-		AwkParser parser = new AwkParser(this.extensions);
+		AwkParser parser = new AwkParser(this.extensionFunctions);
 		AstNode ast = parser.parseExpression(expressionSource);
 
 		// Create the tuples that we will return
-		AwkTuples tuples = new AwkTuples();
+		AwkTuples tuples = createTuples();
 
 		// Attempt to traverse the syntax tree and build
 		// the intermediate code
@@ -690,7 +762,6 @@ public class Awk {
 	/**
 	 * Evaluates the specified AWK expression (not a full script, just an expression)
 	 * and returns the value of this expression.
-	 * <p>
 	 *
 	 * @param expression Expression to evaluate (e.g. <code>2+3</code>)
 	 * @return the value of the specified expression
@@ -703,7 +774,6 @@ public class Awk {
 	/**
 	 * Evaluates the specified AWK expression (not a full script, just an expression)
 	 * and returns the value of this expression.
-	 * <p>
 	 *
 	 * @param expression Expression to evaluate (e.g. <code>2+3</code> or <code>$2 "-" $3</code>
 	 * @param input Optional text input (that will be available as $0, and tokenized as $1, $2, etc.)
@@ -717,7 +787,6 @@ public class Awk {
 	/**
 	 * Evaluates the specified AWK expression (not a full script, just an expression)
 	 * and returns the value of this expression.
-	 * <p>
 	 *
 	 * @param expression Expression to evaluate (e.g. <code>2+3</code> or <code>$2 "-" $3</code>
 	 * @param input Optional text input (that will be available as $0, and tokenized as $1, $2, etc.)
@@ -732,7 +801,6 @@ public class Awk {
 	/**
 	 * Evaluates the specified AWK tuples, i.e. the result of the execution of the
 	 * TERNARY_EXPRESSION AST (the value that has been pushed in the stack).
-	 * <p>
 	 *
 	 * @param tuples Tuples returned by {@link Awk#compileForEval(String)}
 	 * @param input Optional text input (that will be available as $0, and tokenized as $1, $2, etc.)
@@ -757,8 +825,16 @@ public class Awk {
 				.setOutputStream(
 						new PrintStream(new ByteArrayOutputStream(), false, StandardCharsets.UTF_8.name()));
 
-		AVM avm = new AVM(settings, this.extensions);
+		AVM avm = createAvm(settings);
 		return avm.eval(tuples, input);
+	}
+
+	protected AwkTuples createTuples() {
+		return new AwkTuples();
+	}
+
+	protected AVM createAvm(AwkSettings settings) {
+		return new AVM(settings, this.extensionInstances, this.extensionFunctions);
 	}
 
 	/**
@@ -789,77 +865,13 @@ public class Awk {
 	}
 
 	/**
-	 * Discovers and instantiates the default set of {@link JawkExtension}s used by
-	 * Jawk. Additional extensions can be specified via the
-	 * {@code jawk.extensions} system property, whose value is a {@code #}-separated
-	 * list of fully qualified class names.
+	 * Lists metadata for the {@link JawkExtension} implementations discovered on
+	 * the class path.
 	 *
-	 * @return map of extension keywords to their implementing
-	 *         {@link JawkExtension} instances
+	 * @return list of discovered extension descriptors
 	 */
-	public static Map<String, JawkExtension> getDefaultExtensions() {
-		String extensionsStr = System.getProperty("jawk.extensions", null);
-		if (extensionsStr == null) {
-			// return Collections.emptyMap();
-			extensionsStr = DEFAULT_EXTENSIONS;
-		} else {
-			extensionsStr = DEFAULT_EXTENSIONS + "#" + extensionsStr;
-		}
-
-		// use reflection to obtain extensions
-
-		Set<Class<?>> extensionClasses = new HashSet<Class<?>>();
-		Map<String, JawkExtension> retval = new HashMap<String, JawkExtension>();
-
-		StringTokenizer st = new StringTokenizer(extensionsStr, "#");
-		while (st.hasMoreTokens()) {
-			String cls = st.nextToken();
-			try {
-				Class<?> c = Class.forName(cls);
-				// check if it's a JawkExtension
-				if (!JawkExtension.class.isAssignableFrom(c)) {
-					throw new ClassNotFoundException(cls + " does not implement JawkExtension");
-				}
-				if (extensionClasses.contains(c)) {
-					throw new IllegalArgumentException(
-							"class " + cls + " is multiple times referred in extension class list.");
-				} else {
-					extensionClasses.add(c);
-				}
-
-				// it is...
-				// create a new instance and put it here
-				try {
-					Constructor<?> constructor = c.getDeclaredConstructor(); // Default constructor
-					JawkExtension ji = (JawkExtension) constructor.newInstance();
-					String[] keywords = ji.extensionKeywords();
-					for (String keyword : keywords) {
-						if (retval.get(keyword) != null) {
-							throw new IllegalArgumentException(
-									"keyword collision : "
-											+ keyword
-											+ " for both "
-											+ retval.get(keyword).getExtensionName()
-											+ " and "
-											+ ji.getExtensionName());
-						}
-						retval.put(keyword, ji);
-					}
-				} catch (
-						InstantiationException
-						| IllegalAccessException
-						| NoSuchMethodException
-						| SecurityException
-						| IllegalArgumentException
-						| InvocationTargetException e) {
-					throw new IllegalStateException("Cannot instantiate " + c.getName(), e);
-				}
-			} catch (ClassNotFoundException cnfe) {
-				throw new IllegalStateException("Cannot classload " + cls, cnfe);
-			}
-		}
-
-		return retval;
+	public static Map<String, JawkExtension> listAvailableExtensions() {
+		return ExtensionRegistry.listExtensions();
 	}
 
 }

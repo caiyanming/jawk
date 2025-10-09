@@ -34,12 +34,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import org.metricshub.jawk.NotImplementedError;
 import org.metricshub.jawk.backend.AVM;
-import org.metricshub.jawk.ext.JawkExtension;
+import org.metricshub.jawk.ext.ExtensionFunction;
 import org.metricshub.jawk.intermediate.Address;
 import org.metricshub.jawk.intermediate.AwkTuples;
-import java.util.function.Supplier;
 import org.metricshub.jawk.util.ScriptSource;
 import org.metricshub.jawk.frontend.ast.LexerException;
 import org.metricshub.jawk.frontend.ast.ParserException;
@@ -268,7 +268,7 @@ public class AwkParser {
 	 */
 	private final AwkSymbolTableImpl symbolTable = new AwkSymbolTableImpl();
 
-	private final Map<String, JawkExtension> extensions;
+	private final Map<String, ExtensionFunction> extensions;
 
 	/**
 	 * <p>
@@ -277,7 +277,7 @@ public class AwkParser {
 	 *
 	 * @param extensions a {@link java.util.Map} object
 	 */
-	public AwkParser(Map<String, JawkExtension> extensions) {
+	public AwkParser(Map<String, ExtensionFunction> extensions) {
 		this.extensions = extensions == null ? Collections.emptyMap() : new HashMap<>(extensions);
 	}
 
@@ -1464,7 +1464,10 @@ public class AwkParser {
 
 		if (idToken == Token.EXTENSION) {
 			String extensionKeyword = id;
-			// JawkExtension extension = extensions.get(extensionKeyword);
+			ExtensionFunction function = extensions.get(extensionKeyword);
+			if (function == null) {
+				throw parserException("Unknown extension keyword: " + extensionKeyword);
+			}
 			AST params;
 
 			/*
@@ -1510,7 +1513,7 @@ public class AwkParser {
 				params = null;
 			}
 
-			return new ExtensionAst(extensionKeyword, params);
+			return new ExtensionAst(function, params);
 		} else if (idToken == Token.FUNC_ID || idToken == Token.BUILTIN_FUNC_NAME) {
 			AST params;
 			// length can take on the special form of no parens
@@ -4564,27 +4567,29 @@ public class AwkParser {
 	// we don't know if it is a scalar
 	private final class ExtensionAst extends AST {
 
-		private String extensionKeyword;
+		private final ExtensionFunction function;
 
-		private ExtensionAst(String keyword, AST paramAst) {
+		private ExtensionAst(ExtensionFunction functionParam, AST paramAst) {
 			super(paramAst);
-			this.extensionKeyword = keyword;
+			this.function = functionParam;
 		}
 
 		@Override
 		public int populateTuples(AwkTuples tuples) {
 			pushSourceLineNumber(tuples);
+			int argCount;
+			if (getAst1() == null) {
+				argCount = 0;
+			} else {
+				argCount = countParams((FunctionCallParamListAst) getAst1());
+			}
+
+			int[] reqArrayIdxs = function.collectAssocArrayIndexes(argCount);
+
 			int paramCount;
 			if (getAst1() == null) {
 				paramCount = 0;
 			} else {
-				/// Query for the extension.
-				JawkExtension extension = extensions.get(extensionKeyword);
-				int argCount = countParams((FunctionCallParamListAst) getAst1());
-				/// Get all required assoc array parameters:
-				int[] reqArrayIdxs = extension.getAssocArrayParameterPositions(extensionKeyword, argCount);
-				assert reqArrayIdxs != null;
-
 				for (int idx : reqArrayIdxs) {
 					AST paramAst = getParamAst((FunctionCallParamListAst) getAst1(), idx);
 					assert getAst1() instanceof FunctionCallParamListAst;
@@ -4596,7 +4601,7 @@ public class AwkParser {
 						if (idAst.isScalar()) {
 							throw new SemanticException(
 									"Extension '"
-											+ extensionKeyword
+											+ function.getKeyword()
 											+ "' requires parameter position "
 											+ idx
 											+ " be an associative array, not a scalar.");
@@ -4622,7 +4627,7 @@ public class AwkParser {
 			} else {
 				isInitial = true;
 			}
-			tuples.extension(extensionKeyword, paramCount, isInitial);
+			tuples.extension(function, paramCount, isInitial);
 			popSourceLineNumber(tuples);
 			// an extension always returns a value, even if it is blank/null
 			return 1;
@@ -4649,7 +4654,7 @@ public class AwkParser {
 
 		@Override
 		public String toString() {
-			return super.toString() + " (" + extensionKeyword + ")";
+			return super.toString() + " (" + function.getKeyword() + ")";
 		}
 	}
 
@@ -4709,10 +4714,10 @@ public class AwkParser {
 			if (getAst1() != null) {
 				int ast1Result = getAst1().populateTuples(tuples);
 				assert ast1Result == 1;
-				// stack has getAst1() (i.e., "command")
+// stack has getAst1() (i.e., "command")
 				tuples.useAsCommandInput();
 			} else if (getAst3() != null) {
-				// getline ... < getAst3()
+// getline ... < getAst3()
 				int ast3Result = getAst3().populateTuples(tuples);
 				assert ast3Result == 1;
 				// stack has getAst3() (i.e., "filename")
