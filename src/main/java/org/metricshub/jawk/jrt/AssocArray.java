@@ -366,7 +366,9 @@ public class AssocArray implements Comparator<Object>, Map<Object, Object> {
 
 	@Override
 	public void putAll(Map<? extends Object, ? extends Object> m) {
-		map.putAll(m);
+		for (Map.Entry<? extends Object, ? extends Object> entry : m.entrySet()) {
+			map.put(entry.getKey(), entry.getValue());
+		}
 	}
 
 	@Override
