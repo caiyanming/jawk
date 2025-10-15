@@ -1,5 +1,7 @@
 package org.metricshub.jawk.jrt;
 
+import java.util.Collection;
+
 /*-
  * ╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲
  * Jawk
@@ -43,7 +45,7 @@ import org.metricshub.jawk.intermediate.UninitializedObject;
  *
  * @author Danny Daglas
  */
-public class AssocArray implements Comparator<Object> {
+public class AssocArray implements Comparator<Object>, Map<Object, Object> {
 
 	private Map<Object, Object> map;
 
@@ -56,7 +58,7 @@ public class AssocArray implements Comparator<Object> {
 	 */
 	public AssocArray(boolean sortedArrayKeys) {
 		if (sortedArrayKeys) {
-			map = new TreeMap<Object, Object>(this);
+			map = new TreeMap<Object, Object>((Comparator<Object>) this);
 		} else {
 			map = new HashMap<Object, Object>();
 		}
@@ -95,7 +97,7 @@ public class AssocArray implements Comparator<Object> {
 			map = new LinkedHashMap<Object, Object>();
 			break;
 		case MT_TREE:
-			map = new TreeMap<Object, Object>(this);
+			map = new TreeMap<Object, Object>((Comparator<Object>) this);
 			break;
 		default:
 			throw new Error("Invalid map type : " + mapType);
@@ -340,5 +342,42 @@ public class AssocArray implements Comparator<Object> {
 	 */
 	public String getMapVersion() {
 		return map.getClass().getPackage().getSpecificationVersion();
+	}
+
+	@Override
+	public int size() {
+		return map.size();
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return map.isEmpty();
+	}
+
+	@Override
+	public boolean containsKey(Object key) {
+		return map.containsKey(key);
+	}
+
+	@Override
+	public boolean containsValue(Object value) {
+		return map.containsValue(value);
+	}
+
+	@Override
+	public void putAll(Map<? extends Object, ? extends Object> m) {
+		for (Map.Entry<? extends Object, ? extends Object> entry : m.entrySet()) {
+			map.put(entry.getKey(), entry.getValue());
+		}
+	}
+
+	@Override
+	public Collection<Object> values() {
+		return map.values();
+	}
+
+	@Override
+	public Set<Entry<Object, Object>> entrySet() {
+		return map.entrySet();
 	}
 }

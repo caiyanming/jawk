@@ -680,8 +680,8 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 			Object o = args[i];
 			if (o instanceof AssocArray) {
 				AssocArray arr = (AssocArray) o;
-				for (Object key : arr.keySet()) {
-					aa.put("" + i + subsep + key, arr.get(key));
+				for (Map.Entry<Object, Object> entry : arr.entrySet()) {
+					aa.put("" + i + subsep + entry.getKey(), entry.getValue());
 				}
 			} else {
 				aa.put("" + i, o);
@@ -721,8 +721,8 @@ public class CoreExtension extends AbstractExtension implements JawkExtension {
 		AssocArray aaSource = (AssocArray) args[1];
 		aaTarget.clear();
 		int cnt = 0;
-		for (Object o : aaSource.keySet()) {
-			aaTarget.put(o, aaSource.get(o));
+		for (Map.Entry<Object, Object> entry : aaSource.entrySet()) {
+			aaTarget.put(entry.getKey(), entry.getValue());
 			++cnt;
 		}
 		return cnt;
