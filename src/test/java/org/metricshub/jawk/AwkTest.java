@@ -465,6 +465,49 @@ public class AwkTest {
 	}
 
 	@Test
+	public void testPrintParenthesizedExpressionConcatenation() throws Exception {
+		assertEquals(
+				"Parenthesized expressions must concatenate with following operands in print",
+				"5;99\n",
+				runAwk("{ print ($1 - $2) \";\" $3 }", "10 5 99"));
+	}
+
+	@Test
+	public void testPrintParenthesizedExpressionOperators() throws Exception {
+		assertEquals(
+				"Parenthesized expressions must participate in arithmetic operations in print",
+				"20\n",
+				runAwk("{ print ($1 - $2) * $3 }", "10 5 4\n"));
+		assertEquals(
+				"Parenthesized expressions must support equality comparisons in print",
+				"1\n",
+				runAwk("{ print ($1 - $2) == $3 }", "10 5 5\n"));
+		assertEquals(
+				"Parenthesized expressions must support ternary operators in print",
+				"yes\n",
+				runAwk("{ print ($1 - $2) ? \"yes\" : \"no\" }", "10 5\n"));
+		assertEquals(
+				"Parenthesized expressions must support regular expression matching in print",
+				"1\n",
+				runAwk("{ print ($1) ~ /foo/ }", "foo\n"));
+		assertEquals(
+				"Parenthesized expressions must support the in operator in print",
+				"1\n",
+				runAwk("BEGIN { arr[\"foo\"] = 1 } { print ($1) in arr }", "foo\n"));
+		assertEquals(
+				"Parenthesized expressions must support logical operators in print",
+				"1\n",
+				runAwk("{ print ($1) && ($2) }", "1 1\\n0 1\\n"));
+		assertEquals(
+				"Parenthesized expressions must still support redirection",
+				"",
+				runAwk("{ print ($1) > TEMPDIR\"/printParenRedirect\" }", "value\n", true));
+		assertTrue(
+				"Parenthesized expressions must redirect output to files",
+				Files.exists(Paths.get(AwkTestHelper.getTempDirectory(), "printParenRedirect")));
+	}
+
+	@Test
 	public void testSubArray() throws Exception {
 		assertEquals(
 				"sub on an array element must change the value of the element",
