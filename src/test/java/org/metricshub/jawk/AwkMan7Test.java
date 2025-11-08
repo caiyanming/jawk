@@ -1,6 +1,7 @@
 package org.metricshub.jawk;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -32,6 +33,11 @@ import org.metricshub.jawk.util.ScriptSource;
 
 @RunWith(Parameterized.class)
 public class AwkMan7Test {
+
+	private static final boolean IS_POSIX = !System
+			.getProperty("os.name", "")
+			.toLowerCase(Locale.ROOT)
+			.contains("win");
 
 	private static Locale defaultLocale;
 
@@ -432,7 +438,8 @@ public class AwkMan7Test {
 				.add(
 						test("46. Write to file and close")
 								.path("tOut")
-								.script("BEGIN{f=\"{{tOut}}\"; print \"X\" > f; rc=close(f); print rc; system(\"cat \" f)}")
+								.script(
+										"BEGIN{f=\"{{tOut}}\"; print \"X\" > f; rc=close(f); print rc; while ((getline line < f)>0) print line; close(f)}")
 								.expectLines("0", "X")
 								.build());
 
@@ -440,7 +447,8 @@ public class AwkMan7Test {
 				.add(
 						test("47. Append with redirect")
 								.path("tAppend")
-								.script("BEGIN{f=\"{{tAppend}}\"; print \"A\" >> f; print \"B\" >> f; close(f); system(\"cat \" f)}")
+								.script(
+										"BEGIN{f=\"{{tAppend}}\"; print \"A\" >> f; print \"B\" >> f; close(f); while ((getline line < f)>0) print line; close(f)}")
 								.expectLines("A", "B")
 								.build());
 
@@ -449,6 +457,7 @@ public class AwkMan7Test {
 						test("48. Pipe to command produces output")
 								.script("{print $0 | \"sed s/a/A/\"} END{close(\"sed s/a/A/\")}")
 								.stdin("a\nb\n")
+								.posixOnly()
 								.expectLines("A", "b")
 								.build());
 
@@ -456,6 +465,7 @@ public class AwkMan7Test {
 				.add(
 						test("49. Command pipe getline")
 								.script("BEGIN{cmd=\"printf abc\\n\"; n=(cmd | getline x); print n \":\" x; close(cmd)}")
+								.posixOnly()
 								.expectLines("1:abc")
 								.build());
 
@@ -471,6 +481,7 @@ public class AwkMan7Test {
 				.add(
 						test("51. system() exit status")
 								.script("BEGIN{print system(\"sh -c true\"); print (system(\"sh -c false\")!=0?\"NZ\":\"Z\")}")
+								.posixOnly()
 								.expectLines("0", "NZ")
 								.build());
 
@@ -836,6 +847,7 @@ public class AwkMan7Test {
 
 	@Test
 	public void runSpec() throws Exception {
+		testCase.assumeSupported();
 		TestResult result = testCase.execute();
 		assertEquals(result.expectedOutput, result.output);
 		if (result.expectedExitCode != null) {
@@ -859,6 +871,7 @@ public class AwkMan7Test {
 		private final List<String> pathPlaceholders = new ArrayList<>();
 		private Integer expectedExitCode;
 		private String expectedOutput = "";
+		private boolean requiresPosix;
 
 		TestCaseBuilder(String description) {
 			this.description = description;
@@ -866,6 +879,11 @@ public class AwkMan7Test {
 
 		TestCaseBuilder script(String script) {
 			this.script = script;
+			return this;
+		}
+
+		TestCaseBuilder posixOnly() {
+			this.requiresPosix = true;
 			return this;
 		}
 
@@ -923,7 +941,8 @@ public class AwkMan7Test {
 					preAssignments,
 					pathPlaceholders,
 					expectedExitCode,
-					expectedOutput);
+					expectedOutput,
+					requiresPosix);
 		}
 	}
 
@@ -937,6 +956,7 @@ public class AwkMan7Test {
 		private final List<String> pathPlaceholders;
 		private final Integer expectedExitCode;
 		private final String expectedOutput;
+		private final boolean requiresPosix;
 
 		TestCase(
 				String description,
@@ -947,7 +967,8 @@ public class AwkMan7Test {
 				Map<String, Object> preAssignments,
 				List<String> pathPlaceholders,
 				Integer expectedExitCode,
-				String expectedOutput) {
+				String expectedOutput,
+				boolean requiresPosix) {
 			this.description = description;
 			this.script = script;
 			this.stdin = stdin;
@@ -957,6 +978,13 @@ public class AwkMan7Test {
 			this.pathPlaceholders = pathPlaceholders;
 			this.expectedExitCode = expectedExitCode;
 			this.expectedOutput = expectedOutput;
+			this.requiresPosix = requiresPosix;
+		}
+
+		void assumeSupported() {
+			if (requiresPosix) {
+				assumeTrue("POSIX-like environment required", IS_POSIX);
+			}
 		}
 
 		TestResult execute() throws Exception {
