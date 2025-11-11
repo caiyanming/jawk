@@ -2,12 +2,20 @@ package org.metricshub.jawk;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
-import static org.metricshub.jawk.AwkTestHelper.runAwk;
-
 import org.junit.Test;
 import org.metricshub.jawk.jrt.AwkRuntimeException;
 
 public class DynamicFieldTest {
+
+	private static String runAwk(String script, String input) throws Exception {
+		AwkTestSupport.AwkTestBuilder builder = AwkTestSupport
+				.awkTest("DynamicFieldTest" + script.hashCode())
+				.script(script);
+		if (input != null) {
+			builder.stdin(input);
+		}
+		return builder.build().run().output();
+	}
 
 	@Test
 	public void testEmptyStringFieldIndex() throws Exception {

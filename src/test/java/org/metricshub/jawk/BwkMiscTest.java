@@ -5,6 +5,8 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import org.junit.AfterClass;
@@ -86,9 +88,14 @@ public class BwkMiscTest {
 		// Get the file with the expected result
 		File okFile = new File(bwkMiscDirectory, "results/" + shortName + ".ok");
 
-		String result = AwkTestHelper.runAwk(awkFile, inputFile);
-		String expectedResult = AwkTestHelper.readTextFile(okFile);
-		assertEquals(expectedResult, result);
+		AwkTestSupport.TestResult result = AwkTestSupport
+				.cliTest("BWK.misc " + awkName)
+				.argument("-f", awkFile.getAbsolutePath())
+				.operand(inputFile.getAbsolutePath())
+				.build()
+				.run();
+		String expectedResult = new String(Files.readAllBytes(okFile.toPath()), StandardCharsets.UTF_8);
+		assertEquals(expectedResult, result.output());
 	}
 
 	/**

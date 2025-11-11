@@ -176,12 +176,12 @@
 			<plugin>
 				<artifactId>maven-failsafe-plugin</artifactId>
 				<configuration>
-					<includes>
-						<include>**/BwkPTest.java</include>
-						<include>**/BwkTTest.java</include>
-						<include>**/BwkMiscTest.java</include>
-						<!--include>**/GawkTest.java</include-->
-					</includes>
+                                        <includes>
+                                                <include>**/BwkPTest.java</include>
+                                                <include>**/BwkTTest.java</include>
+                                                <include>**/BwkMiscTest.java</include>
+                                                <include>**/GawkTest.java</include>
+                                        </includes>
 					<testFailureIgnore>true</testFailureIgnore>
 					<workingDirectory>${project.build.directory}/failsafe-workingdir</workingDirectory>
 				</configuration>

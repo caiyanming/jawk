@@ -4,7 +4,6 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.metricshub.jawk.AwkTestHelper.runAwk;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -20,21 +19,19 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collections;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.metricshub.jawk.frontend.ast.ParserException;
 import org.metricshub.jawk.intermediate.AwkTuples;
 import org.metricshub.jawk.util.AwkSettings;
 import org.metricshub.jawk.Cli;
 import org.metricshub.jawk.AwkSandboxException;
+import org.metricshub.jawk.ExitException;
 
 public class AwkTest {
 
 	private static final boolean IS_WINDOWS = (System.getProperty("os.name").contains("Windows"));
-
-	private static final String EOL = System.getProperty("line.separator");
 
 	@SafeVarargs
 	static <T> T[] array(T... vals) {
@@ -45,8 +42,10 @@ public class AwkTest {
 		return Collections.nCopies(num, val).toArray(new String[num]);
 	}
 
-	static void awk(String... args) throws ClassNotFoundException, IOException {
-		Cli.main(args);
+	private static AwkTestSupport.TestResult testCliResult;
+
+	static void awk(String... args) throws Exception {
+		testCliResult = runCli(args);
 	}
 
 	static File classpathFile(final Class<?> c, String path) {
@@ -66,13 +65,71 @@ public class AwkTest {
 		return file.getPath();
 	}
 
-	@Rule
-	public final SystemOutRule systemOutRule = new SystemOutRule().enableLog().muteForSuccessfulTests();
-
 	private static final Awk AWK = new Awk();
 
 	String[] linesOutput() {
-		return systemOutRule.getLog().split(EOL);
+		return testCliResult == null ? new String[0] : testCliResult.lines();
+	}
+
+	private static String runAwk(String script, String input) throws Exception {
+		return runAwk(script, input, false);
+	}
+
+	private static String runAwk(String script, String input, boolean setTempDir) throws Exception {
+		AwkTestSupport.AwkTestBuilder builder = AwkTestSupport
+				.awkTest("AwkTest" + script.hashCode())
+				.script(script);
+		if (input != null) {
+			builder.stdin(input);
+		}
+		if (setTempDir) {
+			builder.withTempDir();
+		}
+		AwkTestSupport.TestResult result = builder.build().run();
+		if (result.exitCode() != 0) {
+			throw new ExitException(result.exitCode());
+		}
+		return result.output();
+	}
+
+	private static AwkTestSupport.TestResult runCli(String... args) throws Exception {
+		AwkTestSupport.CliTestBuilder builder = AwkTestSupport
+				.cliTest("CLI " + Arrays.toString(args));
+		int idx = 0;
+		while (idx < args.length) {
+			String arg = args[idx];
+			if (arg.equals("-") || !arg.startsWith("-")) {
+				break;
+			}
+			builder.argument(arg);
+			if (requiresValue(arg)) {
+				++idx;
+				if (idx >= args.length) {
+					throw new IllegalArgumentException("Missing value for option " + arg);
+				}
+				builder.argument(args[idx]);
+			}
+			++idx;
+		}
+		if (idx < args.length) {
+			builder.script(args[idx++]);
+		}
+		for (; idx < args.length; ++idx) {
+			builder.operand(args[idx]);
+		}
+		return builder.build().run();
+	}
+
+	private static boolean requiresValue(String option) {
+		return option.equals("-f")
+				|| option.equals("-F")
+				|| option.equals("-v")
+				|| option.equals("-L")
+				|| option.equals("-l")
+				|| option.equals("--load")
+				|| option.equals("-K")
+				|| option.equals("-o")
+				|| option.equals("--locale");
 	}
 
 	/**
@@ -453,7 +510,7 @@ public class AwkTest {
 				runAwk("BEGIN { print 1 > TEMPDIR\"/printRedirect\" }", null, true));
 		assertTrue(
 				"> in a print statement must write to the specified file",
-				Files.exists(Paths.get(AwkTestHelper.getTempDirectory(), "printRedirect")));
+				Files.exists(Paths.get(AwkTestSupport.sharedTempDirectory().toString(), "printRedirect")));
 		assertEquals(
 				"> surrounded with parenthesis in a print statement doesn't redirect",
 				"1\n",
@@ -504,7 +561,7 @@ public class AwkTest {
 				runAwk("{ print ($1) > TEMPDIR\"/printParenRedirect\" }", "value\n", true));
 		assertTrue(
 				"Parenthesized expressions must redirect output to files",
-				Files.exists(Paths.get(AwkTestHelper.getTempDirectory(), "printParenRedirect")));
+				Files.exists(Paths.get(AwkTestSupport.sharedTempDirectory().toString(), "printParenRedirect")));
 	}
 
 	@Test

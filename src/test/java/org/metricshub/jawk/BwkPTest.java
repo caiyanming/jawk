@@ -5,6 +5,8 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import org.junit.AfterClass;
@@ -86,14 +88,20 @@ public class BwkPTest {
 		File inputFile = new File(bwkPDirectory, "inputs/test.countries");
 
 		// Get the expected result
-		String expectedResult = AwkTestHelper.readTextFile(okFile);
+		String expectedResult = new String(Files.readAllBytes(okFile.toPath()), StandardCharsets.UTF_8);
 
-		// Run AWK
-		String result = AwkTestHelper.runAwk(awkFile, inputFile);
+		AwkTestSupport.TestResult result = AwkTestSupport
+				.cliTest("BWK.p " + awkName)
+				.argument("-f", awkFile.getAbsolutePath())
+				.operand(inputFile.getAbsolutePath())
+				.build()
+				.run();
 
 		// Some post-processing: remove references to the inputs directory.
-		result = result.replace(inputFile.getParent() + System.getProperty("file.separator"), "");
-		assertEquals(expectedResult, result);
+		String output = result
+				.output()
+				.replace(inputFile.getParent() + System.getProperty("file.separator"), "");
+		assertEquals(expectedResult, output);
 	}
 
 	/**

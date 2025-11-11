@@ -1,25 +1,14 @@
 package org.metricshub.jawk;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeTrue;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,9 +16,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
-import org.metricshub.jawk.ExitException;
-import org.metricshub.jawk.util.AwkSettings;
-import org.metricshub.jawk.util.ScriptSource;
+import org.metricshub.jawk.AwkTestSupport.ConfiguredTest;
+import org.metricshub.jawk.AwkTestSupport.TestResult;
 
 @RunWith(Parameterized.class)
 public class AwkMan7Test {
@@ -58,11 +46,11 @@ public class AwkMan7Test {
 	public String description;
 
 	@Parameter(1)
-	public TestCase testCase;
+	public ConfiguredTest testCase;
 
 	@Parameters(name = "{index}: {0}")
 	public static Collection<Object[]> parameters() throws Exception {
-		List<TestCase> cases = new ArrayList<>();
+		List<ConfiguredTest> cases = new ArrayList<>();
 		// 1) Options, operands, assignment timing
 		cases
 				.add(
@@ -842,240 +830,17 @@ public class AwkMan7Test {
 								.expectLines("1:T")
 								.build());
 
-		return cases.stream().map(tc -> new Object[] { tc.description, tc }).collect(Collectors.toList());
+		return cases.stream().map(tc -> new Object[] { tc.description(), tc }).collect(Collectors.toList());
 	}
 
 	@Test
 	public void runSpec() throws Exception {
 		testCase.assumeSupported();
-		TestResult result = testCase.execute();
-		assertEquals(result.expectedOutput, result.output);
-		if (result.expectedExitCode != null) {
-			assertEquals(result.expectedExitCode.intValue(), result.exitCode);
-		} else {
-			assertEquals(0, result.exitCode);
-		}
+		TestResult result = testCase.run();
+		result.assertExpected();
 	}
 
-	private static TestCaseBuilder test(String description) {
-		return new TestCaseBuilder(description);
-	}
-
-	private static final class TestCaseBuilder {
-		private final String description;
-		private String script;
-		private String stdin;
-		private final Map<String, String> fileContents = new LinkedHashMap<>();
-		private final List<String> operandSpecs = new ArrayList<>();
-		private final Map<String, Object> preAssignments = new LinkedHashMap<>();
-		private final List<String> pathPlaceholders = new ArrayList<>();
-		private Integer expectedExitCode;
-		private String expectedOutput = "";
-		private boolean requiresPosix;
-
-		TestCaseBuilder(String description) {
-			this.description = description;
-		}
-
-		TestCaseBuilder script(String script) {
-			this.script = script;
-			return this;
-		}
-
-		TestCaseBuilder posixOnly() {
-			this.requiresPosix = true;
-			return this;
-		}
-
-		TestCaseBuilder stdin(String stdin) {
-			this.stdin = stdin;
-			return this;
-		}
-
-		TestCaseBuilder file(String name, String contents) {
-			fileContents.put(name, contents);
-			return this;
-		}
-
-		TestCaseBuilder operand(String... operands) {
-			operandSpecs.addAll(Arrays.asList(operands));
-			return this;
-		}
-
-		TestCaseBuilder preassign(String name, Object value) {
-			preAssignments.put(name, value);
-			return this;
-		}
-
-		TestCaseBuilder path(String placeholder) {
-			pathPlaceholders.add(placeholder);
-			return this;
-		}
-
-		TestCaseBuilder expect(String expected) {
-			this.expectedOutput = expected;
-			return this;
-		}
-
-		TestCaseBuilder expectLines(String... lines) {
-			if (lines.length == 0) {
-				this.expectedOutput = "";
-			} else {
-				this.expectedOutput = Arrays.stream(lines).collect(Collectors.joining("\n", "", "\n"));
-			}
-			return this;
-		}
-
-		TestCaseBuilder expectExit(int code) {
-			this.expectedExitCode = code;
-			return this;
-		}
-
-		TestCase build() {
-			return new TestCase(
-					description,
-					script,
-					stdin,
-					fileContents,
-					operandSpecs,
-					preAssignments,
-					pathPlaceholders,
-					expectedExitCode,
-					expectedOutput,
-					requiresPosix);
-		}
-	}
-
-	private static final class TestCase {
-		private final String description;
-		private final String script;
-		private final String stdin;
-		private final Map<String, String> fileContents;
-		private final List<String> operandSpecs;
-		private final Map<String, Object> preAssignments;
-		private final List<String> pathPlaceholders;
-		private final Integer expectedExitCode;
-		private final String expectedOutput;
-		private final boolean requiresPosix;
-
-		TestCase(
-				String description,
-				String script,
-				String stdin,
-				Map<String, String> fileContents,
-				List<String> operandSpecs,
-				Map<String, Object> preAssignments,
-				List<String> pathPlaceholders,
-				Integer expectedExitCode,
-				String expectedOutput,
-				boolean requiresPosix) {
-			this.description = description;
-			this.script = script;
-			this.stdin = stdin;
-			this.fileContents = fileContents;
-			this.operandSpecs = operandSpecs;
-			this.preAssignments = preAssignments;
-			this.pathPlaceholders = pathPlaceholders;
-			this.expectedExitCode = expectedExitCode;
-			this.expectedOutput = expectedOutput;
-			this.requiresPosix = requiresPosix;
-		}
-
-		void assumeSupported() {
-			if (requiresPosix) {
-				assumeTrue("POSIX-like environment required", IS_POSIX);
-			}
-		}
-
-		TestResult execute() throws Exception {
-			Path tempDir = Files.createTempDirectory("awkman7");
-			Map<String, Path> placeholders = new LinkedHashMap<>();
-			for (Map.Entry<String, String> entry : fileContents.entrySet()) {
-				Path path = tempDir.resolve(entry.getKey());
-				Files.write(path, entry.getValue().getBytes(StandardCharsets.UTF_8));
-				placeholders.put(entry.getKey(), path);
-			}
-			for (String placeholder : pathPlaceholders) {
-				Path path = tempDir.resolve(placeholder);
-				placeholders.put(placeholder, path);
-			}
-
-			try {
-				AwkSettings settings = new AwkSettings();
-				settings.setDefaultRS("\n");
-				settings.setDefaultORS("\n");
-				for (Map.Entry<String, Object> entry : preAssignments.entrySet()) {
-					settings.putVariable(entry.getKey(), entry.getValue());
-				}
-				if (stdin != null) {
-					settings.setInput(new ByteArrayInputStream(stdin.getBytes(StandardCharsets.UTF_8)));
-				}
-				ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-				settings.setOutputStream(new PrintStream(outBytes, true, StandardCharsets.UTF_8.name()));
-				for (String operand : operandSpecs) {
-					settings.addNameValueOrFileName(resolve(operand, placeholders));
-				}
-				Awk awk = new Awk();
-				int exitCode = 0;
-				String resolvedExpected = resolve(expectedOutput, placeholders);
-				Integer exitExpectation = expectedExitCode;
-				try {
-					awk
-							.invoke(
-									new ScriptSource(
-											"awkMan7",
-											new StringReader(resolve(script, placeholders))),
-									settings);
-				} catch (ExitException e) {
-					exitCode = e.getCode();
-				}
-				return new TestResult(outBytes.toString("UTF-8"), exitCode, resolvedExpected, exitExpectation);
-			} finally {
-				deleteRecursively(tempDir);
-			}
-		}
-
-		private static String resolve(String value, Map<String, Path> placeholders) {
-			if (value == null) {
-				return null;
-			}
-			String result = value;
-			for (Map.Entry<String, Path> entry : placeholders.entrySet()) {
-				result = result.replace("{{" + entry.getKey() + "}}", entry.getValue().toString());
-			}
-			return result;
-		}
-
-		private static void deleteRecursively(Path root) throws IOException {
-			if (root == null) {
-				return;
-			}
-			if (!Files.exists(root)) {
-				return;
-			}
-			try (Stream<Path> walk = Files.walk(root)) {
-				walk.sorted((a, b) -> b.compareTo(a)).forEach(path -> {
-					try {
-						Files.deleteIfExists(path);
-					} catch (IOException ignored) {
-						// ignore cleanup failures
-					}
-				});
-			}
-		}
-	}
-
-	private static final class TestResult {
-		final String output;
-		final int exitCode;
-		final String expectedOutput;
-		final Integer expectedExitCode;
-
-		TestResult(String output, int exitCode, String expectedOutput, Integer expectedExitCode) {
-			this.output = output;
-			this.exitCode = exitCode;
-			this.expectedOutput = expectedOutput;
-			this.expectedExitCode = expectedExitCode;
-		}
+	private static AwkTestSupport.AwkTestBuilder test(String description) {
+		return AwkTestSupport.awkTest(description);
 	}
 }

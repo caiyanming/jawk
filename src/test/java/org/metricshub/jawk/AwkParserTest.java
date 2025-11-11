@@ -1,14 +1,43 @@
 package org.metricshub.jawk;
 
 import static org.junit.Assert.*;
-import static org.metricshub.jawk.AwkTestHelper.runAwk;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import org.junit.Test;
 import org.metricshub.jawk.frontend.ast.LexerException;
 
 public class AwkParserTest {
 
 	private static final Awk AWK = new Awk();
+
+	private static String runAwk(String script, String input) throws Exception {
+		AwkTestSupport.AwkTestBuilder builder = AwkTestSupport
+				.awkTest("AwkParserTest" + script.hashCode())
+				.script(script);
+		if (input != null) {
+			builder.stdin(input);
+		}
+		return builder.build().run().output();
+	}
+
+	private static String readResource(String resource) throws IOException {
+		try (
+				InputStream in = AwkParserTest.class.getResourceAsStream(resource);
+				ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+			if (in == null) {
+				throw new IOException("Resource not found: " + resource);
+			}
+			byte[] buffer = new byte[4096];
+			int read;
+			while ((read = in.read(buffer)) != -1) {
+				out.write(buffer, 0, read);
+			}
+			return out.toString(StandardCharsets.UTF_8.name());
+		}
+	}
 
 	@Test
 	public void testStringParsing() throws Exception {
@@ -104,7 +133,7 @@ public class AwkParserTest {
 
 	@Test
 	public void testGron() throws Exception {
-		String gron = AwkTestHelper.readResource("/xonixx/gron.awk");
+		String gron = readResource("/xonixx/gron.awk");
 		assertEquals("gron.awk must not trigger any parser exception", "json=[]\n", runAwk(gron, "[]"));
 		assertEquals(
 				"gron.awk must work",
