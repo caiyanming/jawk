@@ -13,16 +13,6 @@ public class JRTTest {
 
 	private static final boolean IS_WINDOWS = System.getProperty("os.name").contains("Windows");
 
-	private static String runAwk(String script, String input) throws Exception {
-		AwkTestSupport.AwkTestBuilder builder = AwkTestSupport
-				.awkTest("JRTTest" + script.hashCode())
-				.script(script);
-		if (input != null) {
-			builder.stdin(input);
-		}
-		return builder.build().run().output();
-	}
-
 	@Test
 	public void testToDouble() {
 		assertEquals(65.0, JRT.toDouble('A'), 0);
@@ -121,35 +111,50 @@ public class JRTTest {
 	@Test
 	public void testSpawnProcessCat() throws Exception {
 		Assume.assumeFalse(IS_WINDOWS);
-		String result = runAwk("BEGIN { print \"Hello\" | \"cat\"; close(\"cat\") }", null);
-		assertEquals("Hello\n", result);
+		AwkTestSupport
+				.awkTest("cat process")
+				.script("BEGIN { print \"Hello\" | \"cat\"; close(\"cat\") }")
+				.expectLines("Hello")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testSpawnProcessMore() throws Exception {
 		Assume.assumeTrue(IS_WINDOWS);
-		String result = runAwk("BEGIN { print \"Hello\" | \"more\"; close(\"more\") }", null);
-		assertEquals("Hello\r\n\r\n", result);
+		AwkTestSupport
+				.awkTest("more process")
+				.script("BEGIN { print \"Hello\" | \"more\"; close(\"more\") }")
+				.expectLines("Hello", "")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testSystemPipe() throws Exception {
 		Assume.assumeFalse(IS_WINDOWS);
-		String result = runAwk("BEGIN { print(system(\"echo test | grep test\")) }", null);
-		assertEquals("test\n0\n", result);
+		AwkTestSupport
+				.awkTest("system pipe")
+				.script("BEGIN { print(system(\"echo test | grep test\")) }")
+				.expectLines("test", "0")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testSystemPipeWindows() throws Exception {
 		Assume.assumeTrue(IS_WINDOWS);
-		String result = runAwk("BEGIN { print(system(\"echo test|findstr test\")) }", null);
-		assertEquals("test\r\n0\n", result);
+		AwkTestSupport
+				.awkTest("system pipe windows")
+				.script("BEGIN { print(system(\"echo test|findstr test\")) }")
+				.expectLines("test", "0")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testPrintfSpecialCharacters() throws Exception {
-		String result = runAwk("BEGIN { printf \"%c\\n\", 17379 }", null);
-		assertEquals("\u43e3\n", result);
+		AwkTestSupport
+				.awkTest("printf special characters")
+				.script("BEGIN { printf \"%c\\n\", 17379 }")
+				.expectLines("\u43e3")
+				.runAndAssert();
 	}
 
 	@Test
@@ -172,7 +177,11 @@ public class JRTTest {
 
 	@Test
 	public void testRegexFsKeepsLeadingAndTrailingSeparators() throws Exception {
-		String result = runAwk("BEGIN { FS = \"[ \\t\\n]+\" } { print $2 }", "  a  b  c  d ");
-		assertEquals("a\n", result);
+		AwkTestSupport
+				.awkTest("regex fs retains separators")
+				.script("BEGIN { FS = \"[ \\t\\n]+\" } { print $2 }")
+				.stdin("  a  b  c  d ")
+				.expectLines("a")
+				.runAndAssert();
 	}
 }
