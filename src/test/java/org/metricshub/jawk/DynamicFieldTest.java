@@ -1,68 +1,87 @@
 package org.metricshub.jawk;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
 import org.junit.Test;
 import org.metricshub.jawk.jrt.AwkRuntimeException;
 
 public class DynamicFieldTest {
 
-	private static String runAwk(String script, String input) throws Exception {
-		AwkTestSupport.AwkTestBuilder builder = AwkTestSupport
-				.awkTest("DynamicFieldTest" + script.hashCode())
-				.script(script);
-		if (input != null) {
-			builder.stdin(input);
-		}
-		return builder.build().run().output();
-	}
-
 	@Test
 	public void testEmptyStringFieldIndex() throws Exception {
-		String result = runAwk("BEGIN{idx=\"\"}{print $(idx)}", "a b c");
-		assertEquals("a b c\n", result);
+		AwkTestSupport
+				.awkTest("DynamicFieldTest empty string field index")
+				.script("BEGIN{idx=\"\"}{print $(idx)}")
+				.stdin("a b c")
+				.expectLines("a b c")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testNonNumericFieldIndex() throws Exception {
-		String result = runAwk("BEGIN{idx=\"foo\"}{print $(idx)}", "a b");
-		assertEquals("a b\n", result);
+		AwkTestSupport
+				.awkTest("DynamicFieldTest non numeric field index")
+				.script("BEGIN{idx=\"foo\"}{print $(idx)}")
+				.stdin("a b")
+				.expectLines("a b")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testUninitializedVariableFieldIndex() throws Exception {
-		String result = runAwk("{print $(idx)}", "a b");
-		assertEquals("a b\n", result);
+		AwkTestSupport
+				.awkTest("DynamicFieldTest uninitialized variable field index")
+				.script("{print $(idx)}")
+				.stdin("a b")
+				.expectLines("a b")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testNumericStringFieldIndex() throws Exception {
-		String result = runAwk("BEGIN{idx=\"2\"}{print $(idx)}", "a b c");
-		assertEquals("b\n", result);
+		AwkTestSupport
+				.awkTest("DynamicFieldTest numeric string field index")
+				.script("BEGIN{idx=\"2\"}{print $(idx)}")
+				.stdin("a b c")
+				.expectLines("b")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testFloatStringFieldIndex() throws Exception {
-		String result = runAwk("BEGIN{idx=\"2.7\"}{print $(idx)}", "a b c");
-		assertEquals("b\n", result);
+		AwkTestSupport
+				.awkTest("DynamicFieldTest float string field index")
+				.script("BEGIN{idx=\"2.7\"}{print $(idx)}")
+				.stdin("a b c")
+				.expectLines("b")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testFloatVariableFieldIndex() throws Exception {
-		String result = runAwk("BEGIN{idx=2.3}{print $(idx)}", "a b c");
-		assertEquals("b\n", result);
+		AwkTestSupport
+				.awkTest("DynamicFieldTest float variable field index")
+				.script("BEGIN{idx=2.3}{print $(idx)}")
+				.stdin("a b c")
+				.expectLines("b")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testExponentStringFieldIndex() throws Exception {
-		String result = runAwk("BEGIN{idx=\"3e0\"}{print $(idx)}", "1 2 3 4");
-		assertEquals("3\n", result);
+		AwkTestSupport
+				.awkTest("DynamicFieldTest exponent string field index")
+				.script("BEGIN{idx=\"3e0\"}{print $(idx)}")
+				.stdin("1 2 3 4")
+				.expectLines("3")
+				.runAndAssert();
 	}
 
 	@Test
-	public void testNegativeFieldIndex() {
-		assertThrows(
-				AwkRuntimeException.class,
-				() -> runAwk("BEGIN{idx=-1}{print $(idx)}", "a b"));
+	public void testNegativeFieldIndex() throws Exception {
+		AwkTestSupport
+				.awkTest("DynamicFieldTest negative field index")
+				.script("BEGIN{idx=-1}{print $(idx)}")
+				.stdin("a b")
+				.expectThrow(AwkRuntimeException.class)
+				.runAndAssert();
 	}
 }
