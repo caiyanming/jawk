@@ -42,38 +42,29 @@ public class AwkParserTest {
 		assertEquals("'\\x1G' must become {0x01, 0x47}", "\u0001G", AWK.eval("\"\\x1G\" "));
 		assertEquals("'\\x21A' must become !A", "!A", AWK.eval("\"\\x21A\" "));
 		assertEquals("'\\x!' must become x!", "x!", AWK.eval("\"\\x!\" "));
-		assertThrows(
-				"Unfinished string by EOF must throw",
-				LexerException.class,
-				() -> AwkTestSupport
-						.awkTest("Unfinished string by EOF must throw")
-						.script("BEGIN { printf \"unfinished")
-						.build()
-						.run());
+		AwkTestSupport
+				.awkTest("Unfinished string by EOF must throw")
+				.script("BEGIN { printf \"unfinished")
+				.expectThrow(LexerException.class)
+				.runAndAssert();
 		assertThrows(
 				"Unfinished string by EOL must throw",
 				LexerException.class,
 				() -> AWK.eval("\"unfinished\n\""));
-		assertThrows(
-				"Interrupted octal number in string by EOF must throw",
-				LexerException.class,
-				() -> AwkTestSupport
-						.awkTest("Interrupted octal number in string by EOF must throw")
-						.script("BEGIN { printf \"unfinished\\0")
-						.build()
-						.run());
+		AwkTestSupport
+				.awkTest("Interrupted octal number in string by EOF must throw")
+				.script("BEGIN { printf \"unfinished\\0")
+				.expectThrow(LexerException.class)
+				.runAndAssert();
 		assertThrows(
 				"Interrupted octal number in string by EOL must throw",
 				LexerException.class,
 				() -> AWK.eval("\"unfinished\\0\n\""));
-		assertThrows(
-				"Interrupted hex number in string by EOF must throw",
-				LexerException.class,
-				() -> AwkTestSupport
-						.awkTest("Interrupted hex number in string by EOF must throw")
-						.script("BEGIN { printf \"unfinished\\xF")
-						.build()
-						.run());
+		AwkTestSupport
+				.awkTest("Interrupted hex number in string by EOF must throw")
+				.script("BEGIN { printf \"unfinished\\xF")
+				.expectThrow(LexerException.class)
+				.runAndAssert();
 		assertThrows(
 				"Interrupted hex number in string by EOL must throw",
 				LexerException.class,
@@ -86,13 +77,11 @@ public class AwkParserTest {
 				.awkTest("|| must allow eol")
 				.script("BEGIN { if (0 || \n    1) { printf \"success\" } }")
 				.expect("success")
-				.build()
 				.runAndAssert();
 		AwkTestSupport
 				.awkTest("&& must allow eol")
 				.script("BEGIN { if (1 && \n    1) { printf \"success\" } }")
 				.expect("success")
-				.build()
 				.runAndAssert();
 		assertEquals("? must allow eol", "success", AWK.eval("1 ?\n\"success\" : \"failed\" "));
 		assertEquals(": must allow eol", "success", AWK.eval("1 ? \"success\" :\n\"failed\" "));
@@ -100,19 +89,16 @@ public class AwkParserTest {
 				.awkTest(", must allow eol")
 				.script("BEGIN { printf(\"%s\", \n\"success\") }")
 				.expect("success")
-				.build()
 				.runAndAssert();
 		AwkTestSupport
 				.awkTest("do must allow eol")
 				.script("BEGIN { do\n printf \"success\"; while (0) }")
 				.expect("success")
-				.build()
 				.runAndAssert();
 		AwkTestSupport
 				.awkTest("else must allow eol")
 				.script("BEGIN { if (0) { printf \"failure\" } else \n printf \"success\" }")
 				.expect("success")
-				.build()
 				.runAndAssert();
 	}
 
@@ -127,7 +113,6 @@ public class AwkParserTest {
 				.awkTest("Ternary expression must allow string concatenations")
 				.script("BEGIN { printf( a \"1\" b ? \"suc\" \"cess\" : \"failure\" ) }")
 				.expect("success")
-				.build()
 				.runAndAssert();
 	}
 
@@ -145,7 +130,6 @@ public class AwkParserTest {
 				.awkTest("Ternary after print parentheses must parse")
 				.script("BEGIN { print (1>2) ? 10 : 20 }")
 				.expectLines("20")
-				.build()
 				.runAndAssert();
 	}
 
@@ -156,14 +140,12 @@ public class AwkParserTest {
 				.script(scriptResource("/xonixx/gron.awk"))
 				.stdin("[]")
 				.expectLines("json=[]")
-				.build()
 				.runAndAssert();
 		AwkTestSupport
 				.awkTest("gron.awk must work")
 				.script(scriptResource("/xonixx/gron.awk"))
 				.stdin("[{\"a\": 1},\n{\"b\": \"2\"}]")
 				.expectLines("json=[]", "json[0]={}", "json[0].a=1", "json[1]={}", "json[1].b=\"2\"")
-				.build()
 				.runAndAssert();
 	}
 
@@ -179,13 +161,11 @@ public class AwkParserTest {
 				.awkTest("^= must be supported")
 				.script("BEGIN { n = 2; n ^= 2; print n }")
 				.expectLines("4")
-				.build()
 				.runAndAssert();
 		AwkTestSupport
 				.awkTest("**= must be supported")
 				.script("BEGIN { n = 2; n **= 2; print n }")
 				.expectLines("4")
-				.build()
 				.runAndAssert();
 	}
 
@@ -196,34 +176,29 @@ public class AwkParserTest {
 				.script("{ a = 1; printf $a++ ; printf a ; printf $(a++) ; printf a }")
 				.stdin("1 2 3")
 				.expect("1122")
-				.build()
 				.runAndAssert();
 		AwkTestSupport
 				.awkTest("$a precedes ++a")
 				.script("{ a = 1; printf $++a ; printf a ; printf $(++a) ; printf a }")
 				.stdin("1 2 3")
 				.expect("2233")
-				.build()
 				.runAndAssert();
 		AwkTestSupport
 				.awkTest("$a precedes a--")
 				.script("{ a = 3; printf $a-- ; printf a ; printf $(a--) ; printf a }")
 				.stdin("1 2 3")
 				.expect("3322")
-				.build()
 				.runAndAssert();
 		AwkTestSupport
 				.awkTest("$a precedes --a")
 				.script("{ a = 3; printf $--a ; printf a ; printf $(--a) ; printf a }")
 				.stdin("1 2 3")
 				.expect("2211")
-				.build()
 				.runAndAssert();
 		AwkTestSupport
 				.awkTest("++ precedes ^")
 				.script("BEGIN { a = 1; printf(2^a++); printf a }")
 				.expect("22")
-				.build()
 				.runAndAssert();
 		assertEquals("^ precedes unary -", -1L, AWK.eval("-1^2"));
 		assertEquals("^ precedes unary !", 1, AWK.eval("!0^2"));
@@ -239,37 +214,30 @@ public class AwkParserTest {
 				.script("/\\\\/ { printf \"success\" }")
 				.stdin("a\\b")
 				.expect("success")
-				.build()
 				.runAndAssert();
 		AwkTestSupport
 				.awkTest("/\\// must be supported")
 				.script("/\\// { printf \"success\" }")
 				.stdin("a/b")
 				.expect("success")
-				.build()
 				.runAndAssert();
 		AwkTestSupport
 				.awkTest("/=1/ must be supported")
 				.script("/=1/ { printf \"success\" }")
 				.stdin("a=1\n1\n=")
 				.expect("success")
-				.build()
 				.runAndAssert();
 		AwkTestSupport
 				.awkTest("/\\057/ must be supported")
 				.script("/\\057/ { printf \"success\" }")
 				.stdin("a/b")
 				.expect("success")
-				.build()
 				.runAndAssert();
-		assertThrows(
-				"Unfinished regexp by EOF must throw",
-				LexerException.class,
-				() -> AwkTestSupport
-						.awkTest("Unfinished regexp by EOF must throw")
-						.script("/unfinished { print $0 }")
-						.build()
-						.run());
+		AwkTestSupport
+				.awkTest("Unfinished regexp by EOF must throw")
+				.script("/unfinished { print $0 }")
+				.expectThrow(LexerException.class)
+				.runAndAssert();
 		assertThrows(
 				"Unfinished regexp by EOL must throw",
 				LexerException.class,

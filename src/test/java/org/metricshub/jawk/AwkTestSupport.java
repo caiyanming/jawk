@@ -82,13 +82,24 @@ public final class AwkTestSupport {
 		private final int exitCode;
 		private final String expectedOutput;
 		private final Integer expectedExitCode;
+		private final Class<? extends Throwable> expectedException;
+		private final Throwable thrownException;
 
-		TestResult(String description, String output, int exitCode, String expectedOutput, Integer expectedExitCode) {
+		TestResult(
+				String description,
+				String output,
+				int exitCode,
+				String expectedOutput,
+				Integer expectedExitCode,
+				Class<? extends Throwable> expectedException,
+				Throwable thrownException) {
 			this.description = description;
 			this.output = output;
 			this.exitCode = exitCode;
 			this.expectedOutput = expectedOutput;
 			this.expectedExitCode = expectedExitCode;
+			this.expectedException = expectedException;
+			this.thrownException = thrownException;
 		}
 
 		public String description() {
@@ -118,6 +129,26 @@ public final class AwkTestSupport {
 		}
 
 		public void assertExpected() {
+			if (expectedException != null) {
+				if (thrownException == null) {
+					throw new AssertionError(
+							"Expected exception "
+									+ expectedException.getName()
+									+ " for "
+									+ description
+									+ " but execution completed successfully");
+				}
+				if (!expectedException.isInstance(thrownException)) {
+					throw new AssertionError(
+							"Expected exception "
+									+ expectedException.getName()
+									+ " for "
+									+ description
+									+ " but got "
+									+ thrownException.getClass().getName());
+				}
+				return;
+			}
 			if (expectedOutput != null) {
 				assertEquals("Unexpected output for " + description, expectedOutput, output);
 			}
@@ -134,6 +165,14 @@ public final class AwkTestSupport {
 
 		public Integer expectedExitCode() {
 			return expectedExitCode;
+		}
+
+		public Throwable thrownException() {
+			return thrownException;
+		}
+
+		public Class<? extends Throwable> expectedException() {
+			return expectedException;
 		}
 	}
 
@@ -202,6 +241,7 @@ public final class AwkTestSupport {
 		protected final List<String> pathPlaceholders = new ArrayList<>();
 		protected String expectedOutput;
 		protected Integer expectedExitCode;
+		protected Class<? extends Throwable> expectedException;
 		protected boolean requiresPosix;
 		protected boolean useTempDir;
 
@@ -279,6 +319,12 @@ public final class AwkTestSupport {
 		}
 
 		@SuppressWarnings("unchecked")
+		public B expectThrow(Class<? extends Throwable> exceptionClass) {
+			this.expectedException = exceptionClass;
+			return (B) this;
+		}
+
+		@SuppressWarnings("unchecked")
 		public B posixOnly() {
 			this.requiresPosix = true;
 			return (B) this;
@@ -291,11 +337,25 @@ public final class AwkTestSupport {
 		}
 
 		public ConfiguredTest build() {
-			TestLayout layout = new TestLayout(description, script, stdin, expectedOutput, expectedExitCode);
+			TestLayout layout = new TestLayout(
+					description,
+					script,
+					stdin,
+					expectedOutput,
+					expectedExitCode,
+					expectedException);
 			Map<String, String> files = new LinkedHashMap<>(fileContents);
 			List<String> operands = new ArrayList<>(operandSpecs);
 			List<String> placeholders = new ArrayList<>(pathPlaceholders);
 			return buildTestCase(layout, files, operands, placeholders);
+		}
+
+		public TestResult run() throws Exception {
+			return build().run();
+		}
+
+		public void runAndAssert() throws Exception {
+			build().runAndAssert();
 		}
 
 		protected abstract BaseTestCase buildTestCase(
@@ -342,11 +402,39 @@ public final class AwkTestSupport {
 			assumeSupported();
 			ExecutionEnvironment env = prepareEnvironment();
 			try {
-				ActualResult result = execute(env);
-				String expected = layout.expectedOutput != null ? env.resolve(layout.expectedOutput) : null;
-				return new TestResult(layout.description, result.output, result.exitCode, expected, layout.expectedExitCode);
+				return executeAndCapture(env);
 			} finally {
 				deleteRecursively(env.tempDir);
+			}
+		}
+
+		private TestResult executeAndCapture(ExecutionEnvironment env) throws Exception {
+			try {
+				ActualResult result = execute(env);
+				String expected = layout.expectedOutput != null ? env.resolve(layout.expectedOutput) : null;
+				return new TestResult(
+						layout.description,
+						result.output,
+						result.exitCode,
+						expected,
+						layout.expectedExitCode,
+						layout.expectedException,
+						null);
+			} catch (Throwable ex) {
+				if (layout.expectedException != null && layout.expectedException.isInstance(ex)) {
+					return new TestResult(
+							layout.description,
+							"",
+							0,
+							null,
+							layout.expectedExitCode,
+							layout.expectedException,
+							ex);
+				}
+				if (ex instanceof Exception) {
+					throw (Exception) ex;
+				}
+				throw (Error) ex;
 			}
 		}
 
@@ -525,13 +613,21 @@ public final class AwkTestSupport {
 		final String stdin;
 		final String expectedOutput;
 		final Integer expectedExitCode;
+		final Class<? extends Throwable> expectedException;
 
-		TestLayout(String description, String script, String stdin, String expectedOutput, Integer expectedExitCode) {
+		TestLayout(
+				String description,
+				String script,
+				String stdin,
+				String expectedOutput,
+				Integer expectedExitCode,
+				Class<? extends Throwable> expectedException) {
 			this.description = description;
 			this.script = script;
 			this.stdin = stdin;
 			this.expectedOutput = expectedOutput;
 			this.expectedExitCode = expectedExitCode;
+			this.expectedException = expectedException;
 		}
 	}
 
