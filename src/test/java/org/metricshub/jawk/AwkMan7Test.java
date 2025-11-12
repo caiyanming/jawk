@@ -22,11 +22,6 @@ import org.metricshub.jawk.AwkTestSupport.TestResult;
 @RunWith(Parameterized.class)
 public class AwkMan7Test {
 
-	private static final boolean IS_POSIX = !System
-			.getProperty("os.name", "")
-			.toLowerCase(Locale.ROOT)
-			.contains("win");
-
 	private static Locale defaultLocale;
 
 	@BeforeClass
