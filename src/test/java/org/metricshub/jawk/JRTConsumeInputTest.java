@@ -22,18 +22,8 @@ package org.metricshub.jawk;
  * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
  */
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.PrintStream;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import org.junit.Test;
-import org.metricshub.jawk.Awk;
-import org.metricshub.jawk.util.AwkSettings;
-import org.metricshub.jawk.util.ScriptSource;
+import org.metricshub.jawk.AwkTestSupport;
 
 /**
  * Tests for the {@link org.metricshub.jawk.jrt.JRT#consumeInput} method.
@@ -48,27 +38,13 @@ public class JRTConsumeInputTest {
 	 */
 	@Test
 	public void testVariableAssignmentBetweenFilesIncrementsNR() throws Exception {
-		File file1 = File.createTempFile("jrt", "1");
-		file1.deleteOnExit();
-		Files.write(file1.toPath(), "a\n".getBytes(StandardCharsets.UTF_8));
-
-		File file2 = File.createTempFile("jrt", "2");
-		file2.deleteOnExit();
-		Files.write(file2.toPath(), "b\n".getBytes(StandardCharsets.UTF_8));
-
-		AwkSettings settings = new AwkSettings();
-		settings.setDefaultRS("\n");
-		settings.setDefaultORS("\n");
-		settings.addNameValueOrFileName(file1.getAbsolutePath());
-		settings.addNameValueOrFileName("X=1");
-		settings.addNameValueOrFileName(file2.getAbsolutePath());
-
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		settings.setOutputStream(new PrintStream(out, true, StandardCharsets.UTF_8.name()));
-		ScriptSource script = new ScriptSource("Body", new StringReader("{ next } \nEND { print NR }"));
-
-		new Awk().invoke(script, settings);
-
-		assertEquals("3\n", out.toString("UTF-8"));
+		AwkTestSupport
+				.awkTest("variable assignments interleaved with filenames advance NR")
+				.file("file1", "a\n")
+				.file("file2", "b\n")
+				.script("{ next } \nEND { print NR }")
+				.operand("{{file1}}", "X=1", "{{file2}}")
+				.expectLines("3")
+				.runAndAssert();
 	}
 }
