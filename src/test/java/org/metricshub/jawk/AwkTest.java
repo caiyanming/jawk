@@ -19,7 +19,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collections;
 import org.junit.Test;
 import org.metricshub.jawk.frontend.ast.ParserException;
@@ -27,7 +26,6 @@ import org.metricshub.jawk.intermediate.AwkTuples;
 import org.metricshub.jawk.util.AwkSettings;
 import org.metricshub.jawk.Cli;
 import org.metricshub.jawk.AwkSandboxException;
-import org.metricshub.jawk.ExitException;
 
 public class AwkTest {
 
@@ -40,12 +38,6 @@ public class AwkTest {
 
 	static String[] monotoneArray(final String val, final int num) {
 		return Collections.nCopies(num, val).toArray(new String[num]);
-	}
-
-	private static AwkTestSupport.TestResult testCliResult;
-
-	static void awk(String... args) throws Exception {
-		testCliResult = runCli(args);
 	}
 
 	static File classpathFile(final Class<?> c, String path) {
@@ -67,71 +59,6 @@ public class AwkTest {
 
 	private static final Awk AWK = new Awk();
 
-	String[] linesOutput() {
-		return testCliResult == null ? new String[0] : testCliResult.lines();
-	}
-
-	private static String runAwk(String script, String input) throws Exception {
-		return runAwk(script, input, false);
-	}
-
-	private static String runAwk(String script, String input, boolean setTempDir) throws Exception {
-		AwkTestSupport.AwkTestBuilder builder = AwkTestSupport
-				.awkTest("AwkTest" + script.hashCode())
-				.script(script);
-		if (input != null) {
-			builder.stdin(input);
-		}
-		if (setTempDir) {
-			builder.withTempDir();
-		}
-		AwkTestSupport.TestResult result = builder.build().run();
-		if (result.exitCode() != 0) {
-			throw new ExitException(result.exitCode());
-		}
-		return result.output();
-	}
-
-	private static AwkTestSupport.TestResult runCli(String... args) throws Exception {
-		AwkTestSupport.CliTestBuilder builder = AwkTestSupport
-				.cliTest("CLI " + Arrays.toString(args));
-		int idx = 0;
-		while (idx < args.length) {
-			String arg = args[idx];
-			if (arg.equals("-") || !arg.startsWith("-")) {
-				break;
-			}
-			builder.argument(arg);
-			if (requiresValue(arg)) {
-				++idx;
-				if (idx >= args.length) {
-					throw new IllegalArgumentException("Missing value for option " + arg);
-				}
-				builder.argument(args[idx]);
-			}
-			++idx;
-		}
-		if (idx < args.length) {
-			builder.script(args[idx++]);
-		}
-		for (; idx < args.length; ++idx) {
-			builder.operand(args[idx]);
-		}
-		return builder.build().run();
-	}
-
-	private static boolean requiresValue(String option) {
-		return option.equals("-f")
-				|| option.equals("-F")
-				|| option.equals("-v")
-				|| option.equals("-L")
-				|| option.equals("-l")
-				|| option.equals("--load")
-				|| option.equals("-K")
-				|| option.equals("-o")
-				|| option.equals("--locale");
-	}
-
 	/**
 	 * Tests the program
 	 *
@@ -144,7 +71,11 @@ public class AwkTest {
 	@Test
 	public void test1() throws Exception {
 		final String devnull = IS_WINDOWS ? pathTo("empty.txt") : "/dev/null";
-		awk("1", devnull);
+		AwkTestSupport
+				.cliTest("awk 1 /dev/null")
+				.script("1")
+				.operand(devnull)
+				.runAndAssert();
 	}
 
 	/**
@@ -158,8 +89,11 @@ public class AwkTest {
 	 */
 	@Test
 	public void testDontPanic() throws Exception {
-		awk("BEGIN { print \"Don\\47t Panic!\" }");
-		assertArrayEquals(array("Don't Panic!"), linesOutput());
+		AwkTestSupport
+				.cliTest("print don't panic")
+				.script("BEGIN { print \"Don\\47t Panic!\" }")
+				.expectLines("Don't Panic!")
+				.runAndAssert();
 	}
 
 	/**
@@ -179,8 +113,11 @@ public class AwkTest {
 	 */
 	@Test
 	public void testDontPanicAdvice() throws Exception {
-		awk("-f", pathTo("advice.awk"));
-		assertArrayEquals(array("Don't Panic!"), linesOutput());
+		AwkTestSupport
+				.cliTest("advice.awk script")
+				.argument("-f", pathTo("advice.awk"))
+				.expectLines("Don't Panic!")
+				.runAndAssert();
 	}
 
 	/**
@@ -196,14 +133,16 @@ public class AwkTest {
 	 */
 	@Test
 	public void testMailListLiList() throws Exception {
-		awk("/li/ {print $0}", pathTo("mail-list"));
-		assertArrayEquals(
-				array(
+		AwkTestSupport
+				.cliTest("mail-list li filter")
+				.script("/li/ {print $0}")
+				.operand(pathTo("mail-list"))
+				.expectLines(
 						"Amelia       555-5553     amelia.zodiacusque@gmail.com    F",
 						"Broderick    555-0542     broderick.aliquotiens@yahoo.com R",
 						"Julie        555-6699     julie.perscrutabor@skeeve.com   F",
-						"Samuel       555-3430     samuel.lanceolis@shu.edu        A"),
-				linesOutput());
+						"Samuel       555-3430     samuel.lanceolis@shu.edu        A")
+				.runAndAssert();
 	}
 
 	/**
@@ -211,24 +150,28 @@ public class AwkTest {
 	 */
 	@Test
 	public void testTwoRules() throws Exception {
-		awk("/12/ {print $0} /21/ {print $0}", pathTo("mail-list"), pathTo("inventory-shipped"));
-		assertArrayEquals(
-				array(
+		AwkTestSupport
+				.cliTest("two-rule filter")
+				.script("/12/ {print $0} /21/ {print $0}")
+				.operand(pathTo("mail-list"), pathTo("inventory-shipped"))
+				.expectLines(
 						"Anthony      555-3412     anthony.asserturo@hotmail.com   A",
 						"Camilla      555-2912     camilla.infusarum@skynet.be     R",
 						"Fabius       555-1234     fabius.undevicesimus@ucb.edu    F",
 						"Jean-Paul    555-2127     jeanpaul.campanorum@nyu.edu     R",
 						"Jean-Paul    555-2127     jeanpaul.campanorum@nyu.edu     R",
 						"Jan  21  36  64 620",
-						"Apr  21  70  74 514"),
-				linesOutput());
+						"Apr  21  70  74 514")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testEmptyPattern() throws Exception {
-		awk("//", pathTo("inventory-shipped"));
-		assertArrayEquals(
-				array(
+		AwkTestSupport
+				.cliTest("empty pattern")
+				.script("//")
+				.operand(pathTo("inventory-shipped"))
+				.expectLines(
 						"Jan  13  25  15 115",
 						"Feb  15  32  24 226",
 						"Mar  15  24  34 228",
@@ -245,21 +188,27 @@ public class AwkTest {
 						"Jan  21  36  64 620",
 						"Feb  26  58  80 652",
 						"Mar  24  75  70 495",
-						"Apr  21  70  74 514"),
-				linesOutput());
+						"Apr  21  70  74 514")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testUninitializedVarible() throws Exception {
-		awk("//{ if (v == 0) {print \"uninitialize variable\"} else {print}}", pathTo("inventory-shipped"));
-		assertArrayEquals(monotoneArray("uninitialize variable", 17), linesOutput());
+		AwkTestSupport
+				.cliTest("uninitialized variable prints message")
+				.script("//{ if (v == 0) {print \"uninitialize variable\"} else {print}}")
+				.operand(pathTo("inventory-shipped"))
+				.expectLines(monotoneArray("uninitialize variable", 17))
+				.runAndAssert();
 	}
 
 	@Test
 	public void testUninitializedVarible2() throws Exception {
-		awk("//{ v = 1; if (v == 0) {print \"uninitialize variable\"} else {print}}", pathTo("inventory-shipped"));
-		assertArrayEquals(
-				array(
+		AwkTestSupport
+				.cliTest("initialized variable prints record")
+				.script("//{ v = 1; if (v == 0) {print \"uninitialize variable\"} else {print}}")
+				.operand(pathTo("inventory-shipped"))
+				.expectLines(
 						"Jan  13  25  15 115",
 						"Feb  15  32  24 226",
 						"Mar  15  24  34 228",
@@ -276,20 +225,28 @@ public class AwkTest {
 						"Jan  21  36  64 620",
 						"Feb  26  58  80 652",
 						"Mar  24  75  70 495",
-						"Apr  21  70  74 514"),
-				linesOutput());
+						"Apr  21  70  74 514")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testArrayStringKey() throws Exception {
-		awk("//{i=1; j=\"1\"; v[i] = 100; print v[i] v[j];}", pathTo("inventory-shipped"));
-		assertArrayEquals(monotoneArray("100100", 17), linesOutput());
+		AwkTestSupport
+				.cliTest("array string key")
+				.script("//{i=1; j=\"1\"; v[i] = 100; print v[i] v[j];}")
+				.operand(pathTo("inventory-shipped"))
+				.expectLines(monotoneArray("100100", 17))
+				.runAndAssert();
 	}
 
 	@Test
 	public void testArrayStringKey2() throws Exception {
-		awk("//{i=1; j=\"1\"; v[j] = 100; print v[i] v[j];}", pathTo("inventory-shipped"));
-		assertArrayEquals(monotoneArray("100100", 17), linesOutput());
+		AwkTestSupport
+				.cliTest("array string key via j")
+				.script("//{i=1; j=\"1\"; v[j] = 100; print v[i] v[j];}")
+				.operand(pathTo("inventory-shipped"))
+				.expectLines(monotoneArray("100100", 17))
+				.runAndAssert();
 	}
 
 	@Test
@@ -307,69 +264,162 @@ public class AwkTest {
 
 	@Test
 	public void testExit() throws Exception {
-		assertThrows("exit NN must throw ExitException", ExitException.class, () -> runAwk("BEGIN { exit 17 }", null));
-		assertEquals("exit in BEGIN prevents any rules execution", "", runAwk("BEGIN { exit 0 }\n{ print $0 }", "failure"));
-		assertEquals(
-				"exit in BEGIN jumps to END",
-				"success",
-				runAwk("BEGIN { exit 0 ; printf \"failure\" }\nEND { printf \"success\" }", ""));
-		assertEquals(
-				"exit in END stops immediately",
-				"success",
-				runAwk("END { printf \"success\" ; exit 0 ; printf \"failure\" }", ""));
-		assertEquals("exit without code works", "", runAwk("BEGIN { exit }\n{ print $0 }", "failure"));
-		int code = 0;
-		try {
-			runAwk("BEGIN { exit 2 }\nEND { exit }", "");
-		} catch (ExitException e) {
-			code = e.getCode();
-		}
-		assertEquals("exit without code must not alter previous exit with code", 2, code);
+		AwkTestSupport
+				.awkTest("exit with code")
+				.script("BEGIN { exit 17 }")
+				.stdin("")
+				.expectExit(17)
+				.runAndAssert();
+
+		AwkTestSupport
+				.awkTest("exit in BEGIN prevents rules")
+				.script("BEGIN { exit 0 }\n{ print $0 }")
+				.stdin("failure")
+				.expect("")
+				.runAndAssert();
+
+		AwkTestSupport
+				.awkTest("exit jumps to END")
+				.script("BEGIN { exit 0 ; printf \"failure\" }\nEND { printf \"success\" }")
+				.stdin("")
+				.expect("success")
+				.runAndAssert();
+
+		AwkTestSupport
+				.awkTest("exit in END stops immediately")
+				.script("END { printf \"success\" ; exit 0 ; printf \"failure\" }")
+				.stdin("")
+				.expect("success")
+				.runAndAssert();
+
+		AwkTestSupport
+				.awkTest("exit without code")
+				.script("BEGIN { exit }\n{ print $0 }")
+				.stdin("failure")
+				.expect("")
+				.runAndAssert();
+
+		AwkTestSupport
+				.awkTest("exit retains previous code")
+				.script("BEGIN { exit 2 }\nEND { exit }")
+				.stdin("")
+				.expectExit(2)
+				.runAndAssert();
 	}
 
 	@Test
 	public void testRanges() throws Exception {
 		String input = "aa\nbb\ncc\ndd\nee\naa\nbb\ncc\ndd\nee";
-		assertEquals("Range of regexp must work", "bb\ncc\ndd\nbb\ncc\ndd\n", runAwk("/b/, /d/", input));
-		assertEquals("Range of conditions must work", "bb\ncc\ndd\n", runAwk("NR == 2, NR == 4", input));
-		assertEquals("Non-matching start condition in range must return nothing", "", runAwk("/zz/, /cc/", input));
-		assertEquals(
-				"Non-matching end condition in range must return all remaining",
-				"cc\ndd\nee\naa\nbb\ncc\ndd\nee\n",
-				runAwk("/cc/, /zz/", input));
-		assertEquals("Range of mixed conditions must work", "bb\ncc\ndd\n", runAwk("NR == 2, /d/", input));
-		assertThrows(
-				"Invalid range (3 args) must throw",
-				ParserException.class,
-				() -> runAwk("/a/, /b/, NR == 4", input));
-		assertEquals("Entering and leaving the range matches 1 record", "bb\nbb\n", runAwk("/b/, /b/", input));
-		assertEquals("Range comma is lowest precedence", "bb\ncc\nbb\ncc\n", runAwk("/b/, /d/ || /c/", input));
+		AwkTestSupport
+				.awkTest("range of regexp")
+				.script("/b/, /d/")
+				.stdin(input)
+				.expect("bb\ncc\ndd\nbb\ncc\ndd\n")
+				.runAndAssert();
+
+		AwkTestSupport
+				.awkTest("range of conditions")
+				.script("NR == 2, NR == 4")
+				.stdin(input)
+				.expect("bb\ncc\ndd\n")
+				.runAndAssert();
+
+		AwkTestSupport
+				.awkTest("non matching start range")
+				.script("/zz/, /cc/")
+				.stdin(input)
+				.expect("")
+				.runAndAssert();
+
+		AwkTestSupport
+				.awkTest("non matching end range")
+				.script("/cc/, /zz/")
+				.stdin(input)
+				.expect("cc\ndd\nee\naa\nbb\ncc\ndd\nee\n")
+				.runAndAssert();
+
+		AwkTestSupport
+				.awkTest("mixed range")
+				.script("NR == 2, /d/")
+				.stdin(input)
+				.expect("bb\ncc\ndd\n")
+				.runAndAssert();
+
+		AwkTestSupport
+				.awkTest("invalid range")
+				.script("/a/, /b/, NR == 4")
+				.stdin(input)
+				.expectThrow(ParserException.class)
+				.runAndAssert();
+
+		AwkTestSupport
+				.awkTest("enter and leave range")
+				.script("/b/, /b/")
+				.stdin(input)
+				.expect("bb\nbb\n")
+				.runAndAssert();
+
+		AwkTestSupport
+				.awkTest("range comma precedence")
+				.script("/b/, /d/ || /c/")
+				.stdin(input)
+				.expect("bb\ncc\nbb\ncc\n")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testDavideBrini() throws Exception {
-		assertEquals(
-				"Davide Brini's signature",
-				"dave_br@gmx.com\n",
-				runAwk(
+		AwkTestSupport
+				.awkTest("Davide Brini signature")
+				.script(
 						"BEGIN{O=\"~\"~\"~\";o=\"==\"==\"==\";o+=+o;x=O\"\"O;while(X++<=x+o+o){c=c\"%c\";}"
 								+
 								"printf c,(x-O)*(x-O),x*(x-o)-o,x*(x-O)+x-O-o,+x*(x-O)-x+o,X*(o*o+O)+x-O,"
 								+
 								"X*(X-x)-o*o,(x+X)*o*o+o,x*(X-x)-O-O,x-O+(O+o+X+x)*(o+O),X*X-X*(x-O)-x+O,"
 								+
-								"O+X*(o*(o+O)+O),+x+O+X*o,x*(x-o),(o+X+x)*o*o-(x-O-O),O+(X-x)*(X+O),x-O}",
-						null));
+								"O+X*(o*(o+O)+O),+x+O+X*o,x*(x-o),(o+X+x)*o*o-(x-O-O),O+(X-x)*(X+O),x-O}")
+				.expect("dave_br@gmx.com\n")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testIncDec() throws Exception {
-		assertEquals("2", runAwk("BEGIN { a = 1; printf ++a }", null));
-		assertEquals("12", runAwk("BEGIN { a = 1; printf a++ ; printf a++; }", null));
-		assertEquals("0", runAwk("BEGIN { a = 1; printf --a }", null));
-		assertEquals("10", runAwk("BEGIN { a = 1; printf a-- ; printf a--; }", null));
-		assertEquals("1", runAwk("BEGIN { printf ++a }", null));
-		assertEquals("01", runAwk("BEGIN { printf a++ ; printf a++; }", null));
+		AwkTestSupport
+				.awkTest("pre increment outputs 2")
+				.script("BEGIN { a = 1; printf ++a }")
+				.expect("2")
+				.runAndAssert();
+
+		AwkTestSupport
+				.awkTest("post increment twice")
+				.script("BEGIN { a = 1; printf a++ ; printf a++; }")
+				.expect("12")
+				.runAndAssert();
+
+		AwkTestSupport
+				.awkTest("pre decrement outputs 0")
+				.script("BEGIN { a = 1; printf --a }")
+				.expect("0")
+				.runAndAssert();
+
+		AwkTestSupport
+				.awkTest("post decrement twice")
+				.script("BEGIN { a = 1; printf a-- ; printf a--; }")
+				.expect("10")
+				.runAndAssert();
+
+		AwkTestSupport
+				.awkTest("pre increment uninitialized")
+				.script("BEGIN { printf ++a }")
+				.expect("1")
+				.runAndAssert();
+
+		AwkTestSupport
+				.awkTest("post increment uninitialized twice")
+				.script("BEGIN { printf a++ ; printf a++; }")
+				.expect("01")
+				.runAndAssert();
 	}
 
 	@Test
@@ -384,10 +434,11 @@ public class AwkTest {
 
 	@Test
 	public void testFunctionArgumentsLeftAssociativity() throws Exception {
-		assertEquals(
-				"Function arguments must be eval'ed from left to right",
-				"0 1 2 3\n",
-				runAwk("BEGIN { print a++, a++, a++, a++ }", null));
+		AwkTestSupport
+				.awkTest("function arguments left to right")
+				.script("BEGIN { print a++, a++, a++, a++ }")
+				.expect("0 1 2 3\n")
+				.runAndAssert();
 	}
 
 	@Test
@@ -397,26 +448,29 @@ public class AwkTest {
 
 	@Test
 	public void testComparisonArgumentsLeftAssociativity() throws Exception {
-		assertEquals(
-				"Comparison arguments must be eval'ed from left to right",
-				"1",
-				runAwk("BEGIN { r = (a++ < a++); printf r }", null));
+		AwkTestSupport
+				.awkTest("comparison arguments left to right")
+				.script("BEGIN { r = (a++ < a++); printf r }")
+				.expect("1")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testAssignmentRightToLeft() throws Exception {
-		assertEquals(
-				"Assignment is eval'ed right first, and then left",
-				"0",
-				runAwk("BEGIN { arr[a++] = a++; printf arr[1] }", null));
+		AwkTestSupport
+				.awkTest("assignment evaluated right to left")
+				.script("BEGIN { arr[a++] = a++; printf arr[1] }")
+				.expect("0")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testBinaryExpressionLeftAssociativity() throws Exception {
-		assertEquals(
-				"Binary expression is eval'ed from left to right",
-				"0.5",
-				runAwk("BEGIN { a = 1; printf a++ / a++ }", null));
+		AwkTestSupport
+				.awkTest("binary expression left to right")
+				.script("BEGIN { a = 1; printf a++ / a++ }")
+				.expect("0.5")
+				.runAndAssert();
 	}
 
 	@Test
@@ -441,26 +495,29 @@ public class AwkTest {
 
 	@Test
 	public void testChainedLogicalAndLeftAssociativity() throws Exception {
-		assertEquals(
-				"Chained logical AND must be eval'ed from left to right",
-				"0",
-				runAwk("BEGIN { a = 0; r = (a++ && a++ && a++); printf r }", null));
+		AwkTestSupport
+				.awkTest("logical and left to right")
+				.script("BEGIN { a = 0; r = (a++ && a++ && a++); printf r }")
+				.expect("0")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testChainedLogicalOrLeftAssociativity() throws Exception {
-		assertEquals(
-				"Chained logical OR must be eval'ed from left to right",
-				"1",
-				runAwk("BEGIN { a = 1; r = (a++ || a++ || a++); printf r }", null));
+		AwkTestSupport
+				.awkTest("logical or left to right")
+				.script("BEGIN { a = 1; r = (a++ || a++ || a++); printf r }")
+				.expect("1")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testChainedComparisonLeftAssociativity() throws Exception {
-		assertEquals(
-				"Chained comparisons must be eval'ed from left to right",
-				"0",
-				runAwk("BEGIN { a = 1; r = (a++ < a++ < a++); printf r }", null));
+		AwkTestSupport
+				.awkTest("comparison chaining left to right")
+				.script("BEGIN { a = 1; r = (a++ < a++ < a++); printf r }")
+				.expect("0")
+				.runAndAssert();
 	}
 
 	@Test
@@ -496,69 +553,92 @@ public class AwkTest {
 
 	@Test
 	public void testPrintComparison() throws Exception {
-		assertEquals(
-				"Comparison operators must be allowed in a print statement",
-				"1\n",
-				runAwk("BEGIN { print 1 < \"2\" }", null));
-		assertEquals(
-				"Comparison operators must be allowed in a print statement",
-				"0\n",
-				runAwk("BEGIN { print 1 >= \"2\" }", null));
-		assertEquals(
-				"> in a print statement must not output to stdout",
-				"",
-				runAwk("BEGIN { print 1 > TEMPDIR\"/printRedirect\" }", null, true));
+		AwkTestSupport
+				.awkTest("print comparison less than")
+				.script("BEGIN { print 1 < \"2\" }")
+				.expect("1\n")
+				.runAndAssert();
+		AwkTestSupport
+				.awkTest("print comparison greater equal")
+				.script("BEGIN { print 1 >= \"2\" }")
+				.expect("0\n")
+				.runAndAssert();
+		AwkTestSupport
+				.awkTest("print redirection suppresses stdout")
+				.script("BEGIN { print 1 > TEMPDIR\"/printRedirect\" }")
+				.withTempDir()
+				.expect("")
+				.runAndAssert();
 		assertTrue(
 				"> in a print statement must write to the specified file",
 				Files.exists(Paths.get(AwkTestSupport.sharedTempDirectory().toString(), "printRedirect")));
-		assertEquals(
-				"> surrounded with parenthesis in a print statement doesn't redirect",
-				"1\n",
-				runAwk("BEGIN { print(1 > 0) }", null));
-		assertEquals(
-				"> surrounded with parenthesis in a print statement doesn't redirect",
-				"test1test\n",
-				runAwk("BEGIN { print \"test\" (1 > 0) \"test\" }", null));
+		AwkTestSupport
+				.awkTest("print parenthesized comparison")
+				.script("BEGIN { print(1 > 0) }")
+				.expect("1\n")
+				.runAndAssert();
+		AwkTestSupport
+				.awkTest("print concatenated comparison")
+				.script("BEGIN { print \"test\" (1 > 0) \"test\" }")
+				.expect("test1test\n")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testPrintParenthesizedExpressionConcatenation() throws Exception {
-		assertEquals(
-				"Parenthesized expressions must concatenate with following operands in print",
-				"5;99\n",
-				runAwk("{ print ($1 - $2) \";\" $3 }", "10 5 99"));
+		AwkTestSupport
+				.awkTest("print parenthesized concatenation")
+				.script("{ print ($1 - $2) \";\" $3 }")
+				.stdin("10 5 99")
+				.expect("5;99\n")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testPrintParenthesizedExpressionOperators() throws Exception {
-		assertEquals(
-				"Parenthesized expressions must participate in arithmetic operations in print",
-				"20\n",
-				runAwk("{ print ($1 - $2) * $3 }", "10 5 4\n"));
-		assertEquals(
-				"Parenthesized expressions must support equality comparisons in print",
-				"1\n",
-				runAwk("{ print ($1 - $2) == $3 }", "10 5 5\n"));
-		assertEquals(
-				"Parenthesized expressions must support ternary operators in print",
-				"yes\n",
-				runAwk("{ print ($1 - $2) ? \"yes\" : \"no\" }", "10 5\n"));
-		assertEquals(
-				"Parenthesized expressions must support regular expression matching in print",
-				"1\n",
-				runAwk("{ print ($1) ~ /foo/ }", "foo\n"));
-		assertEquals(
-				"Parenthesized expressions must support the in operator in print",
-				"1\n",
-				runAwk("BEGIN { arr[\"foo\"] = 1 } { print ($1) in arr }", "foo\n"));
-		assertEquals(
-				"Parenthesized expressions must support logical operators in print",
-				"1\n",
-				runAwk("{ print ($1) && ($2) }", "1 1\\n0 1\\n"));
-		assertEquals(
-				"Parenthesized expressions must still support redirection",
-				"",
-				runAwk("{ print ($1) > TEMPDIR\"/printParenRedirect\" }", "value\n", true));
+		AwkTestSupport
+				.awkTest("print arithmetic multiplication")
+				.script("{ print ($1 - $2) * $3 }")
+				.stdin("10 5 4\n")
+				.expect("20\n")
+				.runAndAssert();
+		AwkTestSupport
+				.awkTest("print equality comparison")
+				.script("{ print ($1 - $2) == $3 }")
+				.stdin("10 5 5\n")
+				.expect("1\n")
+				.runAndAssert();
+		AwkTestSupport
+				.awkTest("print ternary expression")
+				.script("{ print ($1 - $2) ? \"yes\" : \"no\" }")
+				.stdin("10 5\n")
+				.expect("yes\n")
+				.runAndAssert();
+		AwkTestSupport
+				.awkTest("print regex match")
+				.script("{ print ($1) ~ /foo/ }")
+				.stdin("foo\n")
+				.expect("1\n")
+				.runAndAssert();
+		AwkTestSupport
+				.awkTest("print in operator")
+				.script("BEGIN { arr[\"foo\"] = 1 } { print ($1) in arr }")
+				.stdin("foo\n")
+				.expect("1\n")
+				.runAndAssert();
+		AwkTestSupport
+				.awkTest("print logical expression")
+				.script("{ print ($1) && ($2) }")
+				.stdin("1 1\\n0 1\\n")
+				.expect("1\n")
+				.runAndAssert();
+		AwkTestSupport
+				.awkTest("print redirection with parentheses")
+				.script("{ print ($1) > TEMPDIR\"/printParenRedirect\" }")
+				.stdin("value\n")
+				.withTempDir()
+				.expect("")
+				.runAndAssert();
 		assertTrue(
 				"Parenthesized expressions must redirect output to files",
 				Files.exists(Paths.get(AwkTestSupport.sharedTempDirectory().toString(), "printParenRedirect")));
@@ -566,99 +646,132 @@ public class AwkTest {
 
 	@Test
 	public void testSubArray() throws Exception {
-		assertEquals(
-				"sub on an array element must change the value of the element",
-				"abc:d\n",
-				runAwk("BEGIN { a[1] = \"ab:c:d\"; sub(/:/, \"\", a[1]); print a[1]; }", null));
+		AwkTestSupport
+				.awkTest("sub modifies array element")
+				.script("BEGIN { a[1] = \"ab:c:d\"; sub(/:/, \"\", a[1]); print a[1]; }")
+				.expect("abc:d\n")
+				.runAndAssert();
 
-		assertEquals(
-				"gsub on an array element must change the value of the element",
-				"abcd\n",
-				runAwk("BEGIN { a[1] = \"ab:c:d\"; gsub(/:/, \"\", a[1]); print a[1]; }", null));
+		AwkTestSupport
+				.awkTest("gsub modifies array element")
+				.script("BEGIN { a[1] = \"ab:c:d\"; gsub(/:/, \"\", a[1]); print a[1]; }")
+				.expect("abcd\n")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testSubDollarReference() throws Exception {
-		assertEquals(
-				"sub on $4 must change the value of the 4th field",
-				"aa bb cc Zd\n",
-				runAwk("{ sub(/d/, \"Z\", $4); print $1, $2, $3, $4; }", "aa bb cc dd"));
+		AwkTestSupport
+				.awkTest("sub modifies field")
+				.script("{ sub(/d/, \"Z\", $4); print $1, $2, $3, $4; }")
+				.stdin("aa bb cc dd")
+				.expect("aa bb cc Zd\n")
+				.runAndAssert();
 
-		assertEquals(
-				"gsub on $4 must change the value of the 4th field",
-				"aa bb cc ZZ\n",
-				runAwk("{ gsub(/d/, \"Z\", $4); print $1, $2, $3, $4; }", "aa bb cc dd"));
+		AwkTestSupport
+				.awkTest("gsub modifies field")
+				.script("{ gsub(/d/, \"Z\", $4); print $1, $2, $3, $4; }")
+				.stdin("aa bb cc dd")
+				.expect("aa bb cc ZZ\n")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testSubDollarZero() throws Exception {
-		assertEquals(
-				"sub on $0 must change the value of the entire line",
-				"aa bb cc Zd\nZd\n",
-				runAwk("{ sub(/d/, \"Z\"); print $0; print $4; }", "aa bb cc dd"));
+		AwkTestSupport
+				.awkTest("sub modifies $0")
+				.script("{ sub(/d/, \"Z\"); print $0; print $4; }")
+				.stdin("aa bb cc dd")
+				.expect("aa bb cc Zd\nZd\n")
+				.runAndAssert();
 
-		assertEquals(
-				"gsub on $0 must change the value of the entire line",
-				"aa bb cc ZZ\nZZ\n",
-				runAwk("{ gsub(/d/, \"Z\"); print $0; print $4; }", "aa bb cc dd"));
+		AwkTestSupport
+				.awkTest("gsub modifies $0")
+				.script("{ gsub(/d/, \"Z\"); print $0; print $4; }")
+				.stdin("aa bb cc dd")
+				.expect("aa bb cc ZZ\nZZ\n")
+				.runAndAssert();
 
-		assertEquals(
-				"sub on $0 must change the value of the entire line",
-				"aa bb cc Zd\nZd\n",
-				runAwk("{ sub(/d/, \"Z\", $0); print $0; print $4; }", "aa bb cc dd"));
+		AwkTestSupport
+				.awkTest("sub modifies $0 with target")
+				.script("{ sub(/d/, \"Z\", $0); print $0; print $4; }")
+				.stdin("aa bb cc dd")
+				.expect("aa bb cc Zd\nZd\n")
+				.runAndAssert();
 
-		assertEquals(
-				"gsub on $0 must change the value of the entire line",
-				"aa bb cc ZZ\nZZ\n",
-				runAwk("{ gsub(/d/, \"Z\", $0); print $0; print $4; }", "aa bb cc dd"));
+		AwkTestSupport
+				.awkTest("gsub modifies $0 with target")
+				.script("{ gsub(/d/, \"Z\", $0); print $0; print $4; }")
+				.stdin("aa bb cc dd")
+				.expect("aa bb cc ZZ\nZZ\n")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testSubVariable() throws Exception {
-		assertEquals(
-				"sub on variable must change the value of the variable",
-				"aa bb cc Zd\n",
-				runAwk("BEGIN { v = \"aa bb cc dd\"; sub(/d/, \"Z\", v); print v; }", null));
-		assertEquals(
-				"gsub on variable must change the value of the variable",
-				"aa bb cc ZZ\n",
-				runAwk("BEGIN { v = \"aa bb cc dd\"; gsub(/d/, \"Z\", v); print v; }", null));
+		AwkTestSupport
+				.awkTest("sub modifies variable")
+				.script("BEGIN { v = \"aa bb cc dd\"; sub(/d/, \"Z\", v); print v; }")
+				.expect("aa bb cc Zd\n")
+				.runAndAssert();
+		AwkTestSupport
+				.awkTest("gsub modifies variable")
+				.script("BEGIN { v = \"aa bb cc dd\"; gsub(/d/, \"Z\", v); print v; }")
+				.expect("aa bb cc ZZ\n")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testSubReplaceWithMatchReference() throws Exception {
-		assertEquals(
-				"gsub must replace '&' with actual match",
-				"a _b_ _c_ d e\n",
-				runAwk("{ gsub(/[b-c]/, \"_&_\"); print $0; }", "a b c d e"));
+		AwkTestSupport
+				.awkTest("gsub replaces ampersand")
+				.script("{ gsub(/[b-c]/, \"_&_\"); print $0; }")
+				.stdin("a b c d e")
+				.expect("a _b_ _c_ d e\n")
+				.runAndAssert();
 
-		assertEquals(
-				"gsub must replace '\\&' with '\\'",
-				"a _&_ _&_ d e\n",
-				runAwk("{ gsub(/[b-c]/, \"_\\\\&_\"); print $0; }", "a b c d e"));
+		AwkTestSupport
+				.awkTest("gsub escapes ampersand")
+				.script("{ gsub(/[b-c]/, \"_\\\\&_\"); print $0; }")
+				.stdin("a b c d e")
+				.expect("a _&_ _&_ d e\n")
+				.runAndAssert();
 
-		assertEquals(
-				"gsub must replace '$0' with '$0'",
-				"a _$0_ _$0_ d e\n",
-				runAwk("{ gsub(/[b-c]/, \"_$0_\"); print $0; }", "a b c d e"));
+		AwkTestSupport
+				.awkTest("gsub replaces dollar zero")
+				.script("{ gsub(/[b-c]/, \"_$0_\"); print $0; }")
+				.stdin("a b c d e")
+				.expect("a _$0_ _$0_ d e\n")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testMultiDimensionalArrayWithSubsep() throws Exception {
-		assertEquals("42\n", runAwk("BEGIN { SUBSEP=\"@\"; a[1,2]=42; print a[1 SUBSEP 2]; }", null));
+		AwkTestSupport
+				.awkTest("multi-dimensional array with subsep")
+				.script("BEGIN { SUBSEP=\"@\"; a[1,2]=42; print a[1 SUBSEP 2]; }")
+				.expect("42\n")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testSubsepChangeAfterIndexCreation() throws Exception {
-		assertEquals(
-				"42\n\n",
-				runAwk("BEGIN { SUBSEP=\"@\"; idx = 1 SUBSEP 2; a[idx]=42; SUBSEP=\":\"; print a[idx]; print a[1,2]; }", null));
+		AwkTestSupport
+				.awkTest("subsep change after index creation")
+				.script("BEGIN { SUBSEP=\"@\"; idx = 1 SUBSEP 2; a[idx]=42; SUBSEP=\":\"; print a[idx]; print a[1,2]; }")
+				.expect("42\n\n")
+				.runAndAssert();
 	}
 
 	@Test
 	public void testGetlineDefaultVariable() throws Exception {
 		String script = "BEGIN { while (getline && n++ < 2) print; exit }";
-		assertEquals("a\nb\n", runAwk(script, "a\nb\nc\n"));
+		AwkTestSupport
+				.awkTest("getline default variable")
+				.script(script)
+				.stdin("a\nb\nc\n")
+				.expect("a\nb\n")
+				.runAndAssert();
 	}
 
 	@Test
