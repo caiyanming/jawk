@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.StringReader;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -212,6 +213,23 @@ public final class AwkTestSupport {
 		public B script(String script) {
 			this.script = script;
 			return (B) this;
+		}
+
+		@SuppressWarnings("unchecked")
+		public B script(InputStream scriptStream) {
+			if (scriptStream == null) {
+				throw new IllegalArgumentException("scriptStream must not be null");
+			}
+			try (InputStream in = scriptStream; ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+				byte[] buffer = new byte[8192];
+				int read;
+				while ((read = in.read(buffer)) != -1) {
+					out.write(buffer, 0, read);
+				}
+				return script(new String(out.toByteArray(), StandardCharsets.UTF_8));
+			} catch (IOException ex) {
+				throw new UncheckedIOException("Failed to read script stream", ex);
+			}
 		}
 
 		@SuppressWarnings("unchecked")
