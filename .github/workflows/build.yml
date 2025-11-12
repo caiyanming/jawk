@@ -15,11 +15,21 @@ on:
         description: Open SSH session in the runner
         required: false
         default: false
-        
+
 jobs:
   build:
+    name: Build on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
     uses: metricshub/workflows/.github/workflows/maven-build.yml@v4
     with:
+      mavenPhases: "verify site"
       jdkVersion: "17"
       debug: ${{ github.event_name == 'workflow_dispatch' && inputs.debug }}
       ssh: ${{ github.event_name == 'workflow_dispatch' && inputs.ssh }}
+    secrets: inherit
