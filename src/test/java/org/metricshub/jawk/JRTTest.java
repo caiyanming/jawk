@@ -2,16 +2,26 @@ package org.metricshub.jawk;
 
 import static org.junit.Assert.*;
 
-import org.junit.Test;
-import org.junit.Assume;
-import org.metricshub.jawk.intermediate.UninitializedObject;
 import java.util.Locale;
+import org.junit.Assume;
+import org.junit.Test;
+import org.metricshub.jawk.intermediate.UninitializedObject;
 import org.metricshub.jawk.jrt.AssocArray;
 import org.metricshub.jawk.jrt.JRT;
 
 public class JRTTest {
 
 	private static final boolean IS_WINDOWS = System.getProperty("os.name").contains("Windows");
+
+	private static String runAwk(String script, String input) throws Exception {
+		AwkTestSupport.AwkTestBuilder builder = AwkTestSupport
+				.awkTest("JRTTest" + script.hashCode())
+				.script(script);
+		if (input != null) {
+			builder.stdin(input);
+		}
+		return builder.build().run().output();
+	}
 
 	@Test
 	public void testToDouble() {
@@ -111,40 +121,34 @@ public class JRTTest {
 	@Test
 	public void testSpawnProcessCat() throws Exception {
 		Assume.assumeFalse(IS_WINDOWS);
-		String result = AwkTestHelper.runAwk("BEGIN { print \"Hello\" | \"cat\"; close(\"cat\") }", null);
+		String result = runAwk("BEGIN { print \"Hello\" | \"cat\"; close(\"cat\") }", null);
 		assertEquals("Hello\n", result);
 	}
 
 	@Test
 	public void testSpawnProcessMore() throws Exception {
 		Assume.assumeTrue(IS_WINDOWS);
-		String result = AwkTestHelper.runAwk("BEGIN { print \"Hello\" | \"more\"; close(\"more\") }", null);
+		String result = runAwk("BEGIN { print \"Hello\" | \"more\"; close(\"more\") }", null);
 		assertEquals("Hello\r\n\r\n", result);
 	}
 
 	@Test
 	public void testSystemPipe() throws Exception {
 		Assume.assumeFalse(IS_WINDOWS);
-		String result = AwkTestHelper
-				.runAwk(
-						"BEGIN { print(system(\"echo test | grep test\")) }",
-						null);
+		String result = runAwk("BEGIN { print(system(\"echo test | grep test\")) }", null);
 		assertEquals("test\n0\n", result);
 	}
 
 	@Test
 	public void testSystemPipeWindows() throws Exception {
 		Assume.assumeTrue(IS_WINDOWS);
-		String result = AwkTestHelper
-				.runAwk(
-						"BEGIN { print(system(\"echo test|findstr test\")) }",
-						null);
+		String result = runAwk("BEGIN { print(system(\"echo test|findstr test\")) }", null);
 		assertEquals("test\r\n0\n", result);
 	}
 
 	@Test
 	public void testPrintfSpecialCharacters() throws Exception {
-		String result = AwkTestHelper.runAwk("BEGIN { printf \"%c\\n\", 17379 }", null);
+		String result = runAwk("BEGIN { printf \"%c\\n\", 17379 }", null);
 		assertEquals("\u43e3\n", result);
 	}
 
@@ -168,10 +172,7 @@ public class JRTTest {
 
 	@Test
 	public void testRegexFsKeepsLeadingAndTrailingSeparators() throws Exception {
-		String result = AwkTestHelper
-				.runAwk(
-						"BEGIN { FS = \"[ \\t\\n]+\" } { print $2 }",
-						"  a  b  c  d ");
+		String result = runAwk("BEGIN { FS = \"[ \\t\\n]+\" } { print $2 }", "  a  b  c  d ");
 		assertEquals("a\n", result);
 	}
 }

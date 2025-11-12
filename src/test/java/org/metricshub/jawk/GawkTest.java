@@ -5,6 +5,8 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -94,16 +96,22 @@ public class GawkTest {
 				.filter(File::isFile)
 				.collect(Collectors.toList());
 
-		String result;
 		try {
-			result = AwkTestHelper.runAwk(awkFile, inputFileList, true);
-			String expectedResult = AwkTestHelper.readTextFile(okFile);
-			if (expectedResult != null && expectedResult.equals(result)) {
+			AwkTestSupport.CliTestBuilder builder = AwkTestSupport
+					.cliTest("GAWK " + shortName)
+					.argument("-f", awkFile.getAbsolutePath())
+					.withTempDir();
+			for (File input : inputFileList) {
+				builder.operand(input.getAbsolutePath());
+			}
+			AwkTestSupport.TestResult result = builder.build().run();
+			String expectedResult = new String(Files.readAllBytes(okFile.toPath()), StandardCharsets.UTF_8);
+			if (expectedResult != null && expectedResult.equals(result.output())) {
 				System.out.println("Success");
 				successCount.incrementAndGet();
 			} else {
 				System.out.println("FAILED");
-				System.err.printf("Test %s expected:\n<%s>\nbut was:\n<%s>\n", shortName, expectedResult, result);
+				System.err.printf("Test %s expected:\n<%s>\nbut was:\n<%s>\n", shortName, expectedResult, result.output());
 			}
 		} catch (Exception e) {
 			System.out.println("FAILED");

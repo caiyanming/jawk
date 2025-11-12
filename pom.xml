@@ -162,26 +162,27 @@
 			<!-- surefire -->
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<configuration>
-					<excludes>
-						<exclude>**/*GawkTest.java</exclude>
-						<exclude>**/BwkTTest.java</exclude>
-						<exclude>**/BwkMiscTest.java</exclude>
-					</excludes>
-					<workingDirectory>${project.build.directory}/surefire-workingdir</workingDirectory>
-				</configuration>
+                                <configuration>
+                                        <excludes>
+                                                <exclude>**/*GawkTest.java</exclude>
+                                                <exclude>**/BwkPTest.java</exclude>
+                                                <exclude>**/BwkTTest.java</exclude>
+                                                <exclude>**/BwkMiscTest.java</exclude>
+                                        </excludes>
+                                        <workingDirectory>${project.build.directory}/surefire-workingdir</workingDirectory>
+                                </configuration>
 			</plugin>
 
 			<!-- failsafe for compatibility tests -->
 			<plugin>
 				<artifactId>maven-failsafe-plugin</artifactId>
 				<configuration>
-					<includes>
-						<include>**/BwkPTest.java</include>
-						<include>**/BwkTTest.java</include>
-						<include>**/BwkMiscTest.java</include>
-						<!--include>**/GawkTest.java</include-->
-					</includes>
+                                        <includes>
+                                                <include>**/BwkPTest.java</include>
+                                                <include>**/BwkTTest.java</include>
+                                                <include>**/BwkMiscTest.java</include>
+                                                <include>**/GawkTest.java</include>
+                                        </includes>
 					<testFailureIgnore>true</testFailureIgnore>
 					<workingDirectory>${project.build.directory}/failsafe-workingdir</workingDirectory>
 				</configuration>

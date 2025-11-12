@@ -5,6 +5,8 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import org.junit.AfterClass;
@@ -85,21 +87,26 @@ public class BwkTTest {
 		// Get the input file (always the same)
 		File inputFile = new File(bwkTDirectory, "inputs/test.data");
 
-		AwkTestHelper.RunResult rr = AwkTestHelper.runAwkWithExitCode(awkFile, inputFile);
-		String expectedResult = AwkTestHelper.readTextFile(okFile);
+		AwkTestSupport.TestResult result = AwkTestSupport
+				.cliTest("BWK.t " + awkName)
+				.argument("-f", awkFile.getAbsolutePath())
+				.operand(inputFile.getAbsolutePath())
+				.build()
+				.run();
+		String expectedResult = new String(Files.readAllBytes(okFile.toPath()), StandardCharsets.UTF_8);
 
 		// For BWK t tests, we won't take into account \r end of lines
-		rr.output = rr.output.replace("\r", "");
+		String output = result.output().replace("\r", "");
 
 		// Special case: certain tests loop through a map, which cannot be expected to be sorted
 		// the same way between C and Java. So we sort the result manually.
 		if ("t.in2".equals(awkName) || "t.intest2".equals(awkName)) {
-			rr.output = Arrays.stream(rr.output.split("\\R")).sorted().collect(Collectors.joining("\n"));
+			output = Arrays.stream(output.split("\\R")).sorted().collect(Collectors.joining("\n"));
 			expectedResult = Arrays.stream(expectedResult.split("\\R")).sorted().collect(Collectors.joining("\n"));
 		}
 
 		// Output must now equal the expected result
-		assertEquals(expectedResult, rr.output);
+		assertEquals(expectedResult, output);
 
 		int expectedCode = 0;
 		if ("t.exit".equals(awkName)) {
@@ -107,7 +114,7 @@ public class BwkTTest {
 		} else if ("t.exit1".equals(awkName)) {
 			expectedCode = 2;
 		}
-		assertEquals("Unexpected exit code for " + awkName, expectedCode, rr.exitCode);
+		assertEquals("Unexpected exit code for " + awkName, expectedCode, result.exitCode());
 	}
 
 	/**
