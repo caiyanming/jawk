@@ -15,12 +15,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.util.AwkSettings;
 import org.metricshub.jawk.util.ScriptSource;
 
@@ -178,6 +180,8 @@ public final class AwkTestSupport {
 
 	public static final class AwkTestBuilder extends BaseTestBuilder<AwkTestBuilder> {
 		private final Map<String, Object> preAssignments = new LinkedHashMap<>();
+		private Awk customAwk;
+		private final List<JawkExtension> extensions = new ArrayList<>();
 
 		private AwkTestBuilder(String description) {
 			super(description);
@@ -185,6 +189,28 @@ public final class AwkTestSupport {
 
 		public AwkTestBuilder preassign(String name, Object value) {
 			preAssignments.put(name, value);
+			return this;
+		}
+
+		public AwkTestBuilder withAwk(Awk awkEngine) {
+			if (awkEngine == null) {
+				throw new IllegalArgumentException("Awk instance must not be null");
+			}
+			this.customAwk = awkEngine;
+			return this;
+		}
+
+		public AwkTestBuilder withExtensions(JawkExtension... extensionsParam) {
+			if (extensionsParam != null) {
+				extensions.addAll(Arrays.asList(extensionsParam));
+			}
+			return this;
+		}
+
+		public AwkTestBuilder withExtensions(Collection<? extends JawkExtension> extensionsParam) {
+			if (extensionsParam != null) {
+				extensions.addAll(extensionsParam);
+			}
 			return this;
 		}
 
@@ -197,7 +223,15 @@ public final class AwkTestSupport {
 			if (useTempDir && !preAssignments.containsKey("TEMPDIR")) {
 				preAssignments.put("TEMPDIR", SHARED_TEMP_DIR.toString());
 			}
-			return new AwkTestCase(layout, files, operands, placeholders, requiresPosix, preAssignments);
+			return new AwkTestCase(
+					layout,
+					files,
+					operands,
+					placeholders,
+					requiresPosix,
+					preAssignments,
+					customAwk,
+					extensions);
 		}
 	}
 
@@ -481,6 +515,8 @@ public final class AwkTestSupport {
 
 	private static final class AwkTestCase extends BaseTestCase {
 		private final Map<String, Object> preAssignments;
+		private final Awk customAwk;
+		private final List<JawkExtension> extensions;
 
 		AwkTestCase(
 				TestLayout layout,
@@ -488,9 +524,13 @@ public final class AwkTestSupport {
 				List<String> operandSpecs,
 				List<String> pathPlaceholders,
 				boolean requiresPosix,
-				Map<String, Object> preAssignments) {
+				Map<String, Object> preAssignments,
+				Awk customAwk,
+				List<JawkExtension> extensions) {
 			super(layout, fileContents, operandSpecs, pathPlaceholders, requiresPosix);
 			this.preAssignments = new LinkedHashMap<>(preAssignments);
+			this.customAwk = customAwk;
+			this.extensions = new ArrayList<>(extensions);
 		}
 
 		@Override
@@ -510,7 +550,14 @@ public final class AwkTestSupport {
 			for (String operand : resolvedOperands(env)) {
 				settings.addNameValueOrFileName(operand);
 			}
-			Awk awk = new Awk();
+			Awk awk;
+			if (customAwk != null) {
+				awk = customAwk;
+			} else if (!extensions.isEmpty()) {
+				awk = new Awk(extensions);
+			} else {
+				awk = new Awk();
+			}
 			int exitCode = 0;
 			try {
 				String resolvedScript = resolvedScript(env);
