@@ -20,6 +20,11 @@ Whenever required, when you add code or when you modify code that is not covered
 
 Compatibility tests are run with `mvn verify` to assess the compatibility with other implementations of AWK. These tests are run with the Maven failsafe plugin and results are stored in the ./target/failsafe-reports directory.
 
+All new or updated unit tests must use the helper methods in
+`org.metricshub.jawk.AwkTestSupport`. The builders in that class encapsulate the
+correct Jawk setup, assertion flow, and temporary file handling, so reusing
+them keeps the test suite consistent and reliable.
+
 ## Code quality reports
 
 Code quality checks are performed during the build with `mvn verify` (checkstyle, pmd, and spotbugs). Always build the project with `mvn verify` and fix any problem reported in ./target/checkstyle-result.xml, ./target/pmd.xml, and ./target/spotbugsXml.xml before committing and submitting your code!

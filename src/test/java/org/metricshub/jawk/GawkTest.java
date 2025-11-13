@@ -9,10 +9,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,12 +26,6 @@ import org.junit.runners.Parameterized.Parameters;
  */
 @RunWith(Parameterized.class)
 public class GawkTest {
-
-	/** Counter of executed tests */
-	private static AtomicInteger testCount = new AtomicInteger(0);
-
-	/** Counter of the tests that succeeded */
-	private static AtomicInteger successCount = new AtomicInteger(0);
 
 	/**
 	 * Initialization of the tests (create a temporary directory for some of the scripts)
@@ -82,11 +74,11 @@ public class GawkTest {
 		File awkFile = new File(awkPath);
 		String shortName = awkFile.getName().substring(0, awkFile.getName().length() - 4);
 		File parent = awkFile.getParentFile();
-		System.out.printf("Testing Jawk against gawk with %-15s:", shortName);
-		testCount.incrementAndGet();
-
 		// Get the file with the expected result
 		File okFile = new File(parent, shortName + ".ok");
+
+		// Load the file with the expected result
+		String expectedResult = loadExpectedResult(okFile);
 
 		// Get the list of input files (usually *.in, but could be *.in1, *.in2, etc.)
 		List<File> inputFileList = IntStream
@@ -96,44 +88,24 @@ public class GawkTest {
 				.filter(File::isFile)
 				.collect(Collectors.toList());
 
-		try {
-			AwkTestSupport.CliTestBuilder builder = AwkTestSupport
-					.cliTest("GAWK " + shortName)
-					.argument("-f", awkFile.getAbsolutePath())
-					.withTempDir();
-			for (File input : inputFileList) {
-				builder.operand(input.getAbsolutePath());
-			}
-			AwkTestSupport.TestResult result = builder.build().run();
-			String expectedResult = new String(Files.readAllBytes(okFile.toPath()), StandardCharsets.UTF_8);
-			if (expectedResult != null && expectedResult.equals(result.output())) {
-				System.out.println("Success");
-				successCount.incrementAndGet();
-			} else {
-				System.out.println("FAILED");
-				System.err.printf("Test %s expected:\n<%s>\nbut was:\n<%s>\n", shortName, expectedResult, result.output());
-			}
-		} catch (Exception e) {
-			System.out.println("FAILED");
-			System.err.printf("Test %s threw %s: %s\n", shortName, e.getClass().getSimpleName(), e.getMessage());
+		AwkTestSupport.CliTestBuilder builder = AwkTestSupport
+				.cliTest("GAWK " + shortName)
+				.argument("-f", awkFile.getAbsolutePath())
+				.withTempDir()
+				.expect(expectedResult);
+		for (File input : inputFileList) {
+			builder.operand(input.getAbsolutePath());
 		}
+		builder.build().run().assertExpected();
 	}
 
-	/**
-	 * Initialization of the tests (create a temporary directory for some of the scripts)
-	 *
-	 * @throws Exception
-	 */
-	@AfterClass
-	public static void afterAll() throws Exception {
-		double successPercentage = ((double) successCount.get() / (double) testCount.get()) * 100d;
-
-		System.out
-				.printf(
-						"\n========\nTEST RESULTS: Jawk compliant with gawk on %d/%d tests (%.1f%%)\n========\n",
-						successCount.get(),
-						testCount.get(),
-						successPercentage);
-		assertTrue("Jawk vs Gawk success rate must be > 19.8%", successPercentage > 19.8);
+	private static String loadExpectedResult(File okFile) throws IOException {
+		String expectedResult = new String(Files.readAllBytes(okFile.toPath()), StandardCharsets.UTF_8);
+		return normalizeExpectedResult(expectedResult);
 	}
+
+	private static String normalizeExpectedResult(String expectedResult) {
+		return expectedResult.replace("\r\n", "\n");
+	}
+
 }

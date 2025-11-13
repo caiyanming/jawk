@@ -15,12 +15,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.metricshub.jawk.ext.JawkExtension;
 import org.metricshub.jawk.util.AwkSettings;
 import org.metricshub.jawk.util.ScriptSource;
 
@@ -29,7 +32,9 @@ import org.metricshub.jawk.util.ScriptSource;
  * logic that was historically duplicated across different test suites, so that
  * all tests share the same approach for managing temporary files, providing
  * input, and capturing the results of either {@link Awk} or {@link Cli}
- * executions.
+ * executions. The class exposes fluent builders ({@link #awkTest(String)} and
+ * {@link #cliTest(String)}) that let tests describe their scripts, inputs, and
+ * expectations declaratively before executing or asserting the results.
  */
 public final class AwkTestSupport {
 
@@ -51,36 +56,93 @@ public final class AwkTestSupport {
 
 	private AwkTestSupport() {}
 
+	/**
+	 * Creates a builder for a unit test that exercises the {@link Awk} API directly.
+	 * The returned builder can be configured with scripts, inputs, operands, and
+	 * expectations before executing the test.
+	 *
+	 * @param description human readable description used in assertion messages
+	 * @return a builder configured with the provided description
+	 */
 	public static AwkTestBuilder awkTest(String description) {
 		return new AwkTestBuilder(description);
 	}
 
+	/**
+	 * Creates a builder for a unit test that exercises the {@link Cli} entry
+	 * point. The builder records all inputs and expectations before invoking the
+	 * CLI.
+	 *
+	 * @param description human readable description used in assertion messages
+	 * @return a builder configured with the provided description
+	 */
 	public static CliTestBuilder cliTest(String description) {
 		return new CliTestBuilder(description);
 	}
 
+	/**
+	 * Returns the shared temporary directory that builders use when a test opts
+	 * into creating temporary files. Tests can reference this value directly when
+	 * they need deterministic paths outside the per-test sandbox.
+	 *
+	 * @return the lazily created shared temporary directory
+	 */
 	public static Path sharedTempDirectory() {
 		return SHARED_TEMP_DIR;
 	}
 
+	/**
+	 * Represents a fully configured test case produced by one of the builders.
+	 * Implementations know how to prepare the execution environment, run the
+	 * script, and assert expectations.
+	 */
 	public interface ConfiguredTest {
+		/**
+		 * Provides a human readable description that is included in assertion
+		 * messages.
+		 *
+		 * @return the description defined by the builder
+		 */
 		String description();
 
+		/**
+		 * Skips the test when the current environment cannot satisfy the test
+		 * prerequisites (for instance POSIX specific behaviour).
+		 */
 		void assumeSupported();
 
+		/**
+		 * Executes the configured test case and returns the captured result
+		 * without asserting it.
+		 *
+		 * @return the captured output, exit code, and expected values
+		 * @throws Exception when executing the test fails unexpectedly
+		 */
 		TestResult run() throws Exception;
 
+		/**
+		 * Executes the configured test case and immediately asserts that the
+		 * observed result matches the configured expectations.
+		 *
+		 * @throws Exception when executing the test fails unexpectedly
+		 */
 		default void runAndAssert() throws Exception {
 			assumeSupported();
 			run().assertExpected();
 		}
 	}
 
+	/**
+	 * Captures the outcome of executing a configured test including the raw
+	 * output, exit code, and any expectations configured on the builder. Instances
+	 * can assert the recorded values against expectations.
+	 */
 	public static final class TestResult {
 		private final String description;
 		private final String output;
 		private final int exitCode;
 		private final String expectedOutput;
+		private final List<String> expectedLines;
 		private final Integer expectedExitCode;
 		private final Class<? extends Throwable> expectedException;
 		private final Throwable thrownException;
@@ -90,6 +152,7 @@ public final class AwkTestSupport {
 				String output,
 				int exitCode,
 				String expectedOutput,
+				List<String> expectedLines,
 				Integer expectedExitCode,
 				Class<? extends Throwable> expectedException,
 				Throwable thrownException) {
@@ -97,37 +160,56 @@ public final class AwkTestSupport {
 			this.output = output;
 			this.exitCode = exitCode;
 			this.expectedOutput = expectedOutput;
+			this.expectedLines = expectedLines != null ? Collections.unmodifiableList(new ArrayList<>(expectedLines)) : null;
 			this.expectedExitCode = expectedExitCode;
 			this.expectedException = expectedException;
 			this.thrownException = thrownException;
 		}
 
+		/**
+		 * Returns the description that was supplied when the test was defined.
+		 *
+		 * @return the human readable description
+		 */
 		public String description() {
 			return description;
 		}
 
+		/**
+		 * Returns the captured stdout of the test execution.
+		 *
+		 * @return the captured output as a UTF-8 string
+		 */
 		public String output() {
 			return output;
 		}
 
+		/**
+		 * Returns the exit code reported by the execution.
+		 *
+		 * @return the exit code observed at runtime
+		 */
 		public int exitCode() {
 			return exitCode;
 		}
 
+		/**
+		 * Returns the captured output split into individual lines. Trailing
+		 * newline characters are ignored and Windows style line endings are
+		 * normalised.
+		 *
+		 * @return the output split into lines, or an empty array when no output
+		 *         was produced
+		 */
 		public String[] lines() {
-			if (output.isEmpty()) {
-				return new String[0];
-			}
-			String trimmed = output.endsWith("\n") ? output.substring(0, output.length() - 1) : output;
-			String[] pieces = trimmed.split("\n", -1);
-			for (int i = 0; i < pieces.length; ++i) {
-				if (pieces[i].endsWith("\r")) {
-					pieces[i] = pieces[i].substring(0, pieces[i].length() - 1);
-				}
-			}
-			return pieces;
+			List<String> normalized = normalizeOutputLines(output);
+			return normalized.toArray(new String[0]);
 		}
 
+		/**
+		 * Verifies that the captured output, exit code, or thrown exception match
+		 * the expectations defined in the builder.
+		 */
 		public void assertExpected() {
 			if (expectedException != null) {
 				if (thrownException == null) {
@@ -149,7 +231,10 @@ public final class AwkTestSupport {
 				}
 				return;
 			}
-			if (expectedOutput != null) {
+			if (expectedLines != null) {
+				List<String> actualLines = normalizeOutputLines(output);
+				assertEquals("Unexpected output for " + description, expectedLines, actualLines);
+			} else if (expectedOutput != null) {
 				assertEquals("Unexpected output for " + description, expectedOutput, output);
 			}
 			if (expectedExitCode != null) {
@@ -159,32 +244,129 @@ public final class AwkTestSupport {
 			}
 		}
 
+		private static List<String> normalizeOutputLines(String output) {
+			if (output.isEmpty()) {
+				return Collections.emptyList();
+			}
+			String normalized = output.replace("\r\n", "\n").replace("\r", "\n");
+			if (normalized.endsWith("\n")) {
+				normalized = normalized.substring(0, normalized.length() - 1);
+			}
+			if (normalized.isEmpty()) {
+				return Collections.singletonList("");
+			}
+			return Arrays.asList(normalized.split("\n", -1));
+		}
+
+		/**
+		 * Returns the expected output configured on the builder.
+		 *
+		 * @return the expected output or {@code null} when no expectation was set
+		 */
 		public String expectedOutput() {
 			return expectedOutput;
 		}
 
+		/**
+		 * Returns the expected exit code configured on the builder.
+		 *
+		 * @return the expected exit code or {@code null} when the default of zero
+		 *         should be asserted
+		 */
 		public Integer expectedExitCode() {
 			return expectedExitCode;
 		}
 
+		/**
+		 * Returns the exception that was thrown while executing the test.
+		 *
+		 * @return the thrown exception or {@code null} when execution completed
+		 *         normally
+		 */
 		public Throwable thrownException() {
 			return thrownException;
 		}
 
+		/**
+		 * Returns the exception type that was expected during execution.
+		 *
+		 * @return the expected exception type or {@code null} when no exception
+		 *         was expected
+		 */
 		public Class<? extends Throwable> expectedException() {
 			return expectedException;
 		}
 	}
 
+	/**
+	 * Fluent builder for tests that execute {@link Awk} directly. The builder
+	 * exposes helpers to preassign variables, provide extensions, and otherwise
+	 * mirror the runtime configuration used when embedding Jawk.
+	 */
 	public static final class AwkTestBuilder extends BaseTestBuilder<AwkTestBuilder> {
 		private final Map<String, Object> preAssignments = new LinkedHashMap<>();
+		private Awk customAwk;
+		private final List<JawkExtension> extensions = new ArrayList<>();
 
 		private AwkTestBuilder(String description) {
 			super(description);
 		}
 
+		/**
+		 * Registers a value to pre-assign to a variable before the script is
+		 * executed.
+		 *
+		 * @param name the variable name
+		 * @param value the value to expose to the script
+		 * @return this builder for method chaining
+		 */
 		public AwkTestBuilder preassign(String name, Object value) {
 			preAssignments.put(name, value);
+			return this;
+		}
+
+		/**
+		 * Supplies an {@link Awk} instance to use when invoking the script.
+		 *
+		 * @param awkEngine the engine to execute the script with
+		 * @return this builder for method chaining
+		 * @throws IllegalArgumentException when {@code awkEngine} is {@code null}
+		 */
+		public AwkTestBuilder withAwk(Awk awkEngine) {
+			if (awkEngine == null) {
+				throw new IllegalArgumentException("Awk instance must not be null");
+			}
+			this.customAwk = awkEngine;
+			return this;
+		}
+
+		/**
+		 * Adds extensions that will be loaded when creating the {@link Awk}
+		 * instance used by this test.
+		 *
+		 * @param extensionsParam the extensions to enable, ignored when
+		 *        {@code null}
+		 * @return this builder for method chaining
+		 */
+		public AwkTestBuilder withExtensions(JawkExtension... extensionsParam) {
+			if (extensionsParam != null) {
+				extensions.addAll(Arrays.asList(extensionsParam));
+			}
+			return this;
+		}
+
+		/**
+		 * Adds extensions that will be loaded when creating the {@link Awk}
+		 * instance used by this test.
+		 *
+		 * @param extensionsParam the extensions to enable, ignored when
+		 *        {@code null}
+		 * @return this builder for method chaining
+		 */
+		public AwkTestBuilder withExtensions(Collection<? extends JawkExtension> extensionsParam) {
+			if (extensionsParam != null) {
+				extensions.addAll(extensionsParam);
+			}
 			return this;
 		}
 
@@ -197,10 +379,23 @@ public final class AwkTestSupport {
 			if (useTempDir && !preAssignments.containsKey("TEMPDIR")) {
 				preAssignments.put("TEMPDIR", SHARED_TEMP_DIR.toString());
 			}
-			return new AwkTestCase(layout, files, operands, placeholders, requiresPosix, preAssignments);
+			return new AwkTestCase(
+					layout,
+					files,
+					operands,
+					placeholders,
+					requiresPosix,
+					preAssignments,
+					customAwk,
+					extensions);
 		}
 	}
 
+	/**
+	 * Fluent builder for tests that exercise the {@link Cli} entry point. The
+	 * builder takes care of wiring command-line arguments, assignments, and
+	 * expectations before invoking the CLI.
+	 */
 	public static final class CliTestBuilder extends BaseTestBuilder<CliTestBuilder> {
 		private final List<String> argumentSpecs = new ArrayList<>();
 		private final Map<String, Object> assignments = new LinkedHashMap<>();
@@ -209,11 +404,26 @@ public final class AwkTestSupport {
 			super(description);
 		}
 
+		/**
+		 * Adds raw command-line arguments to supply to the CLI when the test is
+		 * executed. Path placeholders are resolved at runtime.
+		 *
+		 * @param args the arguments to add
+		 * @return this builder for method chaining
+		 */
 		public CliTestBuilder argument(String... args) {
 			argumentSpecs.addAll(Arrays.asList(args));
 			return this;
 		}
 
+		/**
+		 * Preassigns a variable using {@code -v} style CLI options before
+		 * executing the script.
+		 *
+		 * @param name the variable name
+		 * @param value the value to expose to the script
+		 * @return this builder for method chaining
+		 */
 		public CliTestBuilder preassign(String name, Object value) {
 			assignments.put(name, value);
 			return this;
@@ -232,6 +442,13 @@ public final class AwkTestSupport {
 		}
 	}
 
+	/**
+	 * Shared implementation for the fluent builders exposed by
+	 * {@link AwkTestSupport}. Subclasses specialise the execution behaviour while
+	 * reusing the configuration helpers defined here.
+	 *
+	 * @param <B> the builder type used for fluent chaining
+	 */
 	private abstract static class BaseTestBuilder<B extends BaseTestBuilder<B>> {
 		protected final String description;
 		protected String script;
@@ -240,6 +457,7 @@ public final class AwkTestSupport {
 		protected final List<String> operandSpecs = new ArrayList<>();
 		protected final List<String> pathPlaceholders = new ArrayList<>();
 		protected String expectedOutput;
+		protected List<String> expectedLines;
 		protected Integer expectedExitCode;
 		protected Class<? extends Throwable> expectedException;
 		protected boolean requiresPosix;
@@ -249,12 +467,29 @@ public final class AwkTestSupport {
 			this.description = description;
 		}
 
+		/**
+		 * Sets the AWK script to execute using a raw {@link String}. Any
+		 * placeholder tokens in the script are resolved before execution.
+		 *
+		 * @param script the script contents
+		 * @return this builder for method chaining
+		 */
 		@SuppressWarnings("unchecked")
 		public B script(String script) {
 			this.script = script;
 			return (B) this;
 		}
 
+		/**
+		 * Sets the AWK script to execute using a stream. The contents are read as
+		 * UTF-8 and treated equivalently to {@link #script(String)}.
+		 *
+		 * @param scriptStream the stream supplying the script contents
+		 * @return this builder for method chaining
+		 * @throws IllegalArgumentException when {@code scriptStream} is
+		 *         {@code null}
+		 * @throws UncheckedIOException when the stream cannot be read
+		 */
 		@SuppressWarnings("unchecked")
 		public B script(InputStream scriptStream) {
 			if (scriptStream == null) {
@@ -272,76 +507,150 @@ public final class AwkTestSupport {
 			}
 		}
 
+		/**
+		 * Provides data that will be delivered on standard input when the script
+		 * runs.
+		 *
+		 * @param stdin the content to stream into standard input
+		 * @return this builder for method chaining
+		 */
 		@SuppressWarnings("unchecked")
 		public B stdin(String stdin) {
 			this.stdin = stdin;
 			return (B) this;
 		}
 
+		/**
+		 * Adds a temporary file to create before the script runs. The file is
+		 * written inside the per-test temporary directory and can be referenced
+		 * with {@code {{name}}} placeholders.
+		 *
+		 * @param name the relative path within the temporary directory
+		 * @param contents the file contents to write as UTF-8
+		 * @return this builder for method chaining
+		 */
 		@SuppressWarnings("unchecked")
 		public B file(String name, String contents) {
 			fileContents.put(name, contents);
 			return (B) this;
 		}
 
+		/**
+		 * Adds operands to pass to the script when it is executed. Placeholders
+		 * are resolved at runtime.
+		 *
+		 * @param operands the operands to add
+		 * @return this builder for method chaining
+		 */
 		@SuppressWarnings("unchecked")
 		public B operand(String... operands) {
 			operandSpecs.addAll(Arrays.asList(operands));
 			return (B) this;
 		}
 
+		/**
+		 * Reserves an empty path inside the temporary directory and exposes its
+		 * location via a placeholder.
+		 *
+		 * @param placeholder the placeholder identifier to resolve in scripts or
+		 *        inputs
+		 * @return this builder for method chaining
+		 */
 		@SuppressWarnings("unchecked")
 		public B path(String placeholder) {
 			pathPlaceholders.add(placeholder);
 			return (B) this;
 		}
 
+		/**
+		 * Declares the exact output expected from the script.
+		 *
+		 * @param expected the expected output
+		 * @return this builder for method chaining
+		 */
 		@SuppressWarnings("unchecked")
 		public B expect(String expected) {
 			this.expectedOutput = expected;
+			this.expectedLines = null;
 			return (B) this;
 		}
 
+		/**
+		 * Declares the expected output using individual lines. A trailing newline
+		 * is automatically appended when at least one line is supplied.
+		 *
+		 * @param lines the expected output lines
+		 * @return this builder for method chaining
+		 */
 		@SuppressWarnings("unchecked")
 		public B expectLines(String... lines) {
-			if (lines.length == 0) {
-				this.expectedOutput = "";
-			} else {
-				this.expectedOutput = Arrays.stream(lines).collect(Collectors.joining("\n", "", "\n"));
-			}
+			this.expectedLines = new ArrayList<>(Arrays.asList(Arrays.copyOf(lines, lines.length)));
+			this.expectedOutput = null;
 			return (B) this;
 		}
 
+		/**
+		 * Declares the expected exit code for the execution.
+		 *
+		 * @param code the exit code to expect
+		 * @return this builder for method chaining
+		 */
 		@SuppressWarnings("unchecked")
 		public B expectExit(int code) {
 			this.expectedExitCode = code;
 			return (B) this;
 		}
 
+		/**
+		 * Declares the exception type that the script is expected to throw.
+		 *
+		 * @param exceptionClass the expected exception type
+		 * @return this builder for method chaining
+		 */
 		@SuppressWarnings("unchecked")
 		public B expectThrow(Class<? extends Throwable> exceptionClass) {
 			this.expectedException = exceptionClass;
 			return (B) this;
 		}
 
+		/**
+		 * Marks the test as requiring POSIX behaviour. The test is skipped when
+		 * running on a non-POSIX platform.
+		 *
+		 * @return this builder for method chaining
+		 */
 		@SuppressWarnings("unchecked")
 		public B posixOnly() {
 			this.requiresPosix = true;
 			return (B) this;
 		}
 
+		/**
+		 * Indicates that the test expects a dedicated temporary directory. The
+		 * directory path can be referenced using the {@code {{TEMPDIR}}}
+		 * placeholder.
+		 *
+		 * @return this builder for method chaining
+		 */
 		@SuppressWarnings("unchecked")
 		public B withTempDir() {
 			this.useTempDir = true;
 			return (B) this;
 		}
 
+		/**
+		 * Produces an immutable {@link ConfiguredTest} based on the recorded
+		 * configuration.
+		 *
+		 * @return a configured test ready for execution
+		 */
 		public ConfiguredTest build() {
 			TestLayout layout = new TestLayout(
 					description,
 					script,
 					stdin,
 					expectedOutput,
+					expectedLines,
 					expectedExitCode,
 					expectedException);
 			Map<String, String> files = new LinkedHashMap<>(fileContents);
@@ -350,10 +659,23 @@ public final class AwkTestSupport {
 			return buildTestCase(layout, files, operands, placeholders);
 		}
 
+		/**
+		 * Executes the configured test and returns the captured result without
+		 * asserting it.
+		 *
+		 * @return the captured result
+		 * @throws Exception when execution fails unexpectedly
+		 */
 		public TestResult run() throws Exception {
 			return build().run();
 		}
 
+		/**
+		 * Executes the configured test and immediately asserts the recorded
+		 * expectations.
+		 *
+		 * @throws Exception when execution fails unexpectedly
+		 */
 		public void runAndAssert() throws Exception {
 			build().runAndAssert();
 		}
@@ -411,12 +733,21 @@ public final class AwkTestSupport {
 		private TestResult executeAndCapture(ExecutionEnvironment env) throws Exception {
 			try {
 				ActualResult result = execute(env);
+				String actualOutput = result.output;
 				String expected = layout.expectedOutput != null ? env.resolve(layout.expectedOutput) : null;
+				List<String> expectedLines = null;
+				if (layout.expectedLines != null) {
+					expectedLines = new ArrayList<>(layout.expectedLines.size());
+					for (String line : layout.expectedLines) {
+						expectedLines.add(env.resolve(line));
+					}
+				}
 				return new TestResult(
 						layout.description,
-						result.output,
+						actualOutput,
 						result.exitCode,
 						expected,
+						expectedLines,
 						layout.expectedExitCode,
 						layout.expectedException,
 						null);
@@ -426,6 +757,7 @@ public final class AwkTestSupport {
 							layout.description,
 							"",
 							0,
+							null,
 							null,
 							layout.expectedExitCode,
 							layout.expectedException,
@@ -471,7 +803,7 @@ public final class AwkTestSupport {
 		}
 
 		protected String resolvedScript(ExecutionEnvironment env) {
-			return layout.script != null ? env.resolve(layout.script) : null;
+			return layout.script != null ? env.resolveScript(layout.script) : null;
 		}
 
 		protected String resolvedStdin(ExecutionEnvironment env) {
@@ -481,6 +813,8 @@ public final class AwkTestSupport {
 
 	private static final class AwkTestCase extends BaseTestCase {
 		private final Map<String, Object> preAssignments;
+		private final Awk customAwk;
+		private final List<JawkExtension> extensions;
 
 		AwkTestCase(
 				TestLayout layout,
@@ -488,9 +822,13 @@ public final class AwkTestSupport {
 				List<String> operandSpecs,
 				List<String> pathPlaceholders,
 				boolean requiresPosix,
-				Map<String, Object> preAssignments) {
+				Map<String, Object> preAssignments,
+				Awk customAwk,
+				List<JawkExtension> extensions) {
 			super(layout, fileContents, operandSpecs, pathPlaceholders, requiresPosix);
 			this.preAssignments = new LinkedHashMap<>(preAssignments);
+			this.customAwk = customAwk;
+			this.extensions = new ArrayList<>(extensions);
 		}
 
 		@Override
@@ -504,13 +842,22 @@ public final class AwkTestSupport {
 			String stdin = resolvedStdin(env);
 			if (stdin != null) {
 				settings.setInput(new ByteArrayInputStream(stdin.getBytes(StandardCharsets.UTF_8)));
+			} else {
+				settings.setInput(new ByteArrayInputStream(new byte[0]));
 			}
 			ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
 			settings.setOutputStream(new PrintStream(outBytes, true, StandardCharsets.UTF_8.name()));
 			for (String operand : resolvedOperands(env)) {
 				settings.addNameValueOrFileName(operand);
 			}
-			Awk awk = new Awk();
+			Awk awk;
+			if (customAwk != null) {
+				awk = customAwk;
+			} else if (!extensions.isEmpty()) {
+				awk = new Awk(extensions);
+			} else {
+				awk = new Awk();
+			}
 			int exitCode = 0;
 			try {
 				String resolvedScript = resolvedScript(env);
@@ -589,9 +936,24 @@ public final class AwkTestSupport {
 			if (value == null) {
 				return null;
 			}
+			return replacePlaceholders(value, false);
+		}
+
+		String resolveScript(String value) {
+			if (value == null) {
+				return null;
+			}
+			return replacePlaceholders(value, true);
+		}
+
+		private String replacePlaceholders(String value, boolean escapeForScript) {
 			String result = value;
 			for (Map.Entry<String, Path> entry : placeholders.entrySet()) {
-				result = result.replace("{{" + entry.getKey() + "}}", entry.getValue().toString());
+				String replacement = entry.getValue().toString();
+				if (escapeForScript) {
+					replacement = escapeForAwkString(replacement);
+				}
+				result = result.replace("{{" + entry.getKey() + "}}", replacement);
 			}
 			return result;
 		}
@@ -612,6 +974,7 @@ public final class AwkTestSupport {
 		final String script;
 		final String stdin;
 		final String expectedOutput;
+		final List<String> expectedLines;
 		final Integer expectedExitCode;
 		final Class<? extends Throwable> expectedException;
 
@@ -620,12 +983,14 @@ public final class AwkTestSupport {
 				String script,
 				String stdin,
 				String expectedOutput,
+				List<String> expectedLines,
 				Integer expectedExitCode,
 				Class<? extends Throwable> expectedException) {
 			this.description = description;
 			this.script = script;
 			this.stdin = stdin;
 			this.expectedOutput = expectedOutput;
+			this.expectedLines = expectedLines != null ? Collections.unmodifiableList(new ArrayList<>(expectedLines)) : null;
 			this.expectedExitCode = expectedExitCode;
 			this.expectedException = expectedException;
 		}
@@ -644,5 +1009,17 @@ public final class AwkTestSupport {
 				}
 			});
 		}
+	}
+
+	private static String escapeForAwkString(String value) {
+		StringBuilder builder = new StringBuilder(value.length() * 2);
+		for (int i = 0; i < value.length(); i++) {
+			char ch = value.charAt(i);
+			if (ch == '\\' || ch == '"') {
+				builder.append('\\');
+			}
+			builder.append(ch);
+		}
+		return builder.toString();
 	}
 }
