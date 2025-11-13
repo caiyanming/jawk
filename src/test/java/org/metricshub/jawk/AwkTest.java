@@ -93,7 +93,6 @@ public class AwkTest {
 				.cliTest("print don't panic")
 				.script("BEGIN { print \"Don\\47t Panic!\" }")
 				.expectLines("Don't Panic!")
-				.normalizeOutput()
 				.runAndAssert();
 	}
 
@@ -118,7 +117,6 @@ public class AwkTest {
 				.cliTest("advice.awk script")
 				.argument("-f", pathTo("advice.awk"))
 				.expectLines("Don't Panic!")
-				.normalizeOutput()
 				.runAndAssert();
 	}
 
@@ -144,7 +142,6 @@ public class AwkTest {
 						"Broderick    555-0542     broderick.aliquotiens@yahoo.com R",
 						"Julie        555-6699     julie.perscrutabor@skeeve.com   F",
 						"Samuel       555-3430     samuel.lanceolis@shu.edu        A")
-				.normalizeOutput()
 				.runAndAssert();
 	}
 
@@ -165,7 +162,6 @@ public class AwkTest {
 						"Jean-Paul    555-2127     jeanpaul.campanorum@nyu.edu     R",
 						"Jan  21  36  64 620",
 						"Apr  21  70  74 514")
-				.normalizeOutput()
 				.runAndAssert();
 	}
 
@@ -193,7 +189,6 @@ public class AwkTest {
 						"Feb  26  58  80 652",
 						"Mar  24  75  70 495",
 						"Apr  21  70  74 514")
-				.normalizeOutput()
 				.runAndAssert();
 	}
 
@@ -204,7 +199,6 @@ public class AwkTest {
 				.script("//{ if (v == 0) {print \"uninitialize variable\"} else {print}}")
 				.operand(pathTo("inventory-shipped"))
 				.expectLines(monotoneArray("uninitialize variable", 17))
-				.normalizeOutput()
 				.runAndAssert();
 	}
 
@@ -232,7 +226,6 @@ public class AwkTest {
 						"Feb  26  58  80 652",
 						"Mar  24  75  70 495",
 						"Apr  21  70  74 514")
-				.normalizeOutput()
 				.runAndAssert();
 	}
 
@@ -243,7 +236,6 @@ public class AwkTest {
 				.script("//{i=1; j=\"1\"; v[i] = 100; print v[i] v[j];}")
 				.operand(pathTo("inventory-shipped"))
 				.expectLines(monotoneArray("100100", 17))
-				.normalizeOutput()
 				.runAndAssert();
 	}
 
@@ -254,7 +246,6 @@ public class AwkTest {
 				.script("//{i=1; j=\"1\"; v[j] = 100; print v[i] v[j];}")
 				.operand(pathTo("inventory-shipped"))
 				.expectLines(monotoneArray("100100", 17))
-				.normalizeOutput()
 				.runAndAssert();
 	}
 

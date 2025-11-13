@@ -83,6 +83,7 @@ public final class AwkTestSupport {
 		private final String output;
 		private final int exitCode;
 		private final String expectedOutput;
+		private final String[] expectedLines;
 		private final Integer expectedExitCode;
 		private final Class<? extends Throwable> expectedException;
 		private final Throwable thrownException;
@@ -92,6 +93,7 @@ public final class AwkTestSupport {
 				String output,
 				int exitCode,
 				String expectedOutput,
+				String[] expectedLines,
 				Integer expectedExitCode,
 				Class<? extends Throwable> expectedException,
 				Throwable thrownException) {
@@ -99,6 +101,7 @@ public final class AwkTestSupport {
 			this.output = output;
 			this.exitCode = exitCode;
 			this.expectedOutput = expectedOutput;
+			this.expectedLines = expectedLines != null ? Arrays.copyOf(expectedLines, expectedLines.length) : null;
 			this.expectedExitCode = expectedExitCode;
 			this.expectedException = expectedException;
 			this.thrownException = thrownException;
@@ -151,7 +154,11 @@ public final class AwkTestSupport {
 				}
 				return;
 			}
-			if (expectedOutput != null) {
+			if (expectedLines != null) {
+				List<String> actualLines = Arrays.asList(lines());
+				List<String> expected = Arrays.asList(expectedLines);
+				assertEquals("Unexpected output for " + description, expected, actualLines);
+			} else if (expectedOutput != null) {
 				assertEquals("Unexpected output for " + description, expectedOutput, output);
 			}
 			if (expectedExitCode != null) {
@@ -274,11 +281,11 @@ public final class AwkTestSupport {
 		protected final List<String> operandSpecs = new ArrayList<>();
 		protected final List<String> pathPlaceholders = new ArrayList<>();
 		protected String expectedOutput;
+		protected String[] expectedLines;
 		protected Integer expectedExitCode;
 		protected Class<? extends Throwable> expectedException;
 		protected boolean requiresPosix;
 		protected boolean useTempDir;
-		protected boolean normalizeOutput;
 
 		BaseTestBuilder(String description) {
 			this.description = description;
@@ -334,22 +341,14 @@ public final class AwkTestSupport {
 		@SuppressWarnings("unchecked")
 		public B expect(String expected) {
 			this.expectedOutput = expected;
+			this.expectedLines = null;
 			return (B) this;
 		}
 
 		@SuppressWarnings("unchecked")
 		public B expectLines(String... lines) {
-			if (lines.length == 0) {
-				this.expectedOutput = "";
-			} else {
-				this.expectedOutput = Arrays.stream(lines).collect(Collectors.joining("\n", "", "\n"));
-			}
-			return (B) this;
-		}
-
-		@SuppressWarnings("unchecked")
-		public B normalizeOutput() {
-			this.normalizeOutput = true;
+			this.expectedLines = Arrays.copyOf(lines, lines.length);
+			this.expectedOutput = null;
 			return (B) this;
 		}
 
@@ -383,9 +382,9 @@ public final class AwkTestSupport {
 					script,
 					stdin,
 					expectedOutput,
+					expectedLines,
 					expectedExitCode,
-					expectedException,
-					normalizeOutput);
+					expectedException);
 			Map<String, String> files = new LinkedHashMap<>(fileContents);
 			List<String> operands = new ArrayList<>(operandSpecs);
 			List<String> placeholders = new ArrayList<>(pathPlaceholders);
@@ -453,16 +452,21 @@ public final class AwkTestSupport {
 		private TestResult executeAndCapture(ExecutionEnvironment env) throws Exception {
 			try {
 				ActualResult result = execute(env);
-				String actualOutput = layout.normalizeOutput ? normalizeNewlines(result.output) : result.output;
+				String actualOutput = result.output;
 				String expected = layout.expectedOutput != null ? env.resolve(layout.expectedOutput) : null;
-				if (layout.normalizeOutput && expected != null) {
-					expected = normalizeNewlines(expected);
+				String[] expectedLines = null;
+				if (layout.expectedLines != null) {
+					expectedLines = new String[layout.expectedLines.length];
+					for (int i = 0; i < layout.expectedLines.length; i++) {
+						expectedLines[i] = env.resolve(layout.expectedLines[i]);
+					}
 				}
 				return new TestResult(
 						layout.description,
 						actualOutput,
 						result.exitCode,
 						expected,
+						expectedLines,
 						layout.expectedExitCode,
 						layout.expectedException,
 						null);
@@ -472,6 +476,7 @@ public final class AwkTestSupport {
 							layout.description,
 							"",
 							0,
+							null,
 							null,
 							layout.expectedExitCode,
 							layout.expectedException,
@@ -686,25 +691,25 @@ public final class AwkTestSupport {
 		final String script;
 		final String stdin;
 		final String expectedOutput;
+		final String[] expectedLines;
 		final Integer expectedExitCode;
 		final Class<? extends Throwable> expectedException;
-		final boolean normalizeOutput;
 
 		TestLayout(
 				String description,
 				String script,
 				String stdin,
 				String expectedOutput,
+				String[] expectedLines,
 				Integer expectedExitCode,
-				Class<? extends Throwable> expectedException,
-				boolean normalizeOutput) {
+				Class<? extends Throwable> expectedException) {
 			this.description = description;
 			this.script = script;
 			this.stdin = stdin;
 			this.expectedOutput = expectedOutput;
+			this.expectedLines = expectedLines != null ? Arrays.copyOf(expectedLines, expectedLines.length) : null;
 			this.expectedExitCode = expectedExitCode;
 			this.expectedException = expectedException;
-			this.normalizeOutput = normalizeOutput;
 		}
 	}
 
@@ -733,14 +738,5 @@ public final class AwkTestSupport {
 			builder.append(ch);
 		}
 		return builder.toString();
-	}
-
-	private static String normalizeNewlines(String value) {
-		if (value == null || value.isEmpty()) {
-			return value == null ? null : "";
-		}
-		String normalized = value.replace("\r\n", "\n");
-		normalized = normalized.replace('\r', '\n');
-		return normalized;
 	}
 }
