@@ -505,7 +505,7 @@ public final class AwkTestSupport {
 		}
 
 		protected String resolvedScript(ExecutionEnvironment env) {
-			return layout.script != null ? env.resolve(layout.script) : null;
+			return layout.script != null ? env.resolveScript(layout.script) : null;
 		}
 
 		protected String resolvedStdin(ExecutionEnvironment env) {
@@ -636,9 +636,24 @@ public final class AwkTestSupport {
 			if (value == null) {
 				return null;
 			}
+			return replacePlaceholders(value, false);
+		}
+
+		String resolveScript(String value) {
+			if (value == null) {
+				return null;
+			}
+			return replacePlaceholders(value, true);
+		}
+
+		private String replacePlaceholders(String value, boolean escapeForScript) {
 			String result = value;
 			for (Map.Entry<String, Path> entry : placeholders.entrySet()) {
-				result = result.replace("{{" + entry.getKey() + "}}", entry.getValue().toString());
+				String replacement = entry.getValue().toString();
+				if (escapeForScript) {
+					replacement = escapeForAwkString(replacement);
+				}
+				result = result.replace("{{" + entry.getKey() + "}}", replacement);
 			}
 			return result;
 		}
@@ -649,7 +664,7 @@ public final class AwkTestSupport {
 		final int exitCode;
 
 		ActualResult(String output, int exitCode) {
-			this.output = output;
+			this.output = normalizeNewlines(output);
 			this.exitCode = exitCode;
 		}
 	}
@@ -691,5 +706,26 @@ public final class AwkTestSupport {
 				}
 			});
 		}
+	}
+
+	private static String escapeForAwkString(String value) {
+		StringBuilder builder = new StringBuilder(value.length() * 2);
+		for (int i = 0; i < value.length(); i++) {
+			char ch = value.charAt(i);
+			if (ch == '\\' || ch == '"') {
+				builder.append('\\');
+			}
+			builder.append(ch);
+		}
+		return builder.toString();
+	}
+
+	private static String normalizeNewlines(String value) {
+		if (value == null || value.isEmpty()) {
+			return value == null ? null : "";
+		}
+		String normalized = value.replace("\r\n", "\n");
+		normalized = normalized.replace('\r', '\n');
+		return normalized;
 	}
 }
