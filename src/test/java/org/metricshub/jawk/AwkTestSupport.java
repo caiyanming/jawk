@@ -544,6 +544,8 @@ public final class AwkTestSupport {
 			String stdin = resolvedStdin(env);
 			if (stdin != null) {
 				settings.setInput(new ByteArrayInputStream(stdin.getBytes(StandardCharsets.UTF_8)));
+			} else {
+				settings.setInput(new ByteArrayInputStream(new byte[0]));
 			}
 			ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
 			settings.setOutputStream(new PrintStream(outBytes, true, StandardCharsets.UTF_8.name()));
