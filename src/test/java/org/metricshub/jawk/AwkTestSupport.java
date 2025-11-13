@@ -3,6 +3,7 @@ package org.metricshub.jawk;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -16,6 +17,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -83,6 +85,7 @@ public final class AwkTestSupport {
 		private final String output;
 		private final int exitCode;
 		private final String expectedOutput;
+		private final List<String> expectedLines;
 		private final Integer expectedExitCode;
 		private final Class<? extends Throwable> expectedException;
 		private final Throwable thrownException;
@@ -92,6 +95,7 @@ public final class AwkTestSupport {
 				String output,
 				int exitCode,
 				String expectedOutput,
+				List<String> expectedLines,
 				Integer expectedExitCode,
 				Class<? extends Throwable> expectedException,
 				Throwable thrownException) {
@@ -99,6 +103,7 @@ public final class AwkTestSupport {
 			this.output = output;
 			this.exitCode = exitCode;
 			this.expectedOutput = expectedOutput;
+			this.expectedLines = expectedLines != null ? Collections.unmodifiableList(new ArrayList<>(expectedLines)) : null;
 			this.expectedExitCode = expectedExitCode;
 			this.expectedException = expectedException;
 			this.thrownException = thrownException;
@@ -117,17 +122,8 @@ public final class AwkTestSupport {
 		}
 
 		public String[] lines() {
-			if (output.isEmpty()) {
-				return new String[0];
-			}
-			String trimmed = output.endsWith("\n") ? output.substring(0, output.length() - 1) : output;
-			String[] pieces = trimmed.split("\n", -1);
-			for (int i = 0; i < pieces.length; ++i) {
-				if (pieces[i].endsWith("\r")) {
-					pieces[i] = pieces[i].substring(0, pieces[i].length() - 1);
-				}
-			}
-			return pieces;
+			List<String> split = readOutputLines(output);
+			return split.toArray(new String[0]);
 		}
 
 		public void assertExpected() {
@@ -151,7 +147,10 @@ public final class AwkTestSupport {
 				}
 				return;
 			}
-			if (expectedOutput != null) {
+			if (expectedLines != null) {
+				List<String> actualLines = readOutputLines(output);
+				assertEquals("Unexpected output for " + description, expectedLines, actualLines);
+			} else if (expectedOutput != null) {
 				assertEquals("Unexpected output for " + description, expectedOutput, output);
 			}
 			if (expectedExitCode != null) {
@@ -159,6 +158,22 @@ public final class AwkTestSupport {
 			} else {
 				assertEquals("Unexpected exit code for " + description, 0, exitCode);
 			}
+		}
+
+		private static List<String> readOutputLines(String output) {
+			if (output.isEmpty()) {
+				return Collections.emptyList();
+			}
+			List<String> lines = new ArrayList<>();
+			try (BufferedReader reader = new BufferedReader(new StringReader(output))) {
+				String line;
+				while ((line = reader.readLine()) != null) {
+					lines.add(line);
+				}
+			} catch (IOException ex) {
+				throw new UncheckedIOException("Failed to split captured output", ex);
+			}
+			return Collections.unmodifiableList(lines);
 		}
 
 		public String expectedOutput() {
@@ -274,6 +289,7 @@ public final class AwkTestSupport {
 		protected final List<String> operandSpecs = new ArrayList<>();
 		protected final List<String> pathPlaceholders = new ArrayList<>();
 		protected String expectedOutput;
+		protected List<String> expectedLines;
 		protected Integer expectedExitCode;
 		protected Class<? extends Throwable> expectedException;
 		protected boolean requiresPosix;
@@ -333,16 +349,14 @@ public final class AwkTestSupport {
 		@SuppressWarnings("unchecked")
 		public B expect(String expected) {
 			this.expectedOutput = expected;
+			this.expectedLines = null;
 			return (B) this;
 		}
 
 		@SuppressWarnings("unchecked")
 		public B expectLines(String... lines) {
-			if (lines.length == 0) {
-				this.expectedOutput = "";
-			} else {
-				this.expectedOutput = Arrays.stream(lines).collect(Collectors.joining("\n", "", "\n"));
-			}
+			this.expectedLines = new ArrayList<>(Arrays.asList(Arrays.copyOf(lines, lines.length)));
+			this.expectedOutput = null;
 			return (B) this;
 		}
 
@@ -376,6 +390,7 @@ public final class AwkTestSupport {
 					script,
 					stdin,
 					expectedOutput,
+					expectedLines,
 					expectedExitCode,
 					expectedException);
 			Map<String, String> files = new LinkedHashMap<>(fileContents);
@@ -445,12 +460,21 @@ public final class AwkTestSupport {
 		private TestResult executeAndCapture(ExecutionEnvironment env) throws Exception {
 			try {
 				ActualResult result = execute(env);
+				String actualOutput = result.output;
 				String expected = layout.expectedOutput != null ? env.resolve(layout.expectedOutput) : null;
+				List<String> expectedLines = null;
+				if (layout.expectedLines != null) {
+					expectedLines = new ArrayList<>(layout.expectedLines.size());
+					for (String line : layout.expectedLines) {
+						expectedLines.add(env.resolve(line));
+					}
+				}
 				return new TestResult(
 						layout.description,
-						result.output,
+						actualOutput,
 						result.exitCode,
 						expected,
+						expectedLines,
 						layout.expectedExitCode,
 						layout.expectedException,
 						null);
@@ -460,6 +484,7 @@ public final class AwkTestSupport {
 							layout.description,
 							"",
 							0,
+							null,
 							null,
 							layout.expectedExitCode,
 							layout.expectedException,
@@ -505,7 +530,7 @@ public final class AwkTestSupport {
 		}
 
 		protected String resolvedScript(ExecutionEnvironment env) {
-			return layout.script != null ? env.resolve(layout.script) : null;
+			return layout.script != null ? env.resolveScript(layout.script) : null;
 		}
 
 		protected String resolvedStdin(ExecutionEnvironment env) {
@@ -597,6 +622,8 @@ public final class AwkTestSupport {
 					in,
 					new PrintStream(outBytes, true, StandardCharsets.UTF_8.name()),
 					new PrintStream(errBytes, true, StandardCharsets.UTF_8.name()));
+			cli.getSettings().setDefaultRS("\n");
+			cli.getSettings().setDefaultORS("\n");
 
 			List<String> args = new ArrayList<>();
 			for (Map.Entry<String, Object> entry : assignments.entrySet()) {
@@ -636,9 +663,24 @@ public final class AwkTestSupport {
 			if (value == null) {
 				return null;
 			}
+			return replacePlaceholders(value, false);
+		}
+
+		String resolveScript(String value) {
+			if (value == null) {
+				return null;
+			}
+			return replacePlaceholders(value, true);
+		}
+
+		private String replacePlaceholders(String value, boolean escapeForScript) {
 			String result = value;
 			for (Map.Entry<String, Path> entry : placeholders.entrySet()) {
-				result = result.replace("{{" + entry.getKey() + "}}", entry.getValue().toString());
+				String replacement = entry.getValue().toString();
+				if (escapeForScript) {
+					replacement = escapeForAwkString(replacement);
+				}
+				result = result.replace("{{" + entry.getKey() + "}}", replacement);
 			}
 			return result;
 		}
@@ -659,6 +701,7 @@ public final class AwkTestSupport {
 		final String script;
 		final String stdin;
 		final String expectedOutput;
+		final List<String> expectedLines;
 		final Integer expectedExitCode;
 		final Class<? extends Throwable> expectedException;
 
@@ -667,12 +710,14 @@ public final class AwkTestSupport {
 				String script,
 				String stdin,
 				String expectedOutput,
+				List<String> expectedLines,
 				Integer expectedExitCode,
 				Class<? extends Throwable> expectedException) {
 			this.description = description;
 			this.script = script;
 			this.stdin = stdin;
 			this.expectedOutput = expectedOutput;
+			this.expectedLines = expectedLines != null ? Collections.unmodifiableList(new ArrayList<>(expectedLines)) : null;
 			this.expectedExitCode = expectedExitCode;
 			this.expectedException = expectedException;
 		}
@@ -691,5 +736,17 @@ public final class AwkTestSupport {
 				}
 			});
 		}
+	}
+
+	private static String escapeForAwkString(String value) {
+		StringBuilder builder = new StringBuilder(value.length() * 2);
+		for (int i = 0; i < value.length(); i++) {
+			char ch = value.charAt(i);
+			if (ch == '\\' || ch == '"') {
+				builder.append('\\');
+			}
+			builder.append(ch);
+		}
+		return builder.toString();
 	}
 }
