@@ -41,6 +41,58 @@ String result = awk.run("{ print toupper($0) }", "hello world");
 
 See [AWK in Java documentation](https://metricshub.org/Jawk/java.html) for more details and advanced usage.
 
+## Writing tests with `AwkTestSupport`
+
+Jawk ships with the `org.metricshub.jawk.AwkTestSupport` utility to make unit
+tests expressive and repeatable. The helper provides fluent builders for both
+`Awk` and CLI driven tests, letting you define scripts, inputs, operands,
+pre-assigned variables, expected outputs, and even required operating-system
+capabilities in a single, readable block. Each builder automatically creates a
+temporary execution environment, resolves placeholder paths inside scripts and
+input data, executes the script, and performs assertions on the captured
+results. The helper also exposes assertions such as `runAndAssert()` and
+`assertExpected()` so the intent of the test remains clear.
+
+### Example: testing the Java API
+
+```java
+import static org.metricshub.jawk.AwkTestSupport.awkTest;
+
+@Test
+public void uppercasesAllInput() throws Exception {
+        awkTest("uppercase conversion")
+                .script("{ print toupper($0) }")
+                .input("hello", "world")
+                .expectedOutput("HELLO\nWORLD\n")
+                .runAndAssert();
+}
+```
+
+### Example: testing the CLI entry point
+
+```java
+import static org.metricshub.jawk.AwkTestSupport.cliTest;
+
+@Test
+public void reportsUsageOnMissingScript() throws Exception {
+        cliTest("missing script argument")
+                .args("-f")
+                .expectedExitCode(2)
+                .expectedOutput("usage: jawk ...\n")
+                .runAndAssert();
+}
+```
+
+Always lean on `AwkTestSupport` when adding new tests. Jawk spans a broad
+surface area—parsing, evaluation, file-system interaction, and extension
+loading—which makes correctness regressions easy to introduce. Consistently
+exercising features with unit tests gives us quick feedback when refactoring,
+ensures behaviour remains consistent across supported platforms, and protects
+our compatibility guarantees with the wider AWK ecosystem. By funneling all
+tests through the shared helper we avoid duplicated boilerplate and ensure that
+every test follows the same execution semantics, leaving more time to reason
+about the scenarios being validated instead of the mechanics of running them.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
