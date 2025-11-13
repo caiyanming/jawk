@@ -3,6 +3,7 @@ package org.metricshub.jawk;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -202,8 +203,8 @@ public final class AwkTestSupport {
 		 *         was produced
 		 */
 		public String[] lines() {
-			List<String> normalized = normalizeOutputLines(output);
-			return normalized.toArray(new String[0]);
+			List<String> split = readOutputLines(output);
+			return split.toArray(new String[0]);
 		}
 
 		/**
@@ -232,7 +233,7 @@ public final class AwkTestSupport {
 				return;
 			}
 			if (expectedLines != null) {
-				List<String> actualLines = normalizeOutputLines(output);
+				List<String> actualLines = readOutputLines(output);
 				assertEquals("Unexpected output for " + description, expectedLines, actualLines);
 			} else if (expectedOutput != null) {
 				assertEquals("Unexpected output for " + description, expectedOutput, output);
@@ -244,25 +245,22 @@ public final class AwkTestSupport {
 			}
 		}
 
-		private static List<String> normalizeOutputLines(String output) {
+		private static List<String> readOutputLines(String output) {
 			if (output.isEmpty()) {
 				return Collections.emptyList();
 			}
-			String normalized = output.replace("\r\n", "\n").replace("\r", "\n");
-			if (normalized.endsWith("\n")) {
-				normalized = normalized.substring(0, normalized.length() - 1);
+			List<String> lines = new ArrayList<>();
+			try (BufferedReader reader = new BufferedReader(new StringReader(output))) {
+				String line;
+				while ((line = reader.readLine()) != null) {
+					lines.add(line);
+				}
+			} catch (IOException ex) {
+				throw new UncheckedIOException("Failed to split captured output", ex);
 			}
-			if (normalized.isEmpty()) {
-				return Collections.singletonList("");
-			}
-			return Arrays.asList(normalized.split("\n", -1));
+			return Collections.unmodifiableList(lines);
 		}
 
-		/**
-		 * Returns the expected output configured on the builder.
-		 *
-		 * @return the expected output or {@code null} when no expectation was set
-		 */
 		public String expectedOutput() {
 			return expectedOutput;
 		}
@@ -897,6 +895,8 @@ public final class AwkTestSupport {
 					in,
 					new PrintStream(outBytes, true, StandardCharsets.UTF_8.name()),
 					new PrintStream(errBytes, true, StandardCharsets.UTF_8.name()));
+			cli.getSettings().setDefaultRS("\n");
+			cli.getSettings().setDefaultORS("\n");
 
 			List<String> args = new ArrayList<>();
 			for (Map.Entry<String, Object> entry : assignments.entrySet()) {
