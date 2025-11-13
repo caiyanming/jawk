@@ -19,6 +19,9 @@ on:
 jobs:
   build:
     name: Build on ${{ matrix.os }}
+    permissions:
+      contents: read
+      checks: write
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
