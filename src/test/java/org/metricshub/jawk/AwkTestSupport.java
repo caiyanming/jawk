@@ -278,6 +278,7 @@ public final class AwkTestSupport {
 		protected Class<? extends Throwable> expectedException;
 		protected boolean requiresPosix;
 		protected boolean useTempDir;
+		protected boolean normalizeOutput;
 
 		BaseTestBuilder(String description) {
 			this.description = description;
@@ -347,6 +348,12 @@ public final class AwkTestSupport {
 		}
 
 		@SuppressWarnings("unchecked")
+		public B normalizeOutput() {
+			this.normalizeOutput = true;
+			return (B) this;
+		}
+
+		@SuppressWarnings("unchecked")
 		public B expectExit(int code) {
 			this.expectedExitCode = code;
 			return (B) this;
@@ -377,7 +384,8 @@ public final class AwkTestSupport {
 					stdin,
 					expectedOutput,
 					expectedExitCode,
-					expectedException);
+					expectedException,
+					normalizeOutput);
 			Map<String, String> files = new LinkedHashMap<>(fileContents);
 			List<String> operands = new ArrayList<>(operandSpecs);
 			List<String> placeholders = new ArrayList<>(pathPlaceholders);
@@ -445,10 +453,14 @@ public final class AwkTestSupport {
 		private TestResult executeAndCapture(ExecutionEnvironment env) throws Exception {
 			try {
 				ActualResult result = execute(env);
+				String actualOutput = layout.normalizeOutput ? normalizeNewlines(result.output) : result.output;
 				String expected = layout.expectedOutput != null ? env.resolve(layout.expectedOutput) : null;
+				if (layout.normalizeOutput && expected != null) {
+					expected = normalizeNewlines(expected);
+				}
 				return new TestResult(
 						layout.description,
-						result.output,
+						actualOutput,
 						result.exitCode,
 						expected,
 						layout.expectedExitCode,
@@ -664,7 +676,7 @@ public final class AwkTestSupport {
 		final int exitCode;
 
 		ActualResult(String output, int exitCode) {
-			this.output = normalizeNewlines(output);
+			this.output = output;
 			this.exitCode = exitCode;
 		}
 	}
@@ -676,6 +688,7 @@ public final class AwkTestSupport {
 		final String expectedOutput;
 		final Integer expectedExitCode;
 		final Class<? extends Throwable> expectedException;
+		final boolean normalizeOutput;
 
 		TestLayout(
 				String description,
@@ -683,13 +696,15 @@ public final class AwkTestSupport {
 				String stdin,
 				String expectedOutput,
 				Integer expectedExitCode,
-				Class<? extends Throwable> expectedException) {
+				Class<? extends Throwable> expectedException,
+				boolean normalizeOutput) {
 			this.description = description;
 			this.script = script;
 			this.stdin = stdin;
 			this.expectedOutput = expectedOutput;
 			this.expectedExitCode = expectedExitCode;
 			this.expectedException = expectedException;
+			this.normalizeOutput = normalizeOutput;
 		}
 	}
 
