@@ -1,0 +1,157 @@
+package org.metricshub.jawk;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import org.junit.Test;
+import org.metricshub.jawk.intermediate.Address;
+import org.metricshub.jawk.intermediate.AwkTuples;
+import org.metricshub.jawk.intermediate.Opcode;
+import org.metricshub.jawk.intermediate.PositionTracker;
+
+public class AwkTupleOptimizationTest {
+
+	@Test
+	public void removesTrailingPlaceholderNop() throws Exception {
+		String script = "BEGIN { print \"hello\" }\n";
+		AwkTestSupport
+				.awkTest("placeholder nop removal")
+				.script(script)
+				.expect("hello\n")
+				.runAndAssert();
+
+		AwkTuples tuples = new Awk().compile(script);
+		List<Opcode> opcodes = collectOpcodes(tuples);
+		assertFalse("Tuple list should not be empty", opcodes.isEmpty());
+		assertNotEquals("Optimizer should remove trailing NOP", Opcode.NOP, opcodes.get(opcodes.size() - 1));
+	}
+
+	@Test
+	public void removesInstructionsAfterExit() throws Exception {
+		String script = "" + "BEGIN { print \"before\"; exit; print \"after\" }\n" + "END { print \"done\" }\n";
+		AwkTestSupport
+				.awkTest("exit removes trailing code")
+				.script(script)
+				.expect("before\ndone\n")
+				.runAndAssert();
+
+		AwkTuples tuples = new Awk().compile(script);
+		String dump = dumpTuples(tuples);
+		assertFalse("Optimizer should remove unreachable print after exit", dump.contains("\"after\""));
+	}
+
+	@Test
+	public void retainsNopsTargetedByAddresses() throws Exception {
+		String script = "{ print $0 }\n";
+		AwkTestSupport
+				.awkTest("targeted nop retained")
+				.script(script)
+				.stdin("value\n")
+				.expect("value\n")
+				.runAndAssert();
+
+		AwkTuples tuples = new Awk().compile(script);
+		List<Integer> nopIndices = new ArrayList<>();
+		Set<Integer> referencedIndices = new HashSet<>();
+
+		PositionTracker tracker = tuples.top();
+		while (!tracker.isEOF()) {
+			int current = tracker.current();
+			Opcode opcode = tracker.opcode();
+			if (opcode == Opcode.NOP) {
+				nopIndices.add(Integer.valueOf(current));
+			}
+			if (usesAddress(opcode)) {
+				Address address = tracker.addressArg();
+				referencedIndices.add(Integer.valueOf(address.index()));
+			}
+			tracker.next();
+		}
+
+		assertFalse("Expected at least one NOP in compiled script", nopIndices.isEmpty());
+		for (Integer index : nopIndices) {
+			assertTrue("NOP at index " + index + " should remain referenced", referencedIndices.contains(index));
+		}
+	}
+
+	@Test
+	public void retainsRecursiveFunctionBodies() throws Exception {
+		String script = "function fact(n){return n? n*fact(n-1):1}\n" + "BEGIN{print fact(5)}\n";
+		AwkTestSupport
+				.awkTest("recursive function survives optimization")
+				.script(script)
+				.expect("120\n")
+				.runAndAssert();
+
+		AwkTuples tuples = new Awk().compile(script);
+		List<Opcode> opcodes = collectOpcodes(tuples);
+		Set<Integer> callTargets = new HashSet<>();
+
+		PositionTracker tracker = tuples.top();
+		while (!tracker.isEOF()) {
+			if (tracker.opcode() == Opcode.CALL_FUNCTION) {
+				Address address = tracker.addressArg();
+				assertTrue("Call target should be assigned", address.index() >= 0);
+				callTargets.add(Integer.valueOf(address.index()));
+			}
+			tracker.next();
+		}
+
+		assertFalse("Expected at least one function call", callTargets.isEmpty());
+		for (Integer target : callTargets) {
+			assertTrue("Call target index should refer to existing tuple", target.intValue() < opcodes.size());
+			Opcode opcode = opcodes.get(target.intValue());
+			assertNotEquals("Call target should not be optimized away", Opcode.NOP, opcode);
+		}
+	}
+
+	@Test
+	public void skipsOptimizationWhenDisabled() throws Exception {
+		String script = "BEGIN { print \"before\"; exit; print \"after\" }\n";
+		AwkTuples tuples = new Awk().compile(script, true);
+		String dump = dumpTuples(tuples);
+
+		assertTrue("Unreachable code should remain when optimization disabled", dump.contains("\"after\""));
+	}
+
+	private static List<Opcode> collectOpcodes(AwkTuples tuples) {
+		List<Opcode> opcodes = new ArrayList<>();
+		PositionTracker tracker = tuples.top();
+		while (!tracker.isEOF()) {
+			opcodes.add(tracker.opcode());
+			tracker.next();
+		}
+		return opcodes;
+	}
+
+	private static String dumpTuples(AwkTuples tuples) throws Exception {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		try (PrintStream ps = new PrintStream(out, true, StandardCharsets.UTF_8.name())) {
+			tuples.dump(ps);
+		}
+		return out.toString(StandardCharsets.UTF_8.name());
+	}
+
+	private static boolean usesAddress(Opcode opcode) {
+		switch (opcode) {
+		case IFFALSE:
+		case IFTRUE:
+		case GOTO:
+		case IS_EMPTY_KEYLIST:
+		case CONSUME_INPUT:
+		case CALL_FUNCTION:
+		case SET_EXIT_ADDRESS:
+			return true;
+		default:
+			return false;
+		}
+	}
+}
