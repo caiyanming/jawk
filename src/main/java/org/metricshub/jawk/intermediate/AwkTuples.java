@@ -1714,7 +1714,10 @@ public class AwkTuples implements Serializable {
 		case CMP_GT:
 			return JRT.compare2(left, right, 1) ? Long.valueOf(1L) : Long.valueOf(0L);
 		case CONCAT:
-			return String.valueOf(left) + String.valueOf(right);
+			if (left instanceof String && right instanceof String) {
+				return ((String) left) + ((String) right);
+			}
+			return null;
 		default:
 			return null;
 		}

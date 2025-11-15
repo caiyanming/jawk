@@ -112,6 +112,21 @@ public class AwkTupleOptimizationTest {
 	}
 
 	@Test
+	public void doesNotFoldNumericConcatenation() throws Exception {
+		String script = "BEGIN { CONVFMT=\"%.2f\"; print 1 \"x\" }\n";
+		AwkTestSupport
+				.awkTest("skips numeric literal concatenation folding")
+				.script(script)
+				.expect("1x\n")
+				.runAndAssert();
+
+		AwkTuples tuples = new Awk().compile(script);
+		List<Opcode> opcodes = collectOpcodes(tuples);
+		assertTrue("Numeric literal concatenation should preserve CONCAT tuple", opcodes.contains(Opcode.CONCAT));
+		assertFalse("Optimizer should not fold numeric/string concatenation", hasLiteralPush(tuples, "1x"));
+	}
+
+	@Test
 	public void removesInstructionsAfterExit() throws Exception {
 		String script = "" + "BEGIN { print \"before\"; exit; print \"after\" }\n" + "END { print \"done\" }\n";
 		AwkTestSupport
