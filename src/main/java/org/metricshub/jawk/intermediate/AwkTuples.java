@@ -1503,7 +1503,13 @@ public class AwkTuples implements Serializable {
 	 * </ul>
 	 */
 	public void postProcess() {
-		assert queue.isEmpty() || !queue.get(0).hasNext() : "postProcess() already executed";
+		if (postProcessed) {
+			return;
+		}
+		if (!queue.isEmpty() && queue.get(0).hasNext()) {
+			postProcessed = true;
+			return;
+		}
 		assignSequentialNextPointers();
 		for (Tuple tuple : queue) {
 			tuple.touch(queue);

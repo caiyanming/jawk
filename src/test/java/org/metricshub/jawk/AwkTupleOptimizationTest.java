@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -120,6 +121,26 @@ public class AwkTupleOptimizationTest {
 		String dump = dumpTuples(tuples);
 
 		assertTrue("Unreachable code should remain when optimization disabled", dump.contains("\"after\""));
+	}
+
+	@Test
+	public void optimizeSkipsPostProcessingWhenPointersPersist() throws Exception {
+		String script = "BEGIN { print \"hello\" }\n";
+		AwkTuples tuples = new Awk().compile(script, true);
+
+		Field postProcessedField = AwkTuples.class.getDeclaredField("postProcessed");
+		postProcessedField.setAccessible(true);
+		postProcessedField.setBoolean(tuples, false);
+
+		tuples.optimize();
+
+		assertTrue("optimize() should mark tuples as post-processed", postProcessedField.getBoolean(tuples));
+
+		Field optimizedField = AwkTuples.class.getDeclaredField("optimized");
+		optimizedField.setAccessible(true);
+		assertTrue(
+				"optimize() should still run on tuples with existing next pointers",
+				optimizedField.getBoolean(tuples));
 	}
 
 	private static List<Opcode> collectOpcodes(AwkTuples tuples) {
