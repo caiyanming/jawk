@@ -80,7 +80,7 @@ jobs:
 
       - name: Attach Maven artifacts to the build
         if: ${{ runner.os == 'Linux' && always() }}
-        uses: sentrysoftware/upload-buildinfo-outputs@v2
+        uses: sentrysoftware/upload-buildinfo-outputs@v3
 
       - name: Upload Checkstyle reports to GitHub
         if: ${{ runner.os == 'Linux' && always() }}
