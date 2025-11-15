@@ -36,6 +36,82 @@ public class AwkTupleOptimizationTest {
 	}
 
 	@Test
+	public void foldsLiteralBinaryArithmetic() throws Exception {
+		String script = "BEGIN { print 1 + 2 }\n";
+		AwkTestSupport
+				.awkTest("folds literal binary arithmetic")
+				.script(script)
+				.expect("3\n")
+				.runAndAssert();
+
+		AwkTuples tuples = new Awk().compile(script);
+		List<Opcode> opcodes = collectOpcodes(tuples);
+		assertFalse("Binary literal should eliminate ADD tuple", opcodes.contains(Opcode.ADD));
+		assertTrue("Expected folded literal push of 3", hasLiteralPush(tuples, Long.valueOf(3)));
+	}
+
+	@Test
+	public void foldsLiteralUnaryArithmetic() throws Exception {
+		String script = "BEGIN { print -5 }\n";
+		AwkTestSupport
+				.awkTest("folds literal unary arithmetic")
+				.script(script)
+				.expect("-5\n")
+				.runAndAssert();
+
+		AwkTuples tuples = new Awk().compile(script);
+		List<Opcode> opcodes = collectOpcodes(tuples);
+		assertFalse("Unary literal should eliminate NEGATE tuple", opcodes.contains(Opcode.NEGATE));
+		assertFalse("Unary literal should eliminate SUBTRACT tuple", opcodes.contains(Opcode.SUBTRACT));
+		assertTrue("Expected folded literal push of -5", hasLiteralPush(tuples, Long.valueOf(-5)));
+	}
+
+	@Test
+	public void foldsLiteralComparison() throws Exception {
+		String script = "BEGIN { print (4 < 7) }\n";
+		AwkTestSupport
+				.awkTest("folds literal comparison")
+				.script(script)
+				.expect("1\n")
+				.runAndAssert();
+
+		AwkTuples tuples = new Awk().compile(script);
+		List<Opcode> opcodes = collectOpcodes(tuples);
+		assertFalse("Literal comparison should eliminate CMP_LT tuple", opcodes.contains(Opcode.CMP_LT));
+		assertTrue("Expected folded literal push of 1", hasLiteralPush(tuples, Long.valueOf(1)));
+	}
+
+	@Test
+	public void foldsNestedLiteralArithmetic() throws Exception {
+		String script = "BEGIN { print 1 + 2 + 3 }\n";
+		AwkTestSupport
+				.awkTest("folds nested literal arithmetic")
+				.script(script)
+				.expect("6\n")
+				.runAndAssert();
+
+		AwkTuples tuples = new Awk().compile(script);
+		List<Opcode> opcodes = collectOpcodes(tuples);
+		assertFalse("Nested literals should eliminate ADD tuples", opcodes.contains(Opcode.ADD));
+		assertTrue("Expected folded literal push of 6", hasLiteralPush(tuples, Long.valueOf(6)));
+	}
+
+	@Test
+	public void foldsLiteralStringConcatenation() throws Exception {
+		String script = "BEGIN { print \"foo\" \"bar\" }\n";
+		AwkTestSupport
+				.awkTest("folds literal string concatenation")
+				.script(script)
+				.expect("foobar\n")
+				.runAndAssert();
+
+		AwkTuples tuples = new Awk().compile(script);
+		List<Opcode> opcodes = collectOpcodes(tuples);
+		assertFalse("Literal concatenation should eliminate CONCAT tuple", opcodes.contains(Opcode.CONCAT));
+		assertTrue("Expected folded literal push of foobar", hasLiteralPush(tuples, "foobar"));
+	}
+
+	@Test
 	public void removesInstructionsAfterExit() throws Exception {
 		String script = "" + "BEGIN { print \"before\"; exit; print \"after\" }\n" + "END { print \"done\" }\n";
 		AwkTestSupport
@@ -159,6 +235,27 @@ public class AwkTupleOptimizationTest {
 			tuples.dump(ps);
 		}
 		return out.toString(StandardCharsets.UTF_8.name());
+	}
+
+	private static boolean hasLiteralPush(AwkTuples tuples, Object expected) {
+		PositionTracker tracker = tuples.top();
+		while (!tracker.isEOF()) {
+			if (tracker.opcode() == Opcode.PUSH) {
+				Object value = tracker.arg(0);
+				if (expected instanceof Number && value instanceof Number) {
+					double actual = ((Number) value).doubleValue();
+					if (Double.compare(actual, ((Number) expected).doubleValue()) == 0) {
+						return true;
+					}
+				} else if (expected instanceof String && value instanceof String) {
+					if (value.equals(expected)) {
+						return true;
+					}
+				}
+			}
+			tracker.next();
+		}
+		return false;
 	}
 
 	private static boolean usesAddress(Opcode opcode) {
