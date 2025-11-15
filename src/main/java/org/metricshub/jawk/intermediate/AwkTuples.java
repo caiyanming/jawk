@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -70,6 +71,10 @@ public class AwkTuples implements Serializable {
 			return super.add(t);
 		}
 	};
+
+	private boolean postProcessed;
+
+	private boolean optimized;
 
 	/**
 	 * <p>
@@ -1498,14 +1503,193 @@ public class AwkTuples implements Serializable {
 	 * </ul>
 	 */
 	public void postProcess() {
-		assert queue.isEmpty() || !queue.get(0).hasNext() : "postProcess() already executed";
-		// allocate nexts
-		for (int i = 0; i < queue.size() - 1; i++) {
-			queue.get(i).setNext(queue.get(i + 1));
+		if (postProcessed) {
+			return;
 		}
-		// touch per element
+		if (!queue.isEmpty() && queue.get(0).hasNext()) {
+			postProcessed = true;
+			return;
+		}
+		assignSequentialNextPointers();
 		for (Tuple tuple : queue) {
 			tuple.touch(queue);
+		}
+		postProcessed = true;
+	}
+
+	/**
+	 * Performs tuple queue optimizations such as reachability pruning and NOP
+	 * collapsing.
+	 * <p>
+	 * This method is idempotent. Repeated invocations after a successful
+	 * optimization run will have no additional effect.
+	 */
+	public void optimize() {
+		if (optimized) {
+			return;
+		}
+		if (!postProcessed) {
+			postProcess();
+		}
+		optimizeQueue();
+		optimized = true;
+	}
+
+	private void assignSequentialNextPointers() {
+		for (int i = 0; i < queue.size(); i++) {
+			Tuple nextTuple = (i + 1) < queue.size() ? queue.get(i + 1) : null;
+			queue.get(i).setNext(nextTuple);
+		}
+	}
+
+	private void optimizeQueue() {
+		int size = queue.size();
+		if (size <= 1) {
+			return;
+		}
+
+		boolean[] reachable = new boolean[size];
+		int[] referencesFromReachable = new int[size];
+
+		Deque<Integer> worklist = new ArrayDeque<>();
+		if (!queue.isEmpty()) {
+			reachable[0] = true;
+			worklist.add(0);
+		}
+
+		while (!worklist.isEmpty()) {
+			int index = worklist.removeFirst();
+			Tuple tuple = queue.get(index);
+
+			if (fallsThrough(tuple.getOpcode())) {
+				Tuple nextTuple = tuple.getNext();
+				if (nextTuple != null) {
+					int nextIndex = index + 1;
+					if (!reachable[nextIndex]) {
+						reachable[nextIndex] = true;
+						worklist.addLast(nextIndex);
+					}
+				}
+			}
+
+			Address address = tuple.getAddress();
+			if (address != null) {
+				int targetIndex = address.index();
+				if (targetIndex < 0 || targetIndex >= size) {
+					throw new Error("address " + address + " doesn't resolve to an actual list element");
+				}
+				referencesFromReachable[targetIndex]++;
+				if (!reachable[targetIndex]) {
+					reachable[targetIndex] = true;
+					worklist.addLast(targetIndex);
+				}
+			}
+		}
+
+		for (int i = 0; i < size; i++) {
+			if (!reachable[i] && referencesFromReachable[i] > 0) {
+				reachable[i] = true;
+				worklist.addLast(i);
+			}
+		}
+
+		while (!worklist.isEmpty()) {
+			int index = worklist.removeFirst();
+			Tuple tuple = queue.get(index);
+
+			if (fallsThrough(tuple.getOpcode())) {
+				Tuple nextTuple = tuple.getNext();
+				if (nextTuple != null) {
+					int nextIndex = index + 1;
+					if (!reachable[nextIndex]) {
+						reachable[nextIndex] = true;
+						worklist.addLast(nextIndex);
+					}
+				}
+			}
+
+			Address address = tuple.getAddress();
+			if (address != null) {
+				int targetIndex = address.index();
+				if (targetIndex < 0 || targetIndex >= size) {
+					throw new Error("address " + address + " doesn't resolve to an actual list element");
+				}
+				referencesFromReachable[targetIndex]++;
+				if (!reachable[targetIndex]) {
+					reachable[targetIndex] = true;
+					worklist.addLast(targetIndex);
+				}
+			}
+		}
+
+		boolean anyRemoved = false;
+		boolean[] remove = new boolean[size];
+		for (int i = 0; i < size; i++) {
+			if (!reachable[i]) {
+				remove[i] = true;
+				anyRemoved = true;
+				continue;
+			}
+			Tuple tuple = queue.get(i);
+			if (tuple.getOpcode() == Opcode.NOP && referencesFromReachable[i] == 0) {
+				remove[i] = true;
+				anyRemoved = true;
+			}
+		}
+
+		if (!anyRemoved) {
+			return;
+		}
+
+		int[] indexMapping = new int[size];
+		int nextIndex = 0;
+		for (int i = 0; i < size; i++) {
+			if (remove[i]) {
+				indexMapping[i] = -1;
+			} else {
+				indexMapping[i] = nextIndex++;
+			}
+		}
+
+		for (int i = size - 1; i >= 0; i--) {
+			if (remove[i]) {
+				queue.remove(i);
+			}
+		}
+
+		if (!queue.isEmpty()) {
+			assignSequentialNextPointers();
+		}
+
+		Set<Address> processedAddresses = Collections.newSetFromMap(new IdentityHashMap<Address, Boolean>());
+		for (Tuple tuple : queue) {
+			Address address = tuple.getAddress();
+			if (address != null && processedAddresses.add(address)) {
+				int oldIndex = address.index();
+				if (oldIndex >= 0 && oldIndex < indexMapping.length) {
+					int mappedIndex = indexMapping[oldIndex];
+					if (mappedIndex < 0) {
+						throw new Error("Address " + address + " references removed tuple " + oldIndex);
+					}
+					address.assignIndex(mappedIndex);
+				}
+			}
+		}
+
+		addressManager.remapIndexes(indexMapping);
+	}
+
+	private boolean fallsThrough(Opcode opcode) {
+		if (opcode == null) {
+			return true;
+		}
+		switch (opcode) {
+		case GOTO:
+		case EXIT_WITH_CODE:
+		case EXIT_WITHOUT_CODE:
+			return false;
+		default:
+			return true;
 		}
 	}
 

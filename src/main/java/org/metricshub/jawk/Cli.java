@@ -81,6 +81,7 @@ public final class Cli {
 	private File compileOutputFile;
 	private boolean printUsage;
 	private boolean sandbox;
+	private boolean disableOptimize;
 
 	/**
 	 * Creates a CLI instance wired to the standard input and output streams.
@@ -117,6 +118,10 @@ public final class Cli {
 
 	public boolean isSandbox() {
 		return sandbox;
+	}
+
+	public boolean isDisableOptimize() {
+		return disableOptimize;
 	}
 
 	/**
@@ -199,8 +204,11 @@ public final class Cli {
 			} else if (arg.equals("--dump-syntax")) {
 // --dump-syntax : dump syntax tree to file
 				dumpSyntaxTree = true;
-			} else if (arg.equals("-s")) {
-				// -s : dump intermediate tuples to file
+			} else if (arg.equals("-s") || arg.equals("--no-optimize")) {
+				// -s/--no-optimize : skip tuple queue optimizations
+				disableOptimize = true;
+			} else if (arg.equals("--dump-intermediate")) {
+				// --dump-intermediate : dump intermediate tuples to file
 				dumpIntermediateCode = true;
 			} else if (arg.equals("-t")) {
 				// -t : keep associative array keys sorted
@@ -344,7 +352,10 @@ public final class Cli {
 			awk = extensions.isEmpty() ? new Awk() : new Awk(extensions);
 		}
 		// Use precompiled tuples if provided; otherwise compile the scripts now
-		AwkTuples tuples = precompiledTuples != null ? precompiledTuples : awk.compile(scriptSources);
+		AwkTuples tuples = precompiledTuples != null ? precompiledTuples : awk.compile(scriptSources, disableOptimize);
+		if (precompiledTuples != null && !disableOptimize) {
+			tuples.optimize();
+		}
 		if (dumpSyntaxTree) {
 			try (
 					PrintStream ps = new PrintStream(
@@ -399,7 +410,8 @@ public final class Cli {
 								" [-o output-filename]" +
 								" [-S|--sandbox]" +
 								" [--dump-syntax]" +
-								" [-s]" +
+								" [--dump-intermediate]" +
+								" [-s|--no-optimize]" +
 								" [-r]" +
 								" [--locale locale]" +
 								" [-t]" +
@@ -426,7 +438,8 @@ public final class Cli {
 						" -S, --sandbox = (extension) Enable sandbox mode (no system(), redirection, pipelines, or"
 								+ " dynamic extensions).");
 		dest.println(" --dump-syntax = (extension) Write the syntax tree to file. (default: syntax_tree.lst)");
-		dest.println(" -s = (extension) Write the intermediate code to file. (default: avm.lst)");
+		dest.println(" --dump-intermediate = (extension) Write the intermediate code to file. (default: avm.lst)");
+		dest.println(" -s, --no-optimize = (extension) Disable tuple queue optimizations during compilation.");
 		dest.println(" -r = (extension) Do NOT hide IllegalFormatExceptions for [s]printf.");
 		dest.println(" --locale Locale = (extension) Specify a locale to be used instead of US-English");
 		dest.println(" --list-ext = (extension) List available extensions.");

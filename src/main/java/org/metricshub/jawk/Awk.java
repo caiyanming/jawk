@@ -662,10 +662,23 @@ public class Awk {
 	 * @throws IOException if an I/O error occurs during compilation
 	 */
 	public AwkTuples compile(String script) throws IOException {
+		return compile(script, false);
+	}
+
+	/**
+	 * Compiles the specified AWK script and returns the intermediate representation
+	 * as {@link AwkTuples}.
+	 *
+	 * @param script AWK script to compile
+	 * @param disableOptimizeParam {@code true} to skip tuple optimization
+	 * @return compiled {@link AwkTuples}
+	 * @throws IOException if an I/O error occurs during compilation
+	 */
+	public AwkTuples compile(String script, boolean disableOptimizeParam) throws IOException {
 		ScriptSource source = new ScriptSource(
 				ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
 				new StringReader(script));
-		return compile(Collections.singletonList(source));
+		return compile(Collections.singletonList(source), disableOptimizeParam);
 	}
 
 	/**
@@ -677,10 +690,23 @@ public class Awk {
 	 * @throws IOException if an I/O error occurs during compilation
 	 */
 	public AwkTuples compile(Reader script) throws IOException {
+		return compile(script, false);
+	}
+
+	/**
+	 * Compiles the specified AWK script and returns the intermediate representation
+	 * as {@link AwkTuples}.
+	 *
+	 * @param script AWK script to compile (as a {@link Reader})
+	 * @param disableOptimizeParam {@code true} to skip tuple optimization
+	 * @return compiled {@link AwkTuples}
+	 * @throws IOException if an I/O error occurs during compilation
+	 */
+	public AwkTuples compile(Reader script, boolean disableOptimizeParam) throws IOException {
 		ScriptSource source = new ScriptSource(
 				ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT,
 				script);
-		return compile(Collections.singletonList(source));
+		return compile(Collections.singletonList(source), disableOptimizeParam);
 	}
 
 	/**
@@ -693,6 +719,21 @@ public class Awk {
 	 *         scripts
 	 */
 	public AwkTuples compile(List<ScriptSource> scripts)
+			throws IOException {
+		return compile(scripts, false);
+	}
+
+	/**
+	 * Compiles a list of script sources into {@link AwkTuples} that can be
+	 * interpreted by the {@link AVM} runtime.
+	 *
+	 * @param scripts script sources to compile
+	 * @param disableOptimizeParam {@code true} to skip tuple optimization
+	 * @return compiled {@link AwkTuples}
+	 * @throws IOException if an I/O error occurs while reading the
+	 *         scripts
+	 */
+	public AwkTuples compile(List<ScriptSource> scripts, boolean disableOptimizeParam)
 			throws IOException {
 
 		lastAst = null;
@@ -711,6 +752,9 @@ public class Awk {
 				assert result == 0;
 				// Assign addresses and prepare tuples for interpretation
 				tuples.postProcess();
+				if (!disableOptimizeParam) {
+					tuples.optimize();
+				}
 				// Record global variable offset mappings for the interpreter
 				parser.populateGlobalVariableNameToOffsetMappings(tuples);
 			}
@@ -727,6 +771,18 @@ public class Awk {
 	 * @throws IOException if anything goes wrong with the compilation
 	 */
 	public AwkTuples compileForEval(String expression) throws IOException {
+		return compileForEval(expression, false);
+	}
+
+	/**
+	 * Compile an expression to evaluate (not a full script).
+	 *
+	 * @param expression AWK expression to compile to AwkTuples
+	 * @param disableOptimizeParam {@code true} to skip tuple optimization
+	 * @return AwkTuples to be interpreted by AVM
+	 * @throws IOException if anything goes wrong with the compilation
+	 */
+	public AwkTuples compileForEval(String expression, boolean disableOptimizeParam) throws IOException {
 
 		// Create a ScriptSource
 		ScriptSource expressionSource = new ScriptSource(
@@ -751,6 +807,9 @@ public class Awk {
 			ast.populateTuples(tuples);
 			// Calls touch(...) per Tuple so that addresses can be normalized/assigned/allocated
 			tuples.postProcess();
+			if (!disableOptimizeParam) {
+				tuples.optimize();
+			}
 			// record global_var -> offset mapping into the tuples
 			// so that the interpreter can assign variables
 			parser.populateGlobalVariableNameToOffsetMappings(tuples);
