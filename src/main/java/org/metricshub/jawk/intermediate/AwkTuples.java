@@ -64,6 +64,12 @@ public class AwkTuples implements Serializable {
 	 * Override add() to populate the line number for each tuple,
 	 * rather than polluting all the constructors with this assignment.
 	 */
+	/**
+	 * The tuple queue intentionally uses an {@link ArrayList}. The address mapping
+	 * logic stores tuple indexes (rather than node references) so that jump targets
+	 * can be serialized and patched efficiently. A linked list would make every
+	 * lookup O(n) and complicate address reassignment.
+	 */
 	private java.util.List<Tuple> queue = new ArrayList<Tuple>(100) {
 		private static final long serialVersionUID = -6334362156408598578L;
 
@@ -1525,6 +1531,14 @@ public class AwkTuples implements Serializable {
 	 * <p>
 	 * This method is idempotent. Repeated invocations after a successful
 	 * optimization run will have no additional effect.
+	 */
+	/**
+	 * Peephole optimization happens at the tuple layer instead of during AST
+	 * construction. Folding after parsing guarantees that any tuple-level
+	 * transformations (for example, address resolution and extension hooks) have
+	 * already run, and it keeps a single optimization toggle (optimize()) for
+	 * callers. Performing the work at the tuple layer also lets us recurse until
+	 * no more changes occur without complicating the parser.
 	 */
 	public void optimize() {
 		if (optimized) {
