@@ -32,7 +32,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -77,7 +76,6 @@ public final class Cli {
 
 	private boolean dumpSyntaxTree;
 	private boolean dumpIntermediateCode;
-	private String dumpOutputFilename;
 	private File compileOutputFile;
 	private boolean printUsage;
 	private boolean sandbox;
@@ -150,6 +148,14 @@ public final class Cli {
 	 * @param args command-line arguments
 	 */
 	public void parse(String[] args) {
+
+		// Special case: no arguments
+		if (args.length == 0) {
+			printUsage = true;
+			return;
+		}
+
+		// Parse the arguments
 		int argIdx = 0;
 		while (argIdx < args.length) {
 			String arg = args[argIdx];
@@ -194,10 +200,6 @@ public final class Cli {
 				// -K filename : compile scripts to tuples and exit
 				checkParameterHasArgument(args, argIdx);
 				compileOutputFile = new File(args[++argIdx]);
-			} else if (arg.equals("-o")) {
-				// -o filename : direct debug output to file
-				checkParameterHasArgument(args, argIdx);
-				dumpOutputFilename = args[++argIdx];
 			} else if (arg.equals("-S") || arg.equals("--sandbox")) {
 // -S/--sandbox : enable sandbox mode
 				sandbox = true;
@@ -223,7 +225,7 @@ public final class Cli {
 			} else if (arg.equals("--locale")) {
 				// --locale Locale : specify locale
 				checkParameterHasArgument(args, argIdx);
-				settings.setLocale(new Locale(args[++argIdx]));
+				settings.setLocale(Locale.forLanguageTag(args[++argIdx]));
 			} else if (arg.equals("-h") || arg.equals("-?")) {
 				// -h/-? : display usage information and exit
 				if (argIdx != 0 || args.length != 1) {
@@ -307,18 +309,6 @@ public final class Cli {
 	}
 
 	/**
-	 * Determines the filename to use for debug output such as the syntax tree or
-	 * intermediate code dump.
-	 *
-	 * @param defaultName name to use when the <code>-o</code> option was not
-	 *        specified
-	 * @return chosen output filename
-	 */
-	private String outputFilename(String defaultName) {
-		return dumpOutputFilename != null ? dumpOutputFilename : defaultName;
-	}
-
-	/**
 	 * Executes the CLI based on the previously parsed arguments.
 	 *
 	 * @throws Exception if compilation or execution fails
@@ -357,25 +347,13 @@ public final class Cli {
 			tuples.optimize();
 		}
 		if (dumpSyntaxTree) {
-			try (
-					PrintStream ps = new PrintStream(
-							new FileOutputStream(outputFilename("syntax_tree.lst")),
-							false,
-							StandardCharsets.UTF_8.name())) {
-				AstNode ast = awk.getLastAst();
-				if (ast != null) {
-					ast.dump(ps);
-				}
+			AstNode ast = awk.getLastAst();
+			if (ast != null) {
+				ast.dump(out);
 			}
 		}
 		if (dumpIntermediateCode) {
-			try (
-					PrintStream ps = new PrintStream(
-							new FileOutputStream(outputFilename("avm.lst")),
-							false,
-							StandardCharsets.UTF_8.name())) {
-				tuples.dump(ps);
-			}
+			tuples.dump(out);
 		}
 		if (compileOutputFile != null) {
 			// Serialize tuples to the requested file and exit
@@ -437,8 +415,8 @@ public final class Cli {
 				.println(
 						" -S, --sandbox = (extension) Enable sandbox mode (no system(), redirection, pipelines, or"
 								+ " dynamic extensions).");
-		dest.println(" --dump-syntax = (extension) Write the syntax tree to file. (default: syntax_tree.lst)");
-		dest.println(" --dump-intermediate = (extension) Write the intermediate code to file. (default: avm.lst)");
+		dest.println(" --dump-syntax = Print the syntax tree.");
+		dest.println(" --dump-intermediate = Print the intermediate code.");
 		dest.println(" -s, --no-optimize = (extension) Disable tuple queue optimizations during compilation.");
 		dest.println(" -r = (extension) Do NOT hide IllegalFormatExceptions for [s]printf.");
 		dest.println(" --locale Locale = (extension) Specify a locale to be used instead of US-English");
