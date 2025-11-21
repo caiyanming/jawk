@@ -146,8 +146,8 @@ public class AwkTupleOptimizationTest {
 		AwkTestSupport
 				.awkTest("targeted nop retained")
 				.script(script)
-				.stdin("value\n")
-				.expect("value\n")
+				.stdin("value")
+				.expectLines("value")
 				.runAndAssert();
 
 		AwkTuples tuples = new Awk().compile(script);

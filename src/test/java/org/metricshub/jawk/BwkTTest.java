@@ -1,12 +1,12 @@
 package org.metricshub.jawk;
 
-import static org.junit.Assert.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import org.junit.AfterClass;
@@ -29,8 +29,8 @@ import org.junit.runners.Parameterized.Parameters;
 public class BwkTTest {
 
 	private static final String BWK_T_PATH = "/bwk/t";
-	private static File bwkTDirectory;
-	private static File scriptsDirectory;
+	private static Path bwkTDirectory;
+	private static Path scriptsDirectory;
 
 	/**
 	 * Initialization of the tests
@@ -51,17 +51,17 @@ public class BwkTTest {
 		if (bwkTUrl == null) {
 			throw new IOException("Couldn't find resource " + BWK_T_PATH);
 		}
-		bwkTDirectory = new File(bwkTUrl.toURI());
-		if (!bwkTDirectory.isDirectory()) {
+		bwkTDirectory = Paths.get(bwkTUrl.toURI());
+		if (!bwkTDirectory.toFile().isDirectory()) {
 			throw new IOException(BWK_T_PATH + " is not a directory");
 		}
-		scriptsDirectory = new File(bwkTDirectory, "scripts");
-		if (!scriptsDirectory.isDirectory()) {
+		scriptsDirectory = bwkTDirectory.resolve("scripts");
+		if (!scriptsDirectory.toFile().isDirectory()) {
 			throw new IOException("scripts is not a directory");
 		}
 
 		return Arrays
-				.stream(scriptsDirectory.listFiles())
+				.stream(scriptsDirectory.toFile().listFiles())
 				.filter(sf -> sf.getName().startsWith("t."))
 				.map(File::getName)
 				.collect(Collectors.toList());
@@ -79,42 +79,57 @@ public class BwkTTest {
 	@Test
 	public void test() throws Exception {
 		// Get the AWK script file
-		File awkFile = new File(scriptsDirectory, awkName);
+		Path awkPath = scriptsDirectory.resolve(awkName);
 
 		// Get the file with the expected result
-		File okFile = new File(bwkTDirectory, "results/" + awkName + ".ok");
+		Path okPath = bwkTDirectory.resolve("results/" + awkName + ".ok");
 
 		// Get the input file (always the same)
-		File inputFile = new File(bwkTDirectory, "inputs/test.data");
+		Path inputPath = bwkTDirectory.resolve("inputs/test.data");
 
-		AwkTestSupport.TestResult result = AwkTestSupport
-				.cliTest("BWK.t " + awkName)
-				.argument("-f", awkFile.getAbsolutePath())
-				.operand(inputFile.getAbsolutePath())
-				.build()
-				.run();
-		String expectedResult = new String(Files.readAllBytes(okFile.toPath()), StandardCharsets.UTF_8);
-
-		// For BWK t tests, we won't take into account \r end of lines
-		String output = result.output().replace("\r", "");
-
-		// Special case: certain tests loop through a map, which cannot be expected to be sorted
-		// the same way between C and Java. So we sort the result manually.
-		if ("t.in2".equals(awkName) || "t.intest2".equals(awkName)) {
-			output = Arrays.stream(output.split("\\R")).sorted().collect(Collectors.joining("\n"));
-			expectedResult = Arrays.stream(expectedResult.split("\\R")).sorted().collect(Collectors.joining("\n"));
-		}
-
-		// Output must now equal the expected result
-		assertEquals(expectedResult, output);
-
+		// Expected exit code?
 		int expectedCode = 0;
 		if ("t.exit".equals(awkName)) {
 			expectedCode = 1;
 		} else if ("t.exit1".equals(awkName)) {
 			expectedCode = 2;
 		}
-		assertEquals("Unexpected exit code for " + awkName, expectedCode, result.exitCode());
+
+		// Special case: certain tests loop through a map, which cannot be expected to be sorted
+		// the same way between C and Java. So we sort the result artificially
+		if ("t.in2".equals(awkName) || "t.intest2".equals(awkName)) {
+
+			String expectedResult = Files
+					.readAllLines(okPath, StandardCharsets.UTF_8)
+					.stream()
+					.sorted()
+					.collect(Collectors.joining("\n"));
+
+			AwkTestSupport
+					.awkTest("BWK.t " + awkName)
+					.script(Files.newInputStream(awkPath))
+					.operand(inputPath.toString())
+					.postProcessWith(output -> Arrays.stream(output.split("\\R")).sorted().collect(Collectors.joining("\n")))
+					.expect(expectedResult)
+					.expectExit(expectedCode)
+					.build()
+					.runAndAssert();
+		} else {
+
+			// General case
+			AwkTestSupport
+					.awkTest("BWK.t " + awkName)
+					.script(Files.newInputStream(awkPath))
+					.operand(inputPath.toString())
+					.expectLines(okPath)
+					.expectExit(expectedCode)
+					.build()
+					.runAndAssert();
+
+		}
+
+		// Output must now equal the expected result
+//		assertEquals(expectedResult, output);
 	}
 
 	/**

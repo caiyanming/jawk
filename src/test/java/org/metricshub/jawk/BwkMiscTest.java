@@ -88,14 +88,13 @@ public class BwkMiscTest {
 		// Get the file with the expected result
 		File okFile = new File(bwkMiscDirectory, "results/" + shortName + ".ok");
 
-		AwkTestSupport.TestResult result = AwkTestSupport
+		AwkTestSupport
 				.cliTest("BWK.misc " + awkName)
 				.argument("-f", awkFile.getAbsolutePath())
 				.operand(inputFile.getAbsolutePath())
+				.expectLines(okFile)
 				.build()
-				.run();
-		String expectedResult = new String(Files.readAllBytes(okFile.toPath()), StandardCharsets.UTF_8);
-		assertEquals(expectedResult, result.output());
+				.runAndAssert();
 	}
 
 	/**
