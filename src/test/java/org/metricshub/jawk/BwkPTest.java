@@ -1,12 +1,10 @@
 package org.metricshub.jawk;
 
-import static org.junit.Assert.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import org.junit.AfterClass;
@@ -29,8 +27,8 @@ import org.junit.runners.Parameterized.Parameters;
 public class BwkPTest {
 
 	private static final String BWK_P_PATH = "/bwk/p";
-	private static File bwkPDirectory;
-	private static File scriptsDirectory;
+	private static Path bwkPDirectory;
+	private static Path scriptsDirectory;
 
 	/**
 	 * Initialization of the tests
@@ -51,17 +49,18 @@ public class BwkPTest {
 		if (bwkTUrl == null) {
 			throw new IOException("Couldn't find resource " + BWK_P_PATH);
 		}
-		bwkPDirectory = new File(bwkTUrl.toURI());
-		if (!bwkPDirectory.isDirectory()) {
+		Path bwkTPath = Paths.get(bwkTUrl.toURI());
+		bwkPDirectory = new File(".").getAbsoluteFile().toPath().relativize(bwkTPath);
+		if (!bwkPDirectory.toFile().isDirectory()) {
 			throw new IOException(BWK_P_PATH + " is not a directory");
 		}
-		scriptsDirectory = new File(bwkPDirectory, "scripts");
-		if (!scriptsDirectory.isDirectory()) {
+		scriptsDirectory = bwkPDirectory.resolve("scripts");
+		if (!scriptsDirectory.toFile().isDirectory()) {
 			throw new IOException("scripts is not a directory");
 		}
 
 		return Arrays
-				.stream(scriptsDirectory.listFiles())
+				.stream(scriptsDirectory.toFile().listFiles())
 				.filter(sf -> sf.getName().startsWith("p."))
 				.map(File::getName)
 				.collect(Collectors.toList());
@@ -79,29 +78,23 @@ public class BwkPTest {
 	@Test
 	public void test() throws Exception {
 		// Get the AWK script file
-		File awkFile = new File(scriptsDirectory, awkName);
+		Path awkScriptPath = scriptsDirectory.resolve(awkName);
 
 		// Get the file with the expected result
-		File okFile = new File(bwkPDirectory, "results/" + awkName + ".ok");
+		Path okFilePath = bwkPDirectory.resolve("results/" + awkName + ".ok");
 
 		// Get the input file (always the same)
-		File inputFile = new File(bwkPDirectory, "inputs/test.countries");
+		Path inputFilePath = bwkPDirectory.resolve("inputs/test.countries");
 
-		// Get the expected result
-		String expectedResult = new String(Files.readAllBytes(okFile.toPath()), StandardCharsets.UTF_8);
-
-		AwkTestSupport.TestResult result = AwkTestSupport
+		AwkTestSupport
 				.cliTest("BWK.p " + awkName)
-				.argument("-f", awkFile.getAbsolutePath())
-				.operand(inputFile.getAbsolutePath())
+				.argument("-f", awkScriptPath.toString())
+				.operand(inputFilePath.toString())
+				.postProcessWith(s -> s.replace(inputFilePath.toString(), inputFilePath.getFileName().toString()))
+				.expectLines(okFilePath)
 				.build()
-				.run();
+				.runAndAssert();
 
-		// Some post-processing: remove references to the inputs directory.
-		String output = result
-				.output()
-				.replace(inputFile.getParent() + System.getProperty("file.separator"), "");
-		assertEquals(expectedResult, output);
 	}
 
 	/**

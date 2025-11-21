@@ -1,11 +1,14 @@
 package org.metricshub.jawk;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -22,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.metricshub.jawk.ext.JawkExtension;
@@ -234,7 +238,10 @@ public final class AwkTestSupport {
 			}
 			if (expectedLines != null) {
 				List<String> actualLines = readOutputLines(output);
-				assertEquals("Unexpected output for " + description, expectedLines, actualLines);
+				assertArrayEquals(
+						"Unexpected output for " + description,
+						expectedLines.toArray(new String[0]),
+						actualLines.toArray(new String[0]));
 			} else if (expectedOutput != null) {
 				assertEquals("Unexpected output for " + description, expectedOutput, output);
 			}
@@ -460,6 +467,7 @@ public final class AwkTestSupport {
 		protected Class<? extends Throwable> expectedException;
 		protected boolean requiresPosix;
 		protected boolean useTempDir;
+		protected List<Function<String, String>> postProcessors = new ArrayList<>();
 
 		BaseTestBuilder(String description) {
 			this.description = description;
@@ -488,7 +496,6 @@ public final class AwkTestSupport {
 		 *         {@code null}
 		 * @throws UncheckedIOException when the stream cannot be read
 		 */
-		@SuppressWarnings("unchecked")
 		public B script(InputStream scriptStream) {
 			if (scriptStream == null) {
 				throw new IllegalArgumentException("scriptStream must not be null");
@@ -561,6 +568,21 @@ public final class AwkTestSupport {
 		}
 
 		/**
+		 * Adds a post-processing function to the output of the AWK script
+		 * that will be used before running the assertions.
+		 *
+		 * @param processor function used for post-processing the output of the AWK script
+		 * @return this builder for method chaining
+		 */
+		@SuppressWarnings("unchecked")
+		public B postProcessWith(Function<String, String> processor) {
+			if (processor != null) {
+				postProcessors.add(processor);
+			}
+			return (B) this;
+		}
+
+		/**
 		 * Declares the exact output expected from the script.
 		 *
 		 * @param expected the expected output
@@ -580,11 +602,46 @@ public final class AwkTestSupport {
 		 * @param lines the expected output lines
 		 * @return this builder for method chaining
 		 */
-		@SuppressWarnings("unchecked")
 		public B expectLines(String... lines) {
-			this.expectedLines = new ArrayList<>(Arrays.asList(Arrays.copyOf(lines, lines.length)));
+			return expectLines(Arrays.asList(Arrays.copyOf(lines, lines.length)));
+		}
+
+		/**
+		 * Declares the expected output using individual lines. A trailing newline
+		 * is automatically appended when at least one line is supplied.
+		 *
+		 * @param lines the expected output lines
+		 * @return this builder for method chaining
+		 */
+		@SuppressWarnings("unchecked")
+		public B expectLines(List<String> lines) {
+			this.expectedLines = new ArrayList<>(lines);
 			this.expectedOutput = null;
 			return (B) this;
+		}
+
+		/**
+		 * Declares the expected output using individual lines. A trailing newline
+		 * is automatically appended when at least one line is supplied.
+		 *
+		 * @param File instance from which we will extract the lines to be matched with
+		 * @return this builder for method chaining
+		 * @throws IOException if file cannot be read
+		 */
+		public B expectLines(File expectedResultFile) throws IOException {
+			return expectLines(expectedResultFile.toPath());
+		}
+
+		/**
+		 * Declares the expected output using individual lines. A trailing newline
+		 * is automatically appended when at least one line is supplied.
+		 *
+		 * @param Path to the file from which we will extract the lines to be matched with
+		 * @return this builder for method chaining
+		 * @throws IOException if file cannot be read
+		 */
+		public B expectLines(Path expectedResultPath) throws IOException {
+			return expectLines(Files.readAllLines(expectedResultPath, StandardCharsets.UTF_8));
 		}
 
 		/**
@@ -647,6 +704,7 @@ public final class AwkTestSupport {
 					description,
 					script,
 					stdin,
+					postProcessors,
 					expectedOutput,
 					expectedLines,
 					expectedExitCode,
@@ -730,8 +788,18 @@ public final class AwkTestSupport {
 
 		private TestResult executeAndCapture(ExecutionEnvironment env) throws Exception {
 			try {
+				// Execute AWK and get the output
 				ActualResult result = execute(env);
 				String actualOutput = result.output;
+
+				// Post-processing of the output
+				if (layout.postProcessors != null) {
+					for (Function<String, String> processor : layout.postProcessors) {
+						actualOutput = processor.apply(actualOutput);
+					}
+				}
+
+				// Post-processing of the expected result (resolve temporary paths)
 				String expected = layout.expectedOutput != null ? env.resolve(layout.expectedOutput) : null;
 				List<String> expectedLines = null;
 				if (layout.expectedLines != null) {
@@ -740,6 +808,7 @@ public final class AwkTestSupport {
 						expectedLines.add(env.resolve(line));
 					}
 				}
+
 				return new TestResult(
 						layout.description,
 						actualOutput,
@@ -779,7 +848,12 @@ public final class AwkTestSupport {
 				if (parent != null) {
 					Files.createDirectories(parent);
 				}
-				Files.write(path, entry.getValue().getBytes(StandardCharsets.UTF_8));
+
+				if (entry.getValue() != null) {
+					try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
+						writer.write(entry.getValue().replace("\n", System.lineSeparator()));
+					}
+				}
 				placeholders.put(entry.getKey(), path);
 			}
 			for (String placeholder : pathPlaceholders) {
@@ -832,14 +906,14 @@ public final class AwkTestSupport {
 		@Override
 		protected ActualResult execute(ExecutionEnvironment env) throws Exception {
 			AwkSettings settings = new AwkSettings();
-			settings.setDefaultRS("\n");
-			settings.setDefaultORS("\n");
 			for (Map.Entry<String, Object> entry : preAssignments.entrySet()) {
 				settings.putVariable(entry.getKey(), entry.getValue());
 			}
 			String stdin = resolvedStdin(env);
 			if (stdin != null) {
-				settings.setInput(new ByteArrayInputStream(stdin.getBytes(StandardCharsets.UTF_8)));
+				settings
+						.setInput(
+								new ByteArrayInputStream(stdin.replace("\n", System.lineSeparator()).getBytes(StandardCharsets.UTF_8)));
 			} else {
 				settings.setInput(new ByteArrayInputStream(new byte[0]));
 			}
@@ -859,11 +933,13 @@ public final class AwkTestSupport {
 			int exitCode = 0;
 			try {
 				String resolvedScript = resolvedScript(env);
-				awk.invoke(new ScriptSource("test", new StringReader(resolvedScript)), settings);
+				awk.invoke(new ScriptSource(description(), new StringReader(resolvedScript)), settings);
 			} catch (ExitException ex) {
 				exitCode = ex.getCode();
 			}
-			return new ActualResult(outBytes.toString(StandardCharsets.UTF_8.name()), exitCode);
+			return new ActualResult(
+					outBytes.toString(StandardCharsets.UTF_8.name()).replace(System.lineSeparator(), "\n"),
+					exitCode);
 		}
 	}
 
@@ -888,15 +964,14 @@ public final class AwkTestSupport {
 		protected ActualResult execute(ExecutionEnvironment env) throws Exception {
 			String stdin = resolvedStdin(env);
 			InputStream in = stdin != null ?
-					new ByteArrayInputStream(stdin.getBytes(StandardCharsets.UTF_8)) : new ByteArrayInputStream(new byte[0]);
+					new ByteArrayInputStream(stdin.replace("\n", System.lineSeparator()).getBytes(StandardCharsets.UTF_8)) :
+					new ByteArrayInputStream(new byte[0]);
 			ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
 			ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
 			Cli cli = new Cli(
 					in,
 					new PrintStream(outBytes, true, StandardCharsets.UTF_8.name()),
 					new PrintStream(errBytes, true, StandardCharsets.UTF_8.name()));
-			cli.getSettings().setDefaultRS("\n");
-			cli.getSettings().setDefaultORS("\n");
 
 			List<String> args = new ArrayList<>();
 			for (Map.Entry<String, Object> entry : assignments.entrySet()) {
@@ -919,7 +994,9 @@ public final class AwkTestSupport {
 			} catch (ExitException ex) {
 				exitCode = ex.getCode();
 			}
-			return new ActualResult(outBytes.toString(StandardCharsets.UTF_8.name()), exitCode);
+			return new ActualResult(
+					outBytes.toString(StandardCharsets.UTF_8.name()).replace(System.lineSeparator(), "\n"),
+					exitCode);
 		}
 	}
 
@@ -973,6 +1050,7 @@ public final class AwkTestSupport {
 		final String description;
 		final String script;
 		final String stdin;
+		final List<Function<String, String>> postProcessors;
 		final String expectedOutput;
 		final List<String> expectedLines;
 		final Integer expectedExitCode;
@@ -982,6 +1060,7 @@ public final class AwkTestSupport {
 				String description,
 				String script,
 				String stdin,
+				List<Function<String, String>> postProcessors,
 				String expectedOutput,
 				List<String> expectedLines,
 				Integer expectedExitCode,
@@ -989,6 +1068,8 @@ public final class AwkTestSupport {
 			this.description = description;
 			this.script = script;
 			this.stdin = stdin;
+			this.postProcessors = postProcessors != null ?
+					Collections.unmodifiableList(new ArrayList<>(postProcessors)) : null;
 			this.expectedOutput = expectedOutput;
 			this.expectedLines = expectedLines != null ? Collections.unmodifiableList(new ArrayList<>(expectedLines)) : null;
 			this.expectedExitCode = expectedExitCode;

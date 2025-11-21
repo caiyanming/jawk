@@ -26,6 +26,7 @@ import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -35,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 import org.metricshub.jawk.ext.ExtensionFunction;
+import org.metricshub.jawk.jrt.JRT;
 
 /**
  * <p>
@@ -61,6 +63,12 @@ public class AwkTuples implements Serializable {
 	/**
 	 * Override add() to populate the line number for each tuple,
 	 * rather than polluting all the constructors with this assignment.
+	 */
+	/**
+	 * The tuple queue intentionally uses an {@link ArrayList}. The address mapping
+	 * logic stores tuple indexes (rather than node references) so that jump targets
+	 * can be serialized and patched efficiently. A linked list would make every
+	 * lookup O(n) and complicate address reassignment.
 	 */
 	private java.util.List<Tuple> queue = new ArrayList<Tuple>(100) {
 		private static final long serialVersionUID = -6334362156408598578L;
@@ -1524,6 +1532,14 @@ public class AwkTuples implements Serializable {
 	 * This method is idempotent. Repeated invocations after a successful
 	 * optimization run will have no additional effect.
 	 */
+	/**
+	 * Peephole optimization happens at the tuple layer instead of during AST
+	 * construction. Folding after parsing guarantees that any tuple-level
+	 * transformations (for example, address resolution and extension hooks) have
+	 * already run, and it keeps a single optimization toggle (optimize()) for
+	 * callers. Performing the work at the tuple layer also lets us recurse until
+	 * no more changes occur without complicating the parser.
+	 */
 	public void optimize() {
 		if (optimized) {
 			return;
@@ -1531,8 +1547,269 @@ public class AwkTuples implements Serializable {
 		if (!postProcessed) {
 			postProcess();
 		}
+		boolean modified = peepholeOptimize();
+		if (modified) {
+			assignSequentialNextPointers();
+			for (Tuple tuple : queue) {
+				tuple.touch(queue);
+			}
+		}
 		optimizeQueue();
 		optimized = true;
+	}
+
+	private boolean peepholeOptimize() {
+		boolean modified = false;
+		boolean passModified;
+		do {
+			passModified = peepholeOptimizePass();
+			modified |= passModified;
+		} while (passModified);
+		return modified;
+	}
+
+	private boolean peepholeOptimizePass() {
+		int originalSize = queue.size();
+		if (originalSize < 2) {
+			return false;
+		}
+
+		java.util.List<Tuple> original = new ArrayList<Tuple>(queue);
+		int[] indexMapping = new int[originalSize];
+		Arrays.fill(indexMapping, -1);
+		java.util.List<Tuple> optimizedQueue = new ArrayList<Tuple>(originalSize);
+
+		boolean modified = false;
+		int oldIndex = 0;
+		int newIndex = 0;
+		while (oldIndex < originalSize) {
+			Tuple tuple = original.get(oldIndex);
+			Object literal = literalValue(tuple);
+			if (literal != null && !hasResolvedAddress(oldIndex)) {
+				if ((oldIndex + 2) < originalSize) {
+					Tuple nextTuple = original.get(oldIndex + 1);
+					Tuple opTuple = original.get(oldIndex + 2);
+					Object secondLiteral = literalValue(nextTuple);
+					if (secondLiteral != null
+							&& !hasResolvedAddress(oldIndex + 1)
+							&& !hasResolvedAddress(oldIndex + 2)) {
+						Object folded = foldBinary(literal, secondLiteral, opTuple);
+						if (folded != null) {
+							Tuple replacement = createLiteralPush(folded, tuple.getLineno());
+							optimizedQueue.add(replacement);
+							indexMapping[oldIndex] = newIndex;
+							oldIndex += 3;
+							newIndex++;
+							modified = true;
+							continue;
+						}
+					}
+				}
+				if ((oldIndex + 1) < originalSize && !hasResolvedAddress(oldIndex + 1)) {
+					Tuple opTuple = original.get(oldIndex + 1);
+					Object folded = foldUnary(literal, opTuple);
+					if (folded != null) {
+						Tuple replacement = createLiteralPush(folded, tuple.getLineno());
+						optimizedQueue.add(replacement);
+						indexMapping[oldIndex] = newIndex;
+						oldIndex += 2;
+						newIndex++;
+						modified = true;
+						continue;
+					}
+				}
+			}
+
+			optimizedQueue.add(tuple);
+			indexMapping[oldIndex] = newIndex;
+			oldIndex++;
+			newIndex++;
+		}
+
+		if (!modified) {
+			return false;
+		}
+
+		for (int i = 0; i < optimizedQueue.size(); i++) {
+			queue.set(i, optimizedQueue.get(i));
+		}
+		for (int i = queue.size() - 1; i >= optimizedQueue.size(); i--) {
+			queue.remove(i);
+		}
+
+		remapAddresses(indexMapping);
+		return true;
+	}
+
+	private Object literalValue(Tuple tuple) {
+		if (tuple.getOpcode() != Opcode.PUSH) {
+			return null;
+		}
+		Class<?>[] types = tuple.getTypes();
+		if (types.length == 0 || types[0] == null) {
+			return null;
+		}
+		if (types[0] == Long.class) {
+			return Long.valueOf(tuple.getInts()[0]);
+		}
+		if (types[0] == Double.class) {
+			return Double.valueOf(tuple.getDoubles()[0]);
+		}
+		if (types[0] == String.class) {
+			return tuple.getStrings()[0];
+		}
+		return null;
+	}
+
+	private Object foldBinary(Object left, Object right, Tuple operation) {
+		Opcode opcode = operation.getOpcode();
+		if (opcode == null) {
+			return null;
+		}
+		switch (opcode) {
+		case ADD: {
+			double d1 = JRT.toDouble(left);
+			double d2 = JRT.toDouble(right);
+			double ans = d1 + d2;
+			if (JRT.isActuallyLong(ans)) {
+				return Long.valueOf((long) Math.rint(ans));
+			}
+			return Double.valueOf(ans);
+		}
+		case SUBTRACT: {
+			double d1 = JRT.toDouble(left);
+			double d2 = JRT.toDouble(right);
+			double ans = d1 - d2;
+			if (JRT.isActuallyLong(ans)) {
+				return Long.valueOf((long) Math.rint(ans));
+			}
+			return Double.valueOf(ans);
+		}
+		case MULTIPLY: {
+			double d1 = JRT.toDouble(left);
+			double d2 = JRT.toDouble(right);
+			double ans = d1 * d2;
+			if (JRT.isActuallyLong(ans)) {
+				return Long.valueOf((long) Math.rint(ans));
+			}
+			return Double.valueOf(ans);
+		}
+		case DIVIDE: {
+			double d1 = JRT.toDouble(left);
+			double d2 = JRT.toDouble(right);
+			double ans = d1 / d2;
+			if (JRT.isActuallyLong(ans)) {
+				return Long.valueOf((long) Math.rint(ans));
+			}
+			return Double.valueOf(ans);
+		}
+		case MOD: {
+			double d1 = JRT.toDouble(left);
+			double d2 = JRT.toDouble(right);
+			double ans = d1 % d2;
+			if (JRT.isActuallyLong(ans)) {
+				return Long.valueOf((long) Math.rint(ans));
+			}
+			return Double.valueOf(ans);
+		}
+		case POW: {
+			double d1 = JRT.toDouble(left);
+			double d2 = JRT.toDouble(right);
+			double ans = Math.pow(d1, d2);
+			if (JRT.isActuallyLong(ans)) {
+				return Long.valueOf((long) Math.rint(ans));
+			}
+			return Double.valueOf(ans);
+		}
+		case CMP_EQ:
+			return JRT.compare2(left, right, 0) ? Long.valueOf(1L) : Long.valueOf(0L);
+		case CMP_LT:
+			return JRT.compare2(left, right, -1) ? Long.valueOf(1L) : Long.valueOf(0L);
+		case CMP_GT:
+			return JRT.compare2(left, right, 1) ? Long.valueOf(1L) : Long.valueOf(0L);
+		case CONCAT:
+			if (left instanceof String && right instanceof String) {
+				return ((String) left) + ((String) right);
+			}
+			return null;
+		default:
+			return null;
+		}
+	}
+
+	private Object foldUnary(Object literal, Tuple operation) {
+		Opcode opcode = operation.getOpcode();
+		if (opcode == null) {
+			return null;
+		}
+		switch (opcode) {
+		case NEGATE: {
+			double value = JRT.toDouble(literal);
+			double ans = -value;
+			if (JRT.isActuallyLong(ans)) {
+				return Long.valueOf((long) Math.rint(ans));
+			}
+			return Double.valueOf(ans);
+		}
+		case UNARY_PLUS: {
+			double value = JRT.toDouble(literal);
+			if (JRT.isActuallyLong(value)) {
+				return Long.valueOf((long) Math.rint(value));
+			}
+			return Double.valueOf(value);
+		}
+		default:
+			return null;
+		}
+	}
+
+	private Tuple createLiteralPush(Object value, int lineNumber) {
+		Tuple tuple;
+		if (value instanceof Long) {
+			tuple = new Tuple(Opcode.PUSH, ((Long) value).longValue());
+		} else if (value instanceof Integer) {
+			tuple = new Tuple(Opcode.PUSH, ((Integer) value).longValue());
+		} else if (value instanceof Double) {
+			tuple = new Tuple(Opcode.PUSH, ((Double) value).doubleValue());
+		} else if (value instanceof Number) {
+			double d = ((Number) value).doubleValue();
+			if (JRT.isActuallyLong(d)) {
+				tuple = new Tuple(Opcode.PUSH, (long) Math.rint(d));
+			} else {
+				tuple = new Tuple(Opcode.PUSH, d);
+			}
+		} else if (value instanceof String) {
+			tuple = new Tuple(Opcode.PUSH, (String) value);
+		} else {
+			throw new IllegalArgumentException("Unsupported literal value: " + value);
+		}
+		tuple.setLineNumber(lineNumber);
+		return tuple;
+	}
+
+	private boolean hasResolvedAddress(int index) {
+		return addressManager.getAddress(index) != null;
+	}
+
+	private void remapAddresses(int[] indexMapping) {
+		if (indexMapping.length == 0) {
+			return;
+		}
+		Set<Address> processedAddresses = Collections.newSetFromMap(new IdentityHashMap<Address, Boolean>());
+		for (Tuple tuple : queue) {
+			Address address = tuple.getAddress();
+			if (address != null && processedAddresses.add(address)) {
+				int oldIndex = address.index();
+				if (oldIndex >= 0 && oldIndex < indexMapping.length) {
+					int mappedIndex = indexMapping[oldIndex];
+					if (mappedIndex < 0) {
+						throw new Error("Address " + address + " references removed tuple " + oldIndex);
+					}
+					address.assignIndex(mappedIndex);
+				}
+			}
+		}
+		addressManager.remapIndexes(indexMapping);
 	}
 
 	private void assignSequentialNextPointers() {

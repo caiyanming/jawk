@@ -47,7 +47,7 @@ public class PosixConformanceTest {
 				.awkTest("POSIX 1.4 BEGIN runs before first record and -v applies before BEGIN")
 				.script(
 						"BEGIN{print \"BEGIN\", P; print \"FILENAME?\", (FILENAME==\"\"? \"unset\":\"set\")}\n{print \"REC\", $0}\nEND{print \"END\", P}")
-				.file("f1", "X\n")
+				.file("f1", "X")
 				.operand("{{f1}}")
 				.preassign("P", "pre")
 				.expectLines("BEGIN pre", "FILENAME? unset", "REC X", "END pre")
@@ -628,8 +628,9 @@ public class PosixConformanceTest {
 	public void posix95RedirectionTruncatesAndReuses() throws Exception {
 		AwkTestSupport
 				.awkTest("POSIX 9.5 redirection truncates and reuses file")
+				.path("out.txt")
 				.script(
-						"BEGIN{ f=\"out.txt\"; print \"a\" > f; print \"b\" > f; close(f); while ((getline x < f) > 0) print x }")
+						"BEGIN{ f=\"{{out.txt}}\"; print \"a\" > f; print \"b\" > f; close(f); while ((getline x < f) > 0) print x }")
 				.expectLines("a", "b")
 				.runAndAssert();
 	}
@@ -638,8 +639,9 @@ public class PosixConformanceTest {
 	public void posix96AppendRedirection() throws Exception {
 		AwkTestSupport
 				.awkTest("POSIX 9.6 append redirection")
+				.path("app.txt")
 				.script(
-						"BEGIN{ f=\"app.txt\"; print \"first\" > f; close(f); print \"second\" >> f; close(f); while ((getline x < f) > 0) print x }")
+						"BEGIN{ f=\"{{app.txt}}\"; print \"first\" > f; close(f); print \"second\" >> f; close(f); while ((getline x < f) > 0) print x }")
 				.expectLines("first", "second")
 				.runAndAssert();
 	}
@@ -648,7 +650,8 @@ public class PosixConformanceTest {
 	public void posix97CloseReturnsZeroOnSuccess() throws Exception {
 		AwkTestSupport
 				.awkTest("POSIX 9.7 close returns zero")
-				.script("BEGIN{ f=\"c.txt\"; print \"x\" > f; print (close(f)==0 ? \"ok\":\"bad\") }")
+				.path("c.txt")
+				.script("BEGIN{ f=\"{{c.txt}}\"; print \"x\" > f; print (close(f)==0 ? \"ok\":\"bad\") }")
 				.expectLines("ok")
 				.runAndAssert();
 	}
@@ -678,6 +681,7 @@ public class PosixConformanceTest {
 	public void posix991PipelineWritesDataToFile() throws Exception {
 		AwkTestSupport
 				.awkTest("POSIX 9.9 pipeline writes data")
+				.posixOnly()
 				.path("pipe.txt")
 				.script(
 						"BEGIN{ f=\"{{pipe.txt}}\"; cmd=\"cat > \" f; print \"hi\" | cmd; close(cmd); while ((getline x < f) > 0) print x; close(f) }")
@@ -793,6 +797,7 @@ public class PosixConformanceTest {
 	public void posix1012CloseAndGetlineReuse() throws Exception {
 		AwkTestSupport
 				.awkTest("POSIX 10.12 close and getline reuse")
+				.path("gf.txt")
 				.script(
 						"BEGIN{ f=\"gf.txt\"; print \"A\" > f; print \"B\" >> f; close(f); while ((getline x < f) > 0) print x; print (close(f)==0 ? \"ok\":\"bad\") }")
 				.expectLines("A", "B", "ok")
@@ -824,6 +829,7 @@ public class PosixConformanceTest {
 	public void posix1015CommandGetlineAndSystem() throws Exception {
 		AwkTestSupport
 				.awkTest("POSIX 10.15 command getline and system")
+				.posixOnly()
 				.script(
 						"BEGIN{ cmd=\"printf hack\\n\"; if ( (cmd | getline z) > 0 ) print z; close(cmd); print system(\":\") }")
 				.expectLines("hack", "0")
