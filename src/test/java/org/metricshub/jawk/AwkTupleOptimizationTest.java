@@ -1,5 +1,6 @@
 package org.metricshub.jawk;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
@@ -234,6 +235,33 @@ public class AwkTupleOptimizationTest {
 				optimizedField.getBoolean(tuples));
 	}
 
+	@Test
+	public void compilesLiteralInputFieldWithoutPush() throws Exception {
+		String script = "{ print $2 }\n";
+		assertLiteralFieldUsesConstOpcode(script, "alpha beta", new String[] { "beta" }, 2);
+	}
+
+	@Test
+	public void compilesDollarZeroWithConstOpcode() throws Exception {
+		String script = "{ print $0 }\n";
+		assertLiteralFieldUsesConstOpcode(script, "alpha beta", new String[] { "alpha beta" }, 0);
+	}
+
+	@Test
+	public void compilesExpressionBasedFieldWithConstOpcode() throws Exception {
+		String script = "{ print $(1 + 1) }\n";
+		assertLiteralFieldUsesConstOpcode(script, "alpha beta", new String[] { "beta" }, 2);
+	}
+
+	@Test
+	public void rejectsNegativeLiteralFieldIndex() throws Exception {
+		AwkTestSupport
+				.awkTest("negative field literal is invalid")
+				.script("BEGIN { print $-1 }\n")
+				.expectThrow(RuntimeException.class)
+				.runAndAssert();
+	}
+
 	private static List<Opcode> collectOpcodes(AwkTuples tuples) {
 		List<Opcode> opcodes = new ArrayList<>();
 		PositionTracker tracker = tuples.top();
@@ -250,6 +278,29 @@ public class AwkTupleOptimizationTest {
 			tuples.dump(ps);
 		}
 		return out.toString(StandardCharsets.UTF_8.name());
+	}
+
+	private static void assertLiteralFieldUsesConstOpcode(
+			String script,
+			String input,
+			String[] expectedLines,
+			int fieldIndex)
+			throws Exception {
+		AwkTestSupport
+				.awkTest("literal field optimization " + fieldIndex)
+				.script(script)
+				.stdin(input)
+				.expectLines(expectedLines)
+				.runAndAssert();
+
+		AwkTuples tuples = new Awk().compile(script);
+		String dump = dumpTuples(tuples);
+		assertTrue(
+				"Expected GET_INPUT_FIELD_CONST in tuple dump",
+				dump.contains("GET_INPUT_FIELD_CONST, " + fieldIndex));
+		assertFalse(
+				"Literal field index should not be pushed separately",
+				dump.contains("PUSH, " + fieldIndex));
 	}
 
 	private static boolean hasLiteralPush(AwkTuples tuples, Object expected) {

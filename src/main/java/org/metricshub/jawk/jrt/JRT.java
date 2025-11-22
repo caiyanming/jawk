@@ -49,6 +49,7 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.math.BigDecimal;
+import org.metricshub.jawk.intermediate.PositionTracker;
 import org.metricshub.jawk.intermediate.UninitializedObject;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -339,6 +340,27 @@ public class JRT {
 		}
 		// Failed (not even with one char)
 		return 0;
+	}
+
+	/**
+	 * Convert a field designator to a non-negative long, raising an AWK runtime
+	 * exception when the value is invalid.
+	 *
+	 * @param obj the object identifying the field (for example, the result of a
+	 *        numeric expression)
+	 * @param position the position tracker pointing at the tuple being
+	 *        evaluated, used for error reporting
+	 * @return the parsed field number as a long
+	 */
+	public static long parseFieldNumber(Object obj, PositionTracker position) {
+		long num = toLong(obj);
+		if (num < 0) {
+			throw new AwkRuntimeException(
+					position.lineNumber(),
+					"Field $(" + obj.toString()
+							+ ") is incorrect.");
+		}
+		return num;
 	}
 
 	/**
@@ -877,39 +899,15 @@ public class JRT {
 		rebuildDollarZeroFromFields();
 	}
 
-	private static int toFieldNumber(Object o) {
-		if (o instanceof Number) {
-			double num = ((Number) o).doubleValue();
-			if (num < 0) {
-				throw new RuntimeException("Field $(" + o.toString() + ") is incorrect.");
-			}
-			return (int) num;
-		}
-
-		String str = o.toString();
-		if (str.isEmpty()) {
-			return 0;
-		}
-
-		try {
-			double num = new BigDecimal(str).doubleValue();
-			if (num < 0) {
-				throw new RuntimeException("Field $(" + o.toString() + ") is incorrect.");
-			}
-			return (int) num;
-		} catch (NumberFormatException nfe) {
-			return 0;
-		}
-	}
-
 	/**
 	 * Retrieve the contents of a particular input field.
 	 *
 	 * @param fieldnumObj Object referring to the field number.
+	 * @param position the current tuple position, used for error reporting
 	 * @return Contents of the field.
 	 */
-	public Object jrtGetInputField(Object fieldnumObj) {
-		return jrtGetInputField(toFieldNumber(fieldnumObj));
+	public Object jrtGetInputField(Object fieldnumObj, PositionTracker position) {
+		return jrtGetInputField(JRT.parseFieldNumber(fieldnumObj, position), position);
 	}
 
 	/**
@@ -917,43 +915,68 @@ public class JRT {
 	 * jrtGetInputField.
 	 * </p>
 	 *
-	 * @param fieldnum a int
+	 * @param fieldnum a long
+	 * @param position the current tuple position, used for error reporting
 	 * @return a {@link java.lang.Object} object
 	 */
-	public Object jrtGetInputField(int fieldnum) {
-		if (fieldnum < inputFields.size()) {
-			String retval = inputFields.get(fieldnum);
+	public Object jrtGetInputField(long fieldnum, PositionTracker position) {
+		if (fieldnum < 0 || fieldnum > Integer.MAX_VALUE) {
+			Object descriptor = Long.valueOf(fieldnum);
+			String message = "Field $(" + descriptor.toString() + ") is incorrect.";
+			if (position == null) {
+				throw new RuntimeException(message);
+			}
+			throw new AwkRuntimeException(position.lineNumber(), message);
+		}
+		int fieldIndex = (int) fieldnum;
+		if (fieldIndex < inputFields.size()) {
+			String retval = inputFields.get(fieldIndex);
 			assert retval != null;
 			return retval;
-		} else {
-			return BLANK;
 		}
+		return BLANK;
+	}
+
+	public Object jrtGetInputField(long fieldnum) {
+		return jrtGetInputField(fieldnum, null);
 	}
 
 	/**
 	 * Stores value_obj into an input field.
 	 *
 	 * @param valueObj The RHS of the assignment.
-	 * @param fieldNum Object referring to the field number.
+	 * @param fieldNum field number to update.
 	 * @return A string representation of valueObj.
 	 */
-	public String jrtSetInputField(Object valueObj, int fieldNum) {
+	public String jrtSetInputField(Object valueObj, long fieldNum) {
+		return jrtSetInputField(valueObj, fieldNum, null);
+	}
+
+	public String jrtSetInputField(Object valueObj, long fieldNum, PositionTracker position) {
 		assert fieldNum >= 1;
 		assert valueObj != null;
+		if (fieldNum > Integer.MAX_VALUE) {
+			String message = "Field $(" + Long.valueOf(fieldNum) + ") is incorrect.";
+			if (position == null) {
+				throw new RuntimeException(message);
+			}
+			throw new AwkRuntimeException(position.lineNumber(), message);
+		}
 		String value = valueObj.toString();
-		// if the value is BLANK
+		int fieldIndex = (int) fieldNum;
+// if the value is BLANK
 		if (valueObj instanceof UninitializedObject) {
-			if (fieldNum < inputFields.size()) {
-				inputFields.set(fieldNum, "");
+			if (fieldIndex < inputFields.size()) {
+				inputFields.set(fieldIndex, "");
 			}
 		} else {
-			// append the list to accommodate the new value
-			for (int i = inputFields.size() - 1; i < fieldNum; i++) {
+// append the list to accommodate the new value
+			for (int i = inputFields.size() - 1; i < fieldIndex; i++) {
 				inputFields.add("");
 			}
-			inputFields.set(fieldNum, value);
+			inputFields.set(fieldIndex, value);
 		}
-		// rebuild $0
+// rebuild $0
 		rebuildDollarZeroFromFields();
 		// recalc NF
 		recalculateNF();
