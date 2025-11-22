@@ -907,7 +907,7 @@ public class JRT {
 	 * @return Contents of the field.
 	 */
 	public Object jrtGetInputField(Object fieldnumObj, PositionTracker position) {
-		return jrtGetInputField(JRT.parseFieldNumber(fieldnumObj, position), position);
+		return jrtGetInputField(parseFieldNumber(fieldnumObj, position), position);
 	}
 
 	/**
