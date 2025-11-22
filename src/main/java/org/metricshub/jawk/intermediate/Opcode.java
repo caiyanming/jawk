@@ -860,6 +860,15 @@ public enum Opcode {
 	 */
 	GET_INPUT_FIELD,
 	/**
+	 * Pushes an input field onto the stack using an embedded field index.
+	 * <p>
+	 * Argument: field-id
+	 * <p>
+	 * Stack before: ...<br/>
+	 * Stack after: x ...
+	 */
+	GET_INPUT_FIELD_CONST,
+	/**
 	 * Consume next line of input; assigning $0 and recalculating $1, $2, etc.
 	 * The input can come from the following sources:
 	 * <ul>

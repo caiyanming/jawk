@@ -1058,6 +1058,17 @@ public class AwkTuples implements Serializable {
 
 	/**
 	 * <p>
+	 * getInputField.
+	 * </p>
+	 *
+	 * @param fieldIndex a long
+	 */
+	public void getInputField(long fieldIndex) {
+		queue.add(new Tuple(Opcode.GET_INPUT_FIELD_CONST, fieldIndex));
+	}
+
+	/**
+	 * <p>
 	 * consumeInput.
 	 * </p>
 	 *
@@ -1586,6 +1597,24 @@ public class AwkTuples implements Serializable {
 			Tuple tuple = original.get(oldIndex);
 			Object literal = literalValue(tuple);
 			if (literal != null && !hasResolvedAddress(oldIndex)) {
+				if ((oldIndex + 1) < originalSize) {
+					Tuple nextTuple = original.get(oldIndex + 1);
+					if (nextTuple.getOpcode() == Opcode.GET_INPUT_FIELD
+							&& !hasResolvedAddress(oldIndex + 1)) {
+						PositionTracker position = new PositionTracker(original);
+						position.jump(oldIndex + 1);
+						long fieldIndex = JRT.parseFieldNumber(literal, position);
+						Tuple replacement = createGetInputFieldConst(
+								fieldIndex,
+								tuple.getLineno());
+						optimizedQueue.add(replacement);
+						indexMapping[oldIndex] = newIndex;
+						oldIndex += 2;
+						newIndex++;
+						modified = true;
+						continue;
+					}
+				}
 				if ((oldIndex + 2) < originalSize) {
 					Tuple nextTuple = original.get(oldIndex + 1);
 					Tuple opTuple = original.get(oldIndex + 2);
@@ -1783,6 +1812,12 @@ public class AwkTuples implements Serializable {
 		} else {
 			throw new IllegalArgumentException("Unsupported literal value: " + value);
 		}
+		tuple.setLineNumber(lineNumber);
+		return tuple;
+	}
+
+	private Tuple createGetInputFieldConst(long fieldIndex, int lineNumber) {
+		Tuple tuple = new Tuple(Opcode.GET_INPUT_FIELD_CONST, fieldIndex);
 		tuple.setLineNumber(lineNumber);
 		return tuple;
 	}
