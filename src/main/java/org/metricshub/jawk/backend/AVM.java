@@ -194,19 +194,8 @@ public class AVM implements VariableManager {
 		}
 	}
 
-	private long nfOffset = NULL_OFFSET;
-	private long nrOffset = NULL_OFFSET;
-	private long fnrOffset = NULL_OFFSET;
-	private long fsOffset = NULL_OFFSET;
-	private long rsOffset = NULL_OFFSET;
-	private long ofsOffset = NULL_OFFSET;
-	private long orsOffset = NULL_OFFSET;
-	private long rstartOffset = NULL_OFFSET;
-	private long rlengthOffset = NULL_OFFSET;
-	private long filenameOffset = NULL_OFFSET;
-	private long subsepOffset = NULL_OFFSET;
-	private long convfmtOffset = NULL_OFFSET;
-	private long ofmtOffset = NULL_OFFSET;
+	// Offsets for legacy global variables removed for JRT-managed specials.
+	// ENVIRON/ARGC/ARGV remain managed as globals via offsets emitted by the parser.
 	private long environOffset = NULL_OFFSET;
 	private long argcOffset = NULL_OFFSET;
 	private long argvOffset = NULL_OFFSET;
@@ -307,7 +296,7 @@ public class AVM implements VariableManager {
 		// stack[1] = replacement string
 		// stack[2] = ere
 		boolean isGsub = position.boolArg(gsubArgPos);
-		String convfmt = getCONVFMT().toString();
+		String convfmt = jrt.getCONVFMTString();
 		String orig = JRT.toAwkString(pop(), convfmt, locale);
 		String repl = JRT.toAwkString(pop(), convfmt, locale);
 		String ere = JRT.toAwkString(pop(), convfmt, locale);
@@ -336,6 +325,21 @@ public class AVM implements VariableManager {
 
 		PositionTracker position = tuples.top();
 
+		// Initialize JRT-managed special variables from settings before execution
+		jrt.setFS(initialFsValue == null ? " " : initialFsValue);
+		jrt.setRS(settings.getDefaultRS());
+		jrt.setOFS(" ");
+		jrt.setORS(settings.getDefaultORS());
+		jrt.setCONVFMT("%.6g");
+		jrt.setOFMT("%.6g");
+		jrt.setSUBSEP(String.valueOf((char) 28));
+		jrt.setFILENAMEViaJrt("");
+		jrt.setNR(0);
+		jrt.setFNR(0);
+		jrt.setRSTART(0);
+		jrt.setRLENGTH(0);
+		jrt.setARGC(arguments.size() + 1);
+
 		try {
 			while (!position.isEOF()) {
 				// System_out.println("--> "+position);
@@ -361,7 +365,7 @@ public class AVM implements VariableManager {
 					// etc.
 					long numArgs = position.intArg(0);
 					boolean append = position.boolArg(1);
-					String key = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
+					String key = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
 					PrintStream ps = jrt.jrtGetPrintStream(key, append);
 					printTo(ps, numArgs);
 					position.next();
@@ -374,7 +378,7 @@ public class AVM implements VariableManager {
 					// stack[2] = item 2
 					// etc.
 					long numArgs = position.intArg(0);
-					String cmd = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
+					String cmd = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
 					PrintStream ps = jrt.jrtSpawnForOutput(cmd);
 					printTo(ps, numArgs);
 					position.next();
@@ -399,7 +403,7 @@ public class AVM implements VariableManager {
 					// etc.
 					long numArgs = position.intArg(0);
 					boolean append = position.boolArg(1);
-					String key = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
+					String key = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
 					PrintStream ps = jrt.jrtGetPrintStream(key, append);
 					printfTo(ps, numArgs);
 					position.next();
@@ -412,7 +416,7 @@ public class AVM implements VariableManager {
 					// stack[2] = item 1
 					// etc.
 					long numArgs = position.intArg(0);
-					String cmd = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
+					String cmd = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
 					PrintStream ps = jrt.jrtSpawnForOutput(cmd);
 					printfTo(ps, numArgs);
 					position.next();
@@ -549,7 +553,7 @@ public class AVM implements VariableManager {
 				case CONCAT: {
 					// stack[0] = string1
 					// stack[1] = string2
-					String convfmt = getCONVFMT().toString();
+					String convfmt = jrt.getCONVFMTString();
 					String s2 = JRT.toAwkString(pop(), convfmt, locale);
 					String s1 = JRT.toAwkString(pop(), convfmt, locale);
 					String resultString = s1 + s2;
@@ -1003,7 +1007,7 @@ public class AVM implements VariableManager {
 				case MATCH: {
 					// stack[0] = 2nd arg to match() function
 					// stack[1] = 1st arg to match() function
-					String convfmt = getCONVFMT().toString();
+					String convfmt = jrt.getCONVFMTString();
 					String ere = JRT.toAwkString(pop(), convfmt, locale);
 					String s = JRT.toAwkString(pop(), convfmt, locale);
 
@@ -1023,15 +1027,15 @@ public class AVM implements VariableManager {
 					Matcher matcher = pattern.matcher(s);
 					boolean result = matcher.find();
 					if (result) {
-						assign(rstartOffset, matcher.start() + 1, true, position);
-						assign(rlengthOffset, matcher.end() - matcher.start(), true, position);
-						pop();
-						// end up with RSTART on the stack
+						int start = matcher.start() + 1;
+						int len = matcher.end() - matcher.start();
+						jrt.setRSTART(start);
+						jrt.setRLENGTH(len);
+						push(start);
 					} else {
-						assign(rstartOffset, ZERO, true, position);
-						assign(rlengthOffset, -1, true, position);
-						pop();
-						// end up with RSTART on the stack
+						jrt.setRSTART(0);
+						jrt.setRLENGTH(-1);
+						push(0);
 					}
 					position.next();
 					break;
@@ -1039,7 +1043,7 @@ public class AVM implements VariableManager {
 				case INDEX: {
 					// stack[0] = 2nd arg to index() function
 					// stack[1] = 1st arg to index() function
-					String convfmt = getCONVFMT().toString();
+					String convfmt = jrt.getCONVFMTString();
 					String s2 = JRT.toAwkString(pop(), convfmt, locale);
 					String s1 = JRT.toAwkString(pop(), convfmt, locale);
 					push(s1.indexOf(s2) + 1);
@@ -1051,7 +1055,7 @@ public class AVM implements VariableManager {
 					// stack[0] = replacement string
 					// stack[1] = ere
 					boolean isGsub = position.boolArg(0);
-					String convfmt = getCONVFMT().toString();
+					String convfmt = jrt.getCONVFMTString();
 					String repl = JRT.toAwkString(pop(), convfmt, locale);
 					String ere = JRT.toAwkString(pop(), convfmt, locale);
 					String orig = JRT.toAwkString(jrt.jrtGetInputField(0), convfmt, locale);
@@ -1074,7 +1078,7 @@ public class AVM implements VariableManager {
 					// stack[2] = replacement string
 					// stack[3] = ere
 					boolean isGsub = position.boolArg(0);
-					String convfmt = getCONVFMT().toString();
+					String convfmt = jrt.getCONVFMTString();
 					long fieldNum = JRT.parseFieldNumber(pop(), position);
 					String orig = JRT.toAwkString(pop(), convfmt, locale);
 					String repl = JRT.toAwkString(pop(), convfmt, locale);
@@ -1135,11 +1139,11 @@ public class AVM implements VariableManager {
 					// stack[0] = field_sep (only if num args == 3)
 					// stack[1] = array
 					// stack[2] = string
-					String convfmt = getCONVFMT().toString();
+					String convfmt = jrt.getCONVFMTString();
 					long numArgs = position.intArg(0);
 					String fsString;
 					if (numArgs == 2) {
-						fsString = JRT.toAwkString(getFS(), convfmt, locale);
+						fsString = JRT.toAwkString(jrt.getFSVar(), convfmt, locale);
 					} else if (numArgs == 3) {
 						fsString = JRT.toAwkString(pop(), convfmt, locale);
 					} else {
@@ -1182,10 +1186,10 @@ public class AVM implements VariableManager {
 					if (numArgs == 3) {
 						length = (int) JRT.toLong(pop());
 						startPos = (int) JRT.toDouble(pop());
-						s = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
+						s = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
 					} else if (numArgs == 2) {
 						startPos = (int) JRT.toDouble(pop());
-						s = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
+						s = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
 						length = s.length() - startPos + 1;
 					} else {
 						throw new Error("numArgs for SUBSTR must be 2 or 3. It is " + numArgs);
@@ -1207,19 +1211,19 @@ public class AVM implements VariableManager {
 				}
 				case TOLOWER: {
 					// stack[0] = string
-					push(JRT.toAwkString(pop(), getCONVFMT().toString(), locale).toLowerCase());
+					push(JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale).toLowerCase());
 					position.next();
 					break;
 				}
 				case TOUPPER: {
 					// stack[0] = string
-					push(JRT.toAwkString(pop(), getCONVFMT().toString(), locale).toUpperCase());
+					push(JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale).toUpperCase());
 					position.next();
 					break;
 				}
 				case SYSTEM: {
 // stack[0] = command string
-					String s = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
+					String s = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
 					push(jrt.jrtSystem(s));
 					position.next();
 					break;
@@ -1274,7 +1278,7 @@ public class AVM implements VariableManager {
 						boolean result = m.find();
 						push(result ? 1 : 0);
 					} else {
-						String r = JRT.toAwkString(o2, getCONVFMT().toString(), locale);
+						String r = JRT.toAwkString(o2, jrt.getCONVFMTString(), locale);
 						boolean result = Pattern.compile(r).matcher(s).find();
 						push(result ? 1 : 0);
 					}
@@ -1469,136 +1473,15 @@ public class AVM implements VariableManager {
 				}
 				case USE_AS_FILE_INPUT: {
 // stack[0] = filename
-					String s = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
+					String s = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
 					avmConsumeFileInputForGetline(s);
 					position.next();
 					break;
 				}
 				case USE_AS_COMMAND_INPUT: {
 // stack[0] = command line
-					String s = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
+					String s = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
 					avmConsumeCommandInputForGetline(s);
-					position.next();
-					break;
-				}
-				case NF_OFFSET: {
-					// stack[0] = offset
-					nfOffset = position.intArg(0);
-					assert nfOffset != NULL_OFFSET;
-					assign(nfOffset, 0, true, position);
-					pop(); // clean up the stack after the assignment
-					position.next();
-					break;
-				}
-				case NR_OFFSET: {
-					// stack[0] = offset
-					nrOffset = position.intArg(0);
-					assert nrOffset != NULL_OFFSET;
-					assign(nrOffset, 0, true, position);
-					pop(); // clean up the stack after the assignment
-					position.next();
-					break;
-				}
-				case FNR_OFFSET: {
-					// stack[0] = offset
-					fnrOffset = position.intArg(0);
-					assert fnrOffset != NULL_OFFSET;
-					assign(fnrOffset, 0, true, position);
-					pop(); // clean up the stack after the assignment
-					position.next();
-					break;
-				}
-				case FS_OFFSET: {
-					// stack[0] = offset
-					fsOffset = position.intArg(0);
-					assert fsOffset != NULL_OFFSET;
-					if (initialFsValue == null) {
-						assign(fsOffset, " ", true, position);
-					} else {
-						assign(fsOffset, initialFsValue, true, position);
-					}
-					pop(); // clean up the stack after the assignment
-					position.next();
-					break;
-				}
-				case RS_OFFSET: {
-					// stack[0] = offset
-					rsOffset = position.intArg(0);
-					assert rsOffset != NULL_OFFSET;
-					assign(rsOffset, settings.getDefaultRS(), true, position);
-					pop(); // clean up the stack after the assignment
-					position.next();
-					break;
-				}
-				case OFS_OFFSET: {
-					// stack[0] = offset
-					ofsOffset = position.intArg(0);
-					assert ofsOffset != NULL_OFFSET;
-					assign(ofsOffset, " ", true, position);
-					pop(); // clean up the stack after the assignment
-					position.next();
-					break;
-				}
-				case ORS_OFFSET: {
-					// stack[0] = offset
-					orsOffset = position.intArg(0);
-					assert orsOffset != NULL_OFFSET;
-					assign(orsOffset, settings.getDefaultORS(), true, position);
-					pop(); // clean up the stack after the assignment
-					position.next();
-					break;
-				}
-				case RSTART_OFFSET: {
-					// stack[0] = offset
-					rstartOffset = position.intArg(0);
-					assert rstartOffset != NULL_OFFSET;
-					assign(rstartOffset, "", true, position);
-					pop(); // clean up the stack after the assignment
-					position.next();
-					break;
-				}
-				case RLENGTH_OFFSET: {
-					// stack[0] = offset
-					rlengthOffset = position.intArg(0);
-					assert rlengthOffset != NULL_OFFSET;
-					assign(rlengthOffset, "", true, position);
-					pop(); // clean up the stack after the assignment
-					position.next();
-					break;
-				}
-				case FILENAME_OFFSET: {
-					// stack[0] = offset
-					filenameOffset = position.intArg(0);
-					assert filenameOffset != NULL_OFFSET;
-					assign(filenameOffset, "", true, position);
-					pop(); // clean up the stack after the assignment
-					position.next();
-					break;
-				}
-				case SUBSEP_OFFSET: {
-					// stack[0] = offset
-					subsepOffset = position.intArg(0);
-					assert subsepOffset != NULL_OFFSET;
-					assign(subsepOffset, String.valueOf((char) 28), true, position);
-					pop(); // clean up the stack after the assignment
-					position.next();
-					break;
-				}
-				case CONVFMT_OFFSET: {
-					// stack[0] = offset
-					convfmtOffset = position.intArg(0);
-					assert convfmtOffset != NULL_OFFSET;
-					assign(convfmtOffset, "%.6g", true, position);
-					pop(); // clean up the stack after the assignment
-					position.next();
-					break;
-				}
-				case OFMT_OFFSET: {
-					// stack[0] = offset
-					ofmtOffset = position.intArg(0);
-					assert ofmtOffset != NULL_OFFSET;
-					assign(ofmtOffset, "%.6g", true, position);
-					pop(); // clean up the stack after the assignment
 					position.next();
 					break;
 				}
@@ -1624,6 +1507,7 @@ public class AVM implements VariableManager {
 					// +1 to include the "java Awk" (ARGV[0])
 					assign(argcOffset, arguments.size() + 1, true, position); // true = global
 					pop(); // clean up the stack after the assignment
+					jrt.setARGC(arguments.size() + 1);
 					position.next();
 					break;
 				}
@@ -1657,11 +1541,7 @@ public class AVM implements VariableManager {
 					break;
 				}
 				case APPLY_RS: {
-					assert rsOffset != NULL_OFFSET;
-					Object rsObj = runtimeStack.getVariable(rsOffset, true); // true = global
-					if (jrt.getPartitioningReader() != null) {
-						jrt.getPartitioningReader().setRecordSeparator(rsObj.toString());
-					}
+					jrt.applyRS(jrt.getRSVar());
 					position.next();
 					break;
 				}
@@ -1741,7 +1621,7 @@ public class AVM implements VariableManager {
 				}
 				case CLOSE: {
 					// stack[0] = file or command line to close
-					String s = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
+					String s = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
 					push(jrt.jrtClose(s));
 					position.next();
 					break;
@@ -1754,13 +1634,13 @@ public class AVM implements VariableManager {
 					long count = position.intArg(0);
 					assert count >= 1;
 					// String s;
-					String convfmt = getCONVFMT().toString();
+					String convfmt = jrt.getCONVFMTString();
 					if (count == 1) {
 						push(JRT.toAwkString(pop(), convfmt, locale));
 					} else {
 						StringBuilder sb = new StringBuilder();
 						sb.append(JRT.toAwkString(pop(), convfmt, locale));
-						String subsep = JRT.toAwkString(runtimeStack.getVariable(subsepOffset, true), convfmt, locale);
+						String subsep = JRT.toAwkString(jrt.getSUBSEPVar(), convfmt, locale);
 						for (int i = 1; i < count; i++) {
 							sb.insert(0, subsep);
 							sb.insert(0, JRT.toAwkString(pop(), convfmt, locale));
@@ -1833,7 +1713,7 @@ public class AVM implements VariableManager {
 				}
 				case REGEXP: {
 					// arg[0] = string representation of regexp
-					String key = JRT.toAwkString(position.arg(0), getCONVFMT().toString(), locale);
+					String key = JRT.toAwkString(position.arg(0), jrt.getCONVFMTString(), locale);
 					Pattern pattern = regexps.get(key);
 					if (pattern == null) {
 						pattern = Pattern.compile(key);
@@ -1880,7 +1760,7 @@ public class AVM implements VariableManager {
 					// stack[0] = Jawk code
 
 					// Experimental feature. Use with caution.
-					String awkCode = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
+					String awkCode = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
 					List<ScriptSource> scriptSources = new ArrayList<ScriptSource>(1);
 					scriptSources
 							.add(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, new StringReader(awkCode)));
@@ -1984,6 +1864,174 @@ public class AVM implements VariableManager {
 					position.next();
 					break;
 				}
+				case ASSIGN_NF: {
+					Object v = pop();
+					jrt.setNF(v);
+					push(v);
+					position.next();
+					break;
+				}
+				case PUSH_NF: {
+					push(jrt.getNF());
+					position.next();
+					break;
+				}
+				case ASSIGN_NR: {
+					Object v = pop();
+					jrt.setNR(v);
+					push(v);
+					position.next();
+					break;
+				}
+				case PUSH_NR: {
+					push(jrt.getNR());
+					position.next();
+					break;
+				}
+				case ASSIGN_FNR: {
+					Object v = pop();
+					jrt.setFNR(v);
+					push(v);
+					position.next();
+					break;
+				}
+				case PUSH_FNR: {
+					push(jrt.getFNR());
+					position.next();
+					break;
+				}
+				case ASSIGN_FS: {
+					Object v = pop();
+					jrt.setFS(v);
+					push(v);
+					position.next();
+					break;
+				}
+				case PUSH_FS: {
+					push(jrt.getFSVar());
+					position.next();
+					break;
+				}
+				case ASSIGN_RS: {
+					Object v = pop();
+					jrt.setRS(v);
+					push(v);
+					position.next();
+					break;
+				}
+				case PUSH_RS: {
+					push(jrt.getRSVar());
+					position.next();
+					break;
+				}
+				case ASSIGN_OFS: {
+					Object v = pop();
+					jrt.setOFS(v);
+					push(v);
+					position.next();
+					break;
+				}
+				case PUSH_OFS: {
+					push(jrt.getOFSVar());
+					position.next();
+					break;
+				}
+				case ASSIGN_ORS: {
+					Object v = pop();
+					jrt.setORS(v);
+					push(v);
+					position.next();
+					break;
+				}
+				case PUSH_ORS: {
+					push(jrt.getORSVar());
+					position.next();
+					break;
+				}
+				case ASSIGN_RSTART: {
+					Object v = pop();
+					jrt.setRSTART(v);
+					push(v);
+					position.next();
+					break;
+				}
+				case PUSH_RSTART: {
+					push(jrt.getRSTART());
+					position.next();
+					break;
+				}
+				case ASSIGN_RLENGTH: {
+					Object v = pop();
+					jrt.setRLENGTH(v);
+					push(v);
+					position.next();
+					break;
+				}
+				case PUSH_RLENGTH: {
+					push(jrt.getRLENGTH());
+					position.next();
+					break;
+				}
+				case ASSIGN_FILENAME: {
+					Object v = pop();
+					jrt.setFILENAMEViaJrt(v == null ? "" : v.toString());
+					push(v == null ? "" : v.toString());
+					position.next();
+					break;
+				}
+				case PUSH_FILENAME: {
+					push(jrt.getFILENAME());
+					position.next();
+					break;
+				}
+				case ASSIGN_SUBSEP: {
+					Object v = pop();
+					jrt.setSUBSEP(v);
+					push(v);
+					position.next();
+					break;
+				}
+				case PUSH_SUBSEP: {
+					push(jrt.getSUBSEPVar());
+					position.next();
+					break;
+				}
+				case ASSIGN_CONVFMT: {
+					Object v = pop();
+					jrt.setCONVFMT(v);
+					push(v);
+					position.next();
+					break;
+				}
+				case PUSH_CONVFMT: {
+					push(jrt.getCONVFMTVar());
+					position.next();
+					break;
+				}
+				case ASSIGN_OFMT: {
+					Object v = pop();
+					jrt.setOFMT(v);
+					push(v);
+					position.next();
+					break;
+				}
+				case PUSH_OFMT: {
+					push(getOFMT());
+					position.next();
+					break;
+				}
+				case ASSIGN_ARGC: {
+					Object v = pop();
+					jrt.setARGC(v);
+					push(v);
+					position.next();
+					break;
+				}
+				case PUSH_ARGC: {
+					push(jrt.getARGCVar());
+					position.next();
+					break;
+				}
 				default:
 					throw new Error("invalid opcode: " + position.opcode());
 				}
@@ -2027,11 +2075,11 @@ public class AVM implements VariableManager {
 		if (numArgs == 0) {
 			// display $0
 			ps.print(jrt.jrtGetInputField(0));
-			ps.print(getORS().toString());
+			ps.print(jrt.getORSString());
 		} else {
 			// cache $OFS to separate fields below
 			// (no need to execute getOFS for each field)
-			String ofsString = getOFS().toString();
+			String ofsString = jrt.getOFSString();
 
 			// Arguments are stacked, so we need to reverse order
 			Object[] args = new Object[(int) numArgs];
@@ -2048,7 +2096,7 @@ public class AVM implements VariableManager {
 					ps.print(ofsString);
 				}
 			}
-			ps.print(getORS().toString());
+			ps.print(jrt.getORSString());
 		}
 		// always flush to ensure ORS is written even when it does not
 		// contain a newline character
@@ -2084,7 +2132,7 @@ public class AVM implements VariableManager {
 		}
 
 		// the format argument!
-		String fmt = JRT.toAwkString(pop(), getCONVFMT().toString(), locale);
+		String fmt = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
 
 		if (trapIllegalFormatExceptions) {
 			return Printf4J.sprintf(locale, fmt, argArray);
@@ -2123,9 +2171,7 @@ public class AVM implements VariableManager {
 		}
 		push(value);
 		runtimeStack.setVariable(l, value, isGlobal);
-		if (l == nfOffset && jrt != null && jrt.hasInputFields()) {
-			jrt.jrtSetNF(value);
-		}
+		// When specials are compiled correctly, they use ASSIGN_* and skip this path.
 	}
 
 	/**
@@ -2186,29 +2232,23 @@ public class AVM implements VariableManager {
 	/** {@inheritDoc} */
 	@Override
 	public final Object getRS() {
-		assert rsOffset != NULL_OFFSET;
-		Object rsObj = runtimeStack.getVariable(rsOffset, true); // true = global
-		return rsObj;
+		return jrt.getRSVar();
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public final Object getOFS() {
-		assert ofsOffset != NULL_OFFSET;
-		Object ofsObj = runtimeStack.getVariable(ofsOffset, true); // true = global
-		return ofsObj;
+		return jrt.getOFSVar();
 	}
 
 	public final Object getORS() {
-		return runtimeStack.getVariable(orsOffset, true); // true = global
+		return jrt.getORSVar();
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public final Object getSUBSEP() {
-		assert subsepOffset != NULL_OFFSET;
-		Object subsepObj = runtimeStack.getVariable(subsepOffset, true); // true = global
-		return subsepObj;
+		return jrt.getSUBSEPVar();
 	}
 
 	/**
@@ -2355,47 +2395,45 @@ public class AVM implements VariableManager {
 	/** {@inheritDoc} */
 	@Override
 	public Object getFS() {
-		assert fsOffset != NULL_OFFSET;
-		Object fsString = runtimeStack.getVariable(fsOffset, true); // true = global
-		return fsString;
+		return jrt.getFSVar();
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public Object getCONVFMT() {
-		assert convfmtOffset != NULL_OFFSET : "convfmtOffset not defined";
-		Object convfmtString = runtimeStack.getVariable(convfmtOffset, true); // true = global
-		return convfmtString;
+		return jrt.getCONVFMTString();
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public void resetFNR() {
-		runtimeStack.setVariable(fnrOffset, ZERO, true);
+		jrt.setFNR(0);
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public void incFNR() {
-		inc(fnrOffset, true);
+		long v = jrt.getFNR();
+		jrt.setFNR(v + 1);
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public void incNR() {
-		inc(nrOffset, true);
+		long v = jrt.getNR();
+		jrt.setNR(v + 1);
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public void setNF(Integer newNf) {
-		runtimeStack.setVariable(nfOffset, newNf, true);
+		jrt.setNF(newNf);
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public void setFILENAME(String filename) {
-		runtimeStack.setVariable(filenameOffset, filename, true);
+		jrt.setFILENAMEViaJrt(filename);
 	}
 
 	/** {@inheritDoc} */
@@ -2411,9 +2449,7 @@ public class AVM implements VariableManager {
 	}
 
 	private String getOFMT() {
-		assert ofmtOffset != NULL_OFFSET;
-		String ofmtString = runtimeStack.getVariable(ofmtOffset, true).toString(); // true = global
-		return ofmtString;
+		return jrt.getOFMTString();
 	}
 
 	private static final UninitializedObject BLANK = new UninitializedObject();

@@ -1204,6 +1204,86 @@ public enum Opcode {
 	EXIT_WITHOUT_CODE,
 
 	/**
+	 * Assign to the special variable NF via JRT and push the assigned value.
+	 * <p>
+	 * Stack before: value ...<br/>
+	 * Stack after: value ...
+	 */
+	ASSIGN_NF,
+	/**
+	 * Push the current value of the special variable NF via JRT.
+	 * <p>
+	 * Stack before: ...<br/>
+	 * Stack after: NF ...
+	 */
+	PUSH_NF,
+
+	/** Assign to NR via JRT and push the assigned value. */
+	ASSIGN_NR,
+	/** Push the current NR via JRT. */
+	PUSH_NR,
+
+	/** Assign to FNR via JRT and push the assigned value. */
+	ASSIGN_FNR,
+	/** Push the current FNR via JRT. */
+	PUSH_FNR,
+
+	/** Assign to FS via JRT and push the assigned value. */
+	ASSIGN_FS,
+	/** Push the current FS via JRT. */
+	PUSH_FS,
+
+	/** Assign to RS via JRT and push the assigned value. */
+	ASSIGN_RS,
+	/** Push the current RS via JRT. */
+	PUSH_RS,
+
+	/** Assign to OFS via JRT and push the assigned value. */
+	ASSIGN_OFS,
+	/** Push the current OFS via JRT. */
+	PUSH_OFS,
+
+	/** Assign to ORS via JRT and push the assigned value. */
+	ASSIGN_ORS,
+	/** Push the current ORS via JRT. */
+	PUSH_ORS,
+
+	/** Assign to RSTART via JRT and push the assigned value. */
+	ASSIGN_RSTART,
+	/** Push the current RSTART via JRT. */
+	PUSH_RSTART,
+
+	/** Assign to RLENGTH via JRT and push the assigned value. */
+	ASSIGN_RLENGTH,
+	/** Push the current RLENGTH via JRT. */
+	PUSH_RLENGTH,
+
+	/** Assign to FILENAME via JRT and push the assigned value. */
+	ASSIGN_FILENAME,
+	/** Push the current FILENAME via JRT. */
+	PUSH_FILENAME,
+
+	/** Assign to SUBSEP via JRT and push the assigned value. */
+	ASSIGN_SUBSEP,
+	/** Push the current SUBSEP via JRT. */
+	PUSH_SUBSEP,
+
+	/** Assign to CONVFMT via JRT and push the assigned value. */
+	ASSIGN_CONVFMT,
+	/** Push the current CONVFMT via JRT. */
+	PUSH_CONVFMT,
+
+	/** Assign to OFMT via JRT and push the assigned value. */
+	ASSIGN_OFMT,
+	/** Push the current OFMT via JRT. */
+	PUSH_OFMT,
+
+	/** Assign to ARGC via JRT and push the assigned value. */
+	ASSIGN_ARGC,
+	/** Push the current ARGC via JRT. */
+	PUSH_ARGC,
+
+	/**
 	 * Assign the ORS variable offset. This is important for the
 	 * AVM to use when outputting expressions via PRINT.
 	 * <p>

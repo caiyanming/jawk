@@ -207,6 +207,15 @@ public class Awk {
 	}
 
 	/**
+	 * Final empty finalizer to mitigate finalizer attacks flagged by SpotBugs.
+	 * This prevents subclasses from introducing a finalizer that could run on a
+	 * partially constructed instance if a constructor throws.
+	 */
+	@SuppressWarnings("deprecation")
+	@Override
+	protected final void finalize() { /* no-op */ }
+
+	/**
 	 * <p>
 	 * invoke.
 	 * </p>
