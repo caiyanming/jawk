@@ -1069,7 +1069,7 @@ public class JRT {
 	 * @return {@code ARGC} converted to an {@code int}
 	 */
 	private int getArgCount() {
-		return Math.toIntExact(toLong(vm.getARGC()));
+		return Math.toIntExact(argc);
 	}
 
 	/**
