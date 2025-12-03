@@ -121,6 +121,21 @@ public class JRT {
 	private Map<String, Process> commandProcesses = new HashMap<String, Process>();
 	private Map<String, PrintStream> outputFiles = new HashMap<String, PrintStream>();
 
+	// JRT-managed special variables (runtime only)
+	private long nr; // total record number
+	private long fnr; // file record number
+	private int rstart; // last match start (1-based)
+	private int rlength; // last match length
+	private String filename; // current input filename (or empty for stdin/pipe)
+	private String fs; // field separator
+	private String rs; // record separator (regexp)
+	private String ofs; // output field separator
+	private String ors; // output record separator
+	private String convfmt; // number-to-string format
+	private String ofmt; // number-to-string for output
+	private String subsep; // subscript separator
+	private long argc; // number of arguments
+
 	/**
 	 * Create a JRT with a VariableManager
 	 *
@@ -129,6 +144,19 @@ public class JRT {
 	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "JRT must hold the provided VariableManager for later use")
 	public JRT(VariableManager vm) {
 		this.vm = vm;
+		this.nr = 0L;
+		this.fnr = 0L;
+		this.rstart = 0;
+		this.rlength = 0;
+		this.filename = "";
+		this.fs = " ";
+		this.rs = "\n";
+		this.ofs = " ";
+		this.ors = "\n";
+		this.convfmt = "%.6g";
+		this.ofmt = "%.6g";
+		this.subsep = String.valueOf((char) 28);
+		this.argc = 0L;
 	}
 
 	/**
@@ -151,7 +179,57 @@ public class JRT {
 	public final void assignInitialVariables(Map<String, Object> initialVarMap) {
 		assert initialVarMap != null;
 		for (Map.Entry<String, Object> var : initialVarMap.entrySet()) {
-			vm.assignVariable(var.getKey(), var.getValue());
+			String name = var.getKey();
+			Object value = var.getValue();
+			if ("FS".equals(name)) {
+				setFS(value);
+				continue;
+			}
+			if ("RS".equals(name)) {
+				setRS(value);
+				continue;
+			}
+			if ("OFS".equals(name)) {
+				setOFS(value);
+				continue;
+			}
+			if ("ORS".equals(name)) {
+				setORS(value);
+				continue;
+			}
+			if ("CONVFMT".equals(name)) {
+				setCONVFMT(value);
+				continue;
+			}
+			if ("OFMT".equals(name)) {
+				setOFMT(value);
+				continue;
+			}
+			if ("SUBSEP".equals(name)) {
+				setSUBSEP(value);
+				continue;
+			}
+			if ("FILENAME".equals(name)) {
+				setFILENAMEViaJrt(value == null ? "" : value.toString());
+				continue;
+			}
+			if ("NF".equals(name)) {
+				setNF(value);
+				continue;
+			}
+			if ("NR".equals(name)) {
+				setNR(value);
+				continue;
+			}
+			if ("FNR".equals(name)) {
+				setFNR(value);
+				continue;
+			}
+			if ("ARGC".equals(name)) {
+				setARGC(value);
+				continue;
+			}
+			vm.assignVariable(name, value);
 		}
 	}
 
@@ -619,6 +697,285 @@ public class JRT {
 	}
 
 	/**
+	 * Retrieve the current value of NF. When fields are initialized this returns
+	 * the number of fields in $0; otherwise 0.
+	 *
+	 * @return current NF value
+	 */
+	public Integer getNF() {
+		int size = inputFields.size();
+		return Integer.valueOf(size == 0 ? 0 : size - 1);
+	}
+
+	/**
+	 * Set NF to the specified value and update $0 and fields accordingly.
+	 *
+	 * @param nfObject value to assign to NF
+	 */
+	public void setNF(Object nfObject) {
+		jrtSetNF(nfObject);
+	}
+
+	/**
+	 * Get the current NR value as tracked by JRT.
+	 *
+	 * @return current NR
+	 */
+	public Long getNR() {
+		return Long.valueOf(nr);
+	}
+
+	/**
+	 * Assign NR to a specific value; also updates the VariableManager copy.
+	 *
+	 * @param value value to assign
+	 */
+	public void setNR(Object value) {
+		this.nr = toLong(value);
+	}
+
+	/**
+	 * Get the current FNR value as tracked by JRT.
+	 *
+	 * @return current FNR
+	 */
+	public Long getFNR() {
+		return Long.valueOf(fnr);
+	}
+
+	/**
+	 * Assign FNR to a specific value; also updates the VariableManager copy.
+	 *
+	 * @param value value to assign
+	 */
+	public void setFNR(Object value) {
+		this.fnr = toLong(value);
+	}
+
+	/**
+	 * Get FS from the VariableManager.
+	 *
+	 * @return FS value
+	 */
+	public Object getFSVar() {
+		return fs;
+	}
+
+	public String getFSString() {
+		return fs;
+	}
+
+	/**
+	 * Set FS via the VariableManager.
+	 *
+	 * @param value new FS value
+	 */
+	public void setFS(Object value) {
+		this.fs = value == null ? "" : value.toString();
+	}
+
+	/**
+	 * Get RS from the VariableManager.
+	 *
+	 * @return RS value
+	 */
+	public Object getRSVar() {
+		return rs;
+	}
+
+	public String getRSString() {
+		return rs;
+	}
+
+	/**
+	 * Set RS via the VariableManager and apply it to the current reader if any.
+	 *
+	 * @param value new RS value
+	 */
+	public void setRS(Object value) {
+		this.rs = value == null ? "" : value.toString();
+		applyRS(this.rs);
+	}
+
+	/**
+	 * Get OFS from the VariableManager.
+	 *
+	 * @return OFS value
+	 */
+	public Object getOFSVar() {
+		return ofs;
+	}
+
+	public String getOFSString() {
+		return ofs;
+	}
+
+	/**
+	 * Set OFS via the VariableManager.
+	 *
+	 * @param value new OFS value
+	 */
+	public void setOFS(Object value) {
+		this.ofs = value == null ? "" : value.toString();
+	}
+
+	/**
+	 * Get ORS from the VariableManager.
+	 *
+	 * @return ORS value
+	 */
+	public Object getORSVar() {
+		return ors;
+	}
+
+	public String getORSString() {
+		return ors;
+	}
+
+	/**
+	 * Set ORS via the VariableManager.
+	 *
+	 * @param value new ORS value
+	 */
+	public void setORS(Object value) {
+		this.ors = value == null ? "" : value.toString();
+	}
+
+	/**
+	 * Get RSTART tracked by JRT (1-based).
+	 *
+	 * @return current RSTART
+	 */
+	public Integer getRSTART() {
+		return Integer.valueOf(rstart);
+	}
+
+	/**
+	 * Set RSTART tracked by JRT (1-based) and mirror to VariableManager.
+	 *
+	 * @param value new RSTART
+	 */
+	public void setRSTART(Object value) {
+		this.rstart = (int) toLong(value);
+	}
+
+	/**
+	 * Get RLENGTH tracked by JRT.
+	 *
+	 * @return current RLENGTH
+	 */
+	public Integer getRLENGTH() {
+		return Integer.valueOf(rlength);
+	}
+
+	/**
+	 * Set RLENGTH tracked by JRT and mirror to VariableManager.
+	 *
+	 * @param value new RLENGTH
+	 */
+	public void setRLENGTH(Object value) {
+		this.rlength = (int) toLong(value);
+	}
+
+	/**
+	 * Get FILENAME as tracked by JRT.
+	 *
+	 * @return current FILENAME (empty string for stdin/pipe)
+	 */
+	public String getFILENAME() {
+		return filename == null ? "" : filename;
+	}
+
+	/**
+	 * Set FILENAME through VariableManager and update JRT mirror.
+	 *
+	 * @param name file name to set
+	 */
+	public void setFILENAMEViaJrt(String name) {
+		this.filename = name == null ? "" : name;
+	}
+
+	/**
+	 * Get SUBSEP from the VariableManager.
+	 *
+	 * @return SUBSEP value
+	 */
+	public Object getSUBSEPVar() {
+		return subsep;
+	}
+
+	public String getSUBSEPString() {
+		return subsep;
+	}
+
+	/**
+	 * Set SUBSEP via the VariableManager.
+	 *
+	 * @param value new SUBSEP value
+	 */
+	public void setSUBSEP(Object value) {
+		this.subsep = value == null ? "" : value.toString();
+	}
+
+	/**
+	 * Get CONVFMT from the VariableManager.
+	 *
+	 * @return CONVFMT value
+	 */
+	public Object getCONVFMTVar() {
+		return convfmt;
+	}
+
+	public String getCONVFMTString() {
+		return convfmt;
+	}
+
+	/**
+	 * Set CONVFMT via the VariableManager.
+	 *
+	 * @param value new CONVFMT value
+	 */
+	public void setCONVFMT(Object value) {
+		this.convfmt = value == null ? "" : value.toString();
+	}
+
+	/**
+	 * Get OFMT from the VariableManager.
+	 *
+	 * @return OFMT value
+	 */
+	public String getOFMTString() {
+		return ofmt;
+	}
+
+	/**
+	 * Set OFMT via the VariableManager.
+	 *
+	 * @param value new OFMT value
+	 */
+	public void setOFMT(Object value) {
+		this.ofmt = value == null ? "" : value.toString();
+	}
+
+	/**
+	 * Get ARGC from the VariableManager.
+	 *
+	 * @return ARGC value
+	 */
+	public Object getARGCVar() {
+		return Long.valueOf(argc);
+	}
+
+	/**
+	 * Set ARGC via the VariableManager.
+	 *
+	 * @param value new ARGC value
+	 */
+	public void setARGC(Object value) {
+		this.argc = toLong(value);
+	}
+
+	/**
 	 * <p>
 	 * Setter for the field <code>inputLine</code>.
 	 * </p>
@@ -662,9 +1019,11 @@ public class JRT {
 				// For getline the caller will re-acquire $0; otherwise parse fields
 				jrtParseFields();
 			}
-			vm.incNR();
+			// NR is managed by JRT
+			this.nr++;
 			if (partitioningReader.fromFilenameList()) {
-				vm.incFNR();
+				// FNR is managed by JRT
+				this.fnr++;
 			}
 			return true; // NOPMD - loop ends when a line is consumed
 		}
@@ -692,10 +1051,10 @@ public class JRT {
 	 * @return {@code true} if at least one filename was found
 	 */
 	private boolean detectFilenames(Locale locale) {
-		int argc = getArgCount();
-		for (long i = 1; i < argc; i++) {
+		int argCount = getArgCount();
+		for (long i = 1; i < argCount; i++) {
 			if (arglistAa.isIn(i)) {
-				String arg = toAwkString(arglistAa.get(i), vm.getCONVFMT().toString(), locale);
+				String arg = toAwkString(arglistAa.get(i), this.convfmt, locale);
 				if (arg.indexOf('=') == -1) {
 					return true;
 				}
@@ -721,11 +1080,11 @@ public class JRT {
 	 * @return the next argument as an AWK string, or {@code null} if none remain
 	 */
 	private String nextArgument(Locale locale) {
-		int argc = getArgCount();
-		while (arglistIdx <= argc) {
+		int argCount = getArgCount();
+		while (arglistIdx <= argCount) {
 			Object o = arglistAa.get(arglistIdx++);
 			if (!(o instanceof UninitializedObject || o.toString().isEmpty())) {
-				return toAwkString(o, vm.getCONVFMT().toString(), locale);
+				return toAwkString(o, this.convfmt, locale);
 			}
 		}
 		return null;
@@ -750,8 +1109,8 @@ public class JRT {
 				if (partitioningReader == null && !hasFilenames) {
 					partitioningReader = new PartitioningReader(
 							new InputStreamReader(input, StandardCharsets.UTF_8),
-							vm.getRS().toString());
-					vm.setFILENAME("");
+							this.rs);
+					this.filename = "";
 					return true;
 				}
 				return false;
@@ -761,20 +1120,20 @@ public class JRT {
 				if (partitioningReader == null && !hasFilenames) {
 					partitioningReader = new PartitioningReader(
 							new InputStreamReader(input, StandardCharsets.UTF_8),
-							vm.getRS().toString());
-					vm.setFILENAME("");
+							this.rs);
+					this.filename = "";
 					return true;
 				}
 				if (partitioningReader != null) {
-					vm.incNR();
+					this.nr++;
 				}
 			} else {
 				partitioningReader = new PartitioningReader(
 						new InputStreamReader(new FileInputStream(arg), StandardCharsets.UTF_8),
-						vm.getRS().toString(),
+						this.rs,
 						true);
-				vm.setFILENAME(arg);
-				vm.resetFNR();
+				this.filename = arg;
+				this.fnr = 0L;
 				ready = true;
 			}
 		}
@@ -791,11 +1150,11 @@ public class JRT {
 	public void setInputLineforEval(InputStream input) throws IOException {
 		partitioningReader = new PartitioningReader(
 				new InputStreamReader(input, StandardCharsets.UTF_8),
-				vm.getRS().toString());
+				this.rs);
 		inputLine = partitioningReader.readRecord();
 		if (inputLine != null) {
 			jrtParseFields();
-			vm.incNR();
+			this.nr++;
 		}
 	}
 
@@ -833,7 +1192,7 @@ public class JRT {
 	 * Called when an update to $0 has occurred.
 	 */
 	public void jrtParseFields() {
-		String fsString = vm.getFS().toString();
+		String fsString = this.fs;
 		assert inputLine != null;
 
 		inputFields.clear();
@@ -861,7 +1220,7 @@ public class JRT {
 	}
 
 	private void recalculateNF() {
-		vm.setNF(Integer.valueOf(inputFields.size() - 1));
+		// NF is managed internally by JRT; parser reads via PUSH_NF
 	}
 
 	/**
@@ -985,10 +1344,10 @@ public class JRT {
 
 	private void rebuildDollarZeroFromFields() {
 		StringBuilder newDollarZeroSb = new StringBuilder();
-		String ofs = vm.getOFS().toString();
+		String ofsValue = this.ofs;
 		for (int i = 1; i < inputFields.size(); i++) {
 			if (i > 1) {
-				newDollarZeroSb.append(ofs);
+				newDollarZeroSb.append(ofsValue);
 			}
 			newDollarZeroSb.append(inputFields.get(i));
 		}
@@ -1003,9 +1362,9 @@ public class JRT {
 	 * @param filename a {@link java.lang.String} object
 	 * @return a {@link java.lang.Integer} object
 	 */
-	public Integer jrtConsumeFileInputForGetline(String filename) {
+	public Integer jrtConsumeFileInputForGetline(String fileNameParam) {
 		try {
-			if (jrtConsumeFileInput(filename)) {
+			if (jrtConsumeFileInput(fileNameParam)) {
 				return ONE;
 			} else {
 				jrtInputString = "";
@@ -1064,20 +1423,20 @@ public class JRT {
 	 * Retrieve the PrintStream which writes to a particular file,
 	 * creating the PrintStream if necessary.
 	 *
-	 * @param filename The file which to write the contents of the PrintStream.
+	 * @param fileNameParam The file which to write the contents of the PrintStream.
 	 * @param append true to append to the file, false to overwrite the file.
 	 * @return a {@link java.io.PrintStream} object
 	 */
-	public PrintStream jrtGetPrintStream(String filename, boolean append) {
-		PrintStream ps = outputFiles.get(filename);
+	public PrintStream jrtGetPrintStream(String fileNameParam, boolean append) {
+		PrintStream ps = outputFiles.get(fileNameParam);
 		if (ps == null) {
 			try {
-				ps = new PrintStream(new FileOutputStream(filename, append), true, StandardCharsets.UTF_8.name()); // true
+				ps = new PrintStream(new FileOutputStream(fileNameParam, append), true, StandardCharsets.UTF_8.name()); // true
 				// =
 				// autoflush
-				outputFiles.put(filename, ps);
+				outputFiles.put(fileNameParam, ps);
 			} catch (IOException ioe) {
-				throw new AwkRuntimeException("Cannot open " + filename + " for writing: " + ioe);
+				throw new AwkRuntimeException("Cannot open " + fileNameParam + " for writing: " + ioe);
 			}
 		}
 		assert ps != null;
@@ -1093,17 +1452,17 @@ public class JRT {
 	 * @return a boolean
 	 * @throws java.io.IOException if any.
 	 */
-	public boolean jrtConsumeFileInput(String filename) throws IOException {
-		PartitioningReader pr = fileReaders.get(filename);
+	public boolean jrtConsumeFileInput(String fileNameParam) throws IOException {
+		PartitioningReader pr = fileReaders.get(fileNameParam);
 		if (pr == null) {
 			try {
 				pr = new PartitioningReader(
-						new InputStreamReader(new FileInputStream(filename), StandardCharsets.UTF_8),
-						vm.getRS().toString());
-				fileReaders.put(filename, pr);
-				vm.setFILENAME(filename);
+						new InputStreamReader(new FileInputStream(fileNameParam), StandardCharsets.UTF_8),
+						this.rs);
+				fileReaders.put(fileNameParam, pr);
+				this.filename = fileNameParam;
 			} catch (IOException ioe) {
-				fileReaders.remove(filename);
+				fileReaders.remove(fileNameParam);
 				throw ioe;
 			}
 		}
@@ -1113,7 +1472,7 @@ public class JRT {
 			return false;
 		} else {
 			jrtInputString = inputLine;
-			vm.incNR();
+			this.nr++;
 			return true;
 		}
 	}
@@ -1154,9 +1513,9 @@ public class JRT {
 				commandProcesses.put(cmd, p);
 				pr = new PartitioningReader(
 						new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8),
-						vm.getRS().toString());
+						this.rs);
 				commandReaders.put(cmd, pr);
-				vm.setFILENAME("");
+				this.filename = "";
 			} catch (IOException ioe) {
 				commandReaders.remove(cmd);
 				Process p = commandProcesses.get(cmd);
@@ -1173,7 +1532,7 @@ public class JRT {
 			return false;
 		} else {
 			jrtInputString = inputLine;
-			vm.incNR();
+			this.nr++;
 			return true;
 		}
 	}
@@ -1225,11 +1584,11 @@ public class JRT {
 	 * @return Integer(0) upon a successful close, Integer(-1)
 	 *         otherwise.
 	 */
-	public Integer jrtClose(String filename) {
-		boolean b1 = jrtCloseFileReader(filename);
-		boolean b2 = jrtCloseCommandReader(filename);
-		boolean b3 = jrtCloseOutputFile(filename);
-		boolean b4 = jrtCloseOutputStream(filename);
+	public Integer jrtClose(String fileNameParam) {
+		boolean b1 = jrtCloseFileReader(fileNameParam);
+		boolean b2 = jrtCloseCommandReader(fileNameParam);
+		boolean b3 = jrtCloseOutputFile(fileNameParam);
+		boolean b4 = jrtCloseOutputStream(fileNameParam);
 		// either close will do
 		return (b1 || b2 || b3 || b4) ? ZERO : MINUS_ONE;
 	}
@@ -1258,11 +1617,11 @@ public class JRT {
 		}
 	}
 
-	private boolean jrtCloseOutputFile(String filename) {
-		PrintStream ps = outputFiles.get(filename);
+	private boolean jrtCloseOutputFile(String fileNameParam) {
+		PrintStream ps = outputFiles.get(fileNameParam);
 		if (ps != null) {
 			ps.close();
-			outputFiles.remove(filename);
+			outputFiles.remove(fileNameParam);
 		}
 		return ps != null;
 	}
@@ -1291,12 +1650,12 @@ public class JRT {
 		return true;
 	}
 
-	private boolean jrtCloseFileReader(String filename) {
-		PartitioningReader pr = fileReaders.get(filename);
+	private boolean jrtCloseFileReader(String fileNameParam) {
+		PartitioningReader pr = fileReaders.get(fileNameParam);
 		if (pr == null) {
 			return false;
 		}
-		fileReaders.remove(filename);
+		fileReaders.remove(fileNameParam);
 		try {
 			pr.close();
 			return true;

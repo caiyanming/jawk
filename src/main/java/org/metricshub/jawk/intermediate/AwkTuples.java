@@ -1281,6 +1281,119 @@ public class AwkTuples implements Serializable {
 		queue.add(new Tuple(Opcode.ARGV_OFFSET, offset));
 	}
 
+	// JRT-managed special variable helpers
+	public void pushNF() {
+		queue.add(new Tuple(Opcode.PUSH_NF));
+	}
+
+	public void assignNF() {
+		queue.add(new Tuple(Opcode.ASSIGN_NF));
+	}
+
+	public void pushNR() {
+		queue.add(new Tuple(Opcode.PUSH_NR));
+	}
+
+	public void assignNR() {
+		queue.add(new Tuple(Opcode.ASSIGN_NR));
+	}
+
+	public void pushFNR() {
+		queue.add(new Tuple(Opcode.PUSH_FNR));
+	}
+
+	public void assignFNR() {
+		queue.add(new Tuple(Opcode.ASSIGN_FNR));
+	}
+
+	public void pushFS() {
+		queue.add(new Tuple(Opcode.PUSH_FS));
+	}
+
+	public void assignFS() {
+		queue.add(new Tuple(Opcode.ASSIGN_FS));
+	}
+
+	public void pushRS() {
+		queue.add(new Tuple(Opcode.PUSH_RS));
+	}
+
+	public void assignRS() {
+		queue.add(new Tuple(Opcode.ASSIGN_RS));
+	}
+
+	public void pushOFS() {
+		queue.add(new Tuple(Opcode.PUSH_OFS));
+	}
+
+	public void assignOFS() {
+		queue.add(new Tuple(Opcode.ASSIGN_OFS));
+	}
+
+	public void pushORS() {
+		queue.add(new Tuple(Opcode.PUSH_ORS));
+	}
+
+	public void assignORS() {
+		queue.add(new Tuple(Opcode.ASSIGN_ORS));
+	}
+
+	public void pushRSTART() {
+		queue.add(new Tuple(Opcode.PUSH_RSTART));
+	}
+
+	public void assignRSTART() {
+		queue.add(new Tuple(Opcode.ASSIGN_RSTART));
+	}
+
+	public void pushRLENGTH() {
+		queue.add(new Tuple(Opcode.PUSH_RLENGTH));
+	}
+
+	public void assignRLENGTH() {
+		queue.add(new Tuple(Opcode.ASSIGN_RLENGTH));
+	}
+
+	public void pushFILENAME() {
+		queue.add(new Tuple(Opcode.PUSH_FILENAME));
+	}
+
+	public void assignFILENAME() {
+		queue.add(new Tuple(Opcode.ASSIGN_FILENAME));
+	}
+
+	public void pushSUBSEP() {
+		queue.add(new Tuple(Opcode.PUSH_SUBSEP));
+	}
+
+	public void assignSUBSEP() {
+		queue.add(new Tuple(Opcode.ASSIGN_SUBSEP));
+	}
+
+	public void pushCONVFMT() {
+		queue.add(new Tuple(Opcode.PUSH_CONVFMT));
+	}
+
+	public void assignCONVFMT() {
+		queue.add(new Tuple(Opcode.ASSIGN_CONVFMT));
+	}
+
+	public void pushOFMT() {
+		queue.add(new Tuple(Opcode.PUSH_OFMT));
+	}
+
+	public void assignOFMT() {
+		queue.add(new Tuple(Opcode.ASSIGN_OFMT));
+	}
+
+	public void pushARGC() {
+		queue.add(new Tuple(Opcode.PUSH_ARGC));
+	}
+
+	public void assignARGC() {
+		queue.add(new Tuple(Opcode.ASSIGN_ARGC));
+	}
+
 	/**
 	 * <p>
 	 * applyRS.

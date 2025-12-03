@@ -2522,20 +2522,20 @@ public class AwkParser {
 			// START OF MAIN BLOCK
 			tuples.address(startAddress);
 
-			// initialize special variables
-			IDAst nrAst = symbolTable.getID("NR");
-			IDAst fnrAst = symbolTable.getID("FNR");
-			IDAst nfAst = symbolTable.getID("NF");
-			IDAst fsAst = symbolTable.getID("FS");
-			IDAst rsAst = symbolTable.getID("RS");
-			IDAst ofsAst = symbolTable.getID("OFS");
-			IDAst orsAst = symbolTable.getID("ORS");
-			IDAst rstartAst = symbolTable.getID("RSTART");
-			IDAst rlengthAst = symbolTable.getID("RLENGTH");
-			IDAst filenameAst = symbolTable.getID("FILENAME");
-			IDAst subsepAst = symbolTable.getID("SUBSEP");
-			IDAst convfmtAst = symbolTable.getID("CONVFMT");
-			IDAst ofmtAst = symbolTable.getID("OFMT");
+			// initialize runtime-managed special variables via JRT defaults in AVM
+			symbolTable.getID("NR");
+			symbolTable.getID("FNR");
+			symbolTable.getID("NF");
+			symbolTable.getID("FS");
+			symbolTable.getID("RS");
+			symbolTable.getID("OFS");
+			symbolTable.getID("ORS");
+			symbolTable.getID("RSTART");
+			symbolTable.getID("RLENGTH");
+			symbolTable.getID("FILENAME");
+			symbolTable.getID("SUBSEP");
+			symbolTable.getID("CONVFMT");
+			symbolTable.getID("OFMT");
 			IDAst environAst = symbolTable.getID("ENVIRON");
 			IDAst argcAst = symbolTable.getID("ARGC");
 			IDAst argvAst = symbolTable.getID("ARGV");
@@ -2545,19 +2545,7 @@ public class AwkParser {
 			// (see above)!
 			tuples.setNumGlobals(symbolTable.numGlobals());
 
-			tuples.nfOffset(nfAst.offset);
-			tuples.nrOffset(nrAst.offset);
-			tuples.fnrOffset(fnrAst.offset);
-			tuples.fsOffset(fsAst.offset);
-			tuples.rsOffset(rsAst.offset);
-			tuples.ofsOffset(ofsAst.offset);
-			tuples.orsOffset(orsAst.offset);
-			tuples.rstartOffset(rstartAst.offset);
-			tuples.rlengthOffset(rlengthAst.offset);
-			tuples.filenameOffset(filenameAst.offset);
-			tuples.subsepOffset(subsepAst.offset);
-			tuples.convfmtOffset(convfmtAst.offset);
-			tuples.ofmtOffset(ofmtAst.offset);
+			// Only ENVIRON/ARGC/ARGV remain regular globals
 			tuples.environOffset(environAst.offset);
 			tuples.argcOffset(argcAst.offset);
 			tuples.argvOffset(argvAst.offset);
@@ -2671,14 +2659,14 @@ public class AwkParser {
 			// START OF MAIN BLOCK
 			tuples.address(startAddress);
 
-			// initialize special variables
-			IDAst nrAst = symbolTable.getID("NR");
-			IDAst fnrAst = symbolTable.getID("FNR");
-			IDAst nfAst = symbolTable.getID("NF");
-			IDAst fsAst = symbolTable.getID("FS");
-			IDAst rsAst = symbolTable.getID("RS");
-			IDAst subsepAst = symbolTable.getID("SUBSEP");
-			IDAst convfmtAst = symbolTable.getID("CONVFMT");
+			// initialize runtime-managed special variables via JRT defaults in AVM
+			symbolTable.getID("NR");
+			symbolTable.getID("FNR");
+			symbolTable.getID("NF");
+			symbolTable.getID("FS");
+			symbolTable.getID("RS");
+			symbolTable.getID("SUBSEP");
+			symbolTable.getID("CONVFMT");
 			IDAst environAst = symbolTable.getID("ENVIRON");
 
 			// MUST BE DONE AFTER FUNCTIONS ARE COMPILED,
@@ -2686,13 +2674,6 @@ public class AwkParser {
 			// (see above)!
 			tuples.setNumGlobals(symbolTable.numGlobals());
 
-			tuples.nfOffset(nfAst.offset);
-			tuples.nrOffset(nrAst.offset);
-			tuples.fnrOffset(fnrAst.offset);
-			tuples.fsOffset(fsAst.offset);
-			tuples.rsOffset(rsAst.offset);
-			tuples.subsepOffset(subsepAst.offset);
-			tuples.convfmtOffset(convfmtAst.offset);
 			tuples.environOffset(environAst.offset);
 
 			tuples.setInputForEval();
@@ -3171,27 +3152,74 @@ public class AwkParser {
 					throw new SemanticException("Cannot use " + idAst + " as a scalar. It is an array.");
 				}
 				idAst.setScalar(true);
-				if (op == Token.EQUALS) {
-					// Expected side effect:
-					// Upon assignment, if the var is RS, reapply RS to input streams.
-					tuples.assign(idAst.offset, idAst.isGlobal);
-				} else if (op == Token.PLUS_EQ) {
-					tuples.plusEq(idAst.offset, idAst.isGlobal);
-				} else if (op == Token.MINUS_EQ) {
-					tuples.minusEq(idAst.offset, idAst.isGlobal);
-				} else if (op == Token.MULT_EQ) {
-					tuples.multEq(idAst.offset, idAst.isGlobal);
-				} else if (op == Token.DIV_EQ) {
-					tuples.divEq(idAst.offset, idAst.isGlobal);
-				} else if (op == Token.MOD_EQ) {
-					tuples.modEq(idAst.offset, idAst.isGlobal);
-				} else if (op == Token.POW_EQ) {
-					tuples.powEq(idAst.offset, idAst.isGlobal);
+				boolean isSpecial = SPECIAL_VAR_NAMES.containsKey(idAst.id)
+						&& !"ENVIRON".equals(idAst.id)
+						&& !"ARGV".equals(idAst.id);
+				if (isSpecial) {
+					// value is on stack from RHS
+					switch (op) {
+					case EQUALS:
+						assignSpecial(tuples, idAst.id);
+						break;
+					case PLUS_EQ:
+						pushSpecialThenSwap(tuples, idAst.id);
+						tuples.add();
+						assignSpecial(tuples, idAst.id);
+						break;
+					case MINUS_EQ:
+						pushSpecialThenSwap(tuples, idAst.id);
+						tuples.subtract();
+						assignSpecial(tuples, idAst.id);
+						break;
+					case MULT_EQ:
+						pushSpecialThenSwap(tuples, idAst.id);
+						tuples.multiply();
+						assignSpecial(tuples, idAst.id);
+						break;
+					case DIV_EQ:
+						pushSpecialThenSwap(tuples, idAst.id);
+						tuples.divide();
+						assignSpecial(tuples, idAst.id);
+						break;
+					case MOD_EQ:
+						pushSpecialThenSwap(tuples, idAst.id);
+						tuples.mod();
+						assignSpecial(tuples, idAst.id);
+						break;
+					case POW_EQ:
+						pushSpecialThenSwap(tuples, idAst.id);
+						tuples.pow();
+						assignSpecial(tuples, idAst.id);
+						break;
+					default:
+						throw new Error("Unhandled op: " + op + " / " + text);
+					}
+					if ("RS".equals(idAst.id)) {
+						tuples.applyRS();
+					}
 				} else {
-					throw new Error("Unhandled op: " + op + " / " + text);
-				}
-				if (idAst.id.equals("RS")) {
-					tuples.applyRS();
+					if (op == Token.EQUALS) {
+						// Expected side effect:
+						// Upon assignment, if the var is RS, reapply RS to input streams.
+						tuples.assign(idAst.offset, idAst.isGlobal);
+					} else if (op == Token.PLUS_EQ) {
+						tuples.plusEq(idAst.offset, idAst.isGlobal);
+					} else if (op == Token.MINUS_EQ) {
+						tuples.minusEq(idAst.offset, idAst.isGlobal);
+					} else if (op == Token.MULT_EQ) {
+						tuples.multEq(idAst.offset, idAst.isGlobal);
+					} else if (op == Token.DIV_EQ) {
+						tuples.divEq(idAst.offset, idAst.isGlobal);
+					} else if (op == Token.MOD_EQ) {
+						tuples.modEq(idAst.offset, idAst.isGlobal);
+					} else if (op == Token.POW_EQ) {
+						tuples.powEq(idAst.offset, idAst.isGlobal);
+					} else {
+						throw new Error("Unhandled op: " + op + " / " + text);
+					}
+					if (idAst.id.equals("RS")) {
+						tuples.applyRS();
+					}
 				}
 			} else if (getAst1() instanceof ArrayReferenceAst) {
 				ArrayReferenceAst arr = (ArrayReferenceAst) getAst1();
@@ -3251,6 +3279,105 @@ public class AwkParser {
 			}
 			popSourceLineNumber(tuples);
 			return 1;
+		}
+
+		private void pushSpecialThenSwap(AwkTuples tuples, String id) {
+			switch (id) {
+			case "NF":
+				tuples.pushNF();
+				break;
+			case "NR":
+				tuples.pushNR();
+				break;
+			case "FNR":
+				tuples.pushFNR();
+				break;
+			case "FS":
+				tuples.pushFS();
+				break;
+			case "RS":
+				tuples.pushRS();
+				break;
+			case "OFS":
+				tuples.pushOFS();
+				break;
+			case "ORS":
+				tuples.pushORS();
+				break;
+			case "RSTART":
+				tuples.pushRSTART();
+				break;
+			case "RLENGTH":
+				tuples.pushRLENGTH();
+				break;
+			case "FILENAME":
+				tuples.pushFILENAME();
+				break;
+			case "SUBSEP":
+				tuples.pushSUBSEP();
+				break;
+			case "CONVFMT":
+				tuples.pushCONVFMT();
+				break;
+			case "OFMT":
+				tuples.pushOFMT();
+				break;
+			case "ARGC":
+				tuples.pushARGC();
+				break;
+			default:
+				throw new Error("Unhandled special var: " + id);
+			}
+			tuples.swap();
+		}
+
+		private void assignSpecial(AwkTuples tuples, String id) {
+			switch (id) {
+			case "NF":
+				tuples.assignNF();
+				break;
+			case "NR":
+				tuples.assignNR();
+				break;
+			case "FNR":
+				tuples.assignFNR();
+				break;
+			case "FS":
+				tuples.assignFS();
+				break;
+			case "RS":
+				tuples.assignRS();
+				break;
+			case "OFS":
+				tuples.assignOFS();
+				break;
+			case "ORS":
+				tuples.assignORS();
+				break;
+			case "RSTART":
+				tuples.assignRSTART();
+				break;
+			case "RLENGTH":
+				tuples.assignRLENGTH();
+				break;
+			case "FILENAME":
+				tuples.assignFILENAME();
+				break;
+			case "SUBSEP":
+				tuples.assignSUBSEP();
+				break;
+			case "CONVFMT":
+				tuples.assignCONVFMT();
+				break;
+			case "OFMT":
+				tuples.assignOFMT();
+				break;
+			case "ARGC":
+				tuples.assignARGC();
+				break;
+			default:
+				throw new Error("Unhandled special var: " + id);
+			}
 		}
 	}
 
@@ -4176,8 +4303,58 @@ public class AwkParser {
 		@Override
 		public int populateTuples(AwkTuples tuples) {
 			pushSourceLineNumber(tuples);
-			assert offset != AVM.NULL_OFFSET : "offset = " + offset + " for " + this;
-			tuples.dereference(offset, isArray(), isGlobal);
+			if (SPECIAL_VAR_NAMES.containsKey(id) && !"ENVIRON".equals(id) && !"ARGV".equals(id)) {
+				// Use JRT-managed reads for specials
+				switch (id) {
+				case "NF":
+					tuples.pushNF();
+					break;
+				case "NR":
+					tuples.pushNR();
+					break;
+				case "FNR":
+					tuples.pushFNR();
+					break;
+				case "FS":
+					tuples.pushFS();
+					break;
+				case "RS":
+					tuples.pushRS();
+					break;
+				case "OFS":
+					tuples.pushOFS();
+					break;
+				case "ORS":
+					tuples.pushORS();
+					break;
+				case "RSTART":
+					tuples.pushRSTART();
+					break;
+				case "RLENGTH":
+					tuples.pushRLENGTH();
+					break;
+				case "FILENAME":
+					tuples.pushFILENAME();
+					break;
+				case "SUBSEP":
+					tuples.pushSUBSEP();
+					break;
+				case "CONVFMT":
+					tuples.pushCONVFMT();
+					break;
+				case "OFMT":
+					tuples.pushOFMT();
+					break;
+				case "ARGC":
+					tuples.pushARGC();
+					break;
+				default:
+					throw new Error("Unhandled special var: " + id);
+				}
+			} else {
+				assert offset != AVM.NULL_OFFSET : "offset = " + offset + " for " + this;
+				tuples.dereference(offset, isArray(), isGlobal);
+			}
 			popSourceLineNumber(tuples);
 			return 1;
 		}
