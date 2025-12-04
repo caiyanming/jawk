@@ -32,7 +32,7 @@ class VersionManager implements Serializable {
 
 	private static final long serialVersionUID = -2015316238483923915L;
 
-	private static final int CLASS_VERSION = 2;
+	private static final int CLASS_VERSION = 3;
 
 	private int instanceVersion = CLASS_VERSION;
 
@@ -40,8 +40,8 @@ class VersionManager implements Serializable {
 		instanceVersion = ois.readInt();
 		if (instanceVersion != CLASS_VERSION) {
 			throw new InvalidClassException(
-					"Invalid intermeidate file format (instance version " + instanceVersion
-							+ " != class version " + CLASS_VERSION + ")");
+					"Incompatible intermediate tuple format (found " + instanceVersion
+							+ ", expected " + CLASS_VERSION + "). Recompile your script.");
 		}
 	}
 

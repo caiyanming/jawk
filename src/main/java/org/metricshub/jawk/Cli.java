@@ -183,8 +183,15 @@ public final class Cli {
 				String file = args[++argIdx];
 				try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
 					precompiledTuples = (AwkTuples) ois.readObject();
+				} catch (java.io.InvalidClassException ex) {
+					throw new IllegalArgumentException(
+							"Precompiled tuples '" + file + "' are not compatible with this version (" + ex.getMessage()
+									+ "). Please recompile.",
+							ex);
 				} catch (IOException | ClassNotFoundException ex) {
-					throw new IllegalArgumentException("Failed to read tuples '" + file + "': " + ex.getMessage(), ex);
+					throw new IllegalArgumentException(
+							"Failed to read tuples '" + file + "': " + ex.getMessage(),
+							ex);
 				}
 			} else if (arg.equals("-l") || arg.equals("--load")) {
 				// -l/--load extension : load extension
