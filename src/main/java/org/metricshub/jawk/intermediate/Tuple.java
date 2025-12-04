@@ -23,6 +23,7 @@ package org.metricshub.jawk.intermediate;
  */
 
 import java.io.Serializable;
+import java.util.regex.Pattern;
 import java.util.function.Supplier;
 import org.metricshub.jawk.ext.ExtensionFunction;
 
@@ -46,6 +47,7 @@ class Tuple implements Serializable {
 	private boolean[] bools = new boolean[4];
 	private double[] doubles = new double[4];
 	private String[] strings = new String[4];
+	private Pattern[] patterns = new Pattern[4];
 	private Class<?>[] types = new Class[4];
 	private Address address = null;
 	private Class<?> cls = null;
@@ -92,6 +94,12 @@ class Tuple implements Serializable {
 		this(opcode);
 		strings[0] = s1;
 		types[0] = String.class;
+	}
+
+	Tuple(Opcode opcode, String s1, Pattern p2) {
+		this(opcode, s1);
+		patterns[1] = p2;
+		types[1] = Pattern.class;
 	}
 
 	Tuple(Opcode opcode, boolean b1) {
@@ -185,6 +193,13 @@ class Tuple implements Serializable {
 				sb.append(doubles[idx]);
 			} else if (type == String.class) {
 				sb.append('"').append(strings[idx]).append('"');
+			} else if (type == Pattern.class) {
+				// Display regex patterns in /.../ form for readability
+				Pattern p = patterns[idx];
+				sb
+						.append('/')
+						.append(p == null ? "" : p.pattern())
+						.append('/');
 			} else if (type == Address.class) {
 				assert idx == 0;
 				sb.append(address);
@@ -236,6 +251,10 @@ class Tuple implements Serializable {
 
 	String[] getStrings() {
 		return strings;
+	}
+
+	Pattern[] getPatterns() {
+		return patterns;
 	}
 
 	Class<?>[] getTypes() {

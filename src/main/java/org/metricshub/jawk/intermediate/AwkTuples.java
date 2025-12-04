@@ -35,6 +35,7 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import org.metricshub.jawk.ext.ExtensionFunction;
 import org.metricshub.jawk.jrt.JRT;
 
@@ -48,9 +49,6 @@ import org.metricshub.jawk.jrt.JRT;
 public class AwkTuples implements Serializable {
 
 	private static final long serialVersionUID = 2L;
-
-	/** Version Manager */
-	private VersionManager versionManager = new VersionManager();
 
 	/** Address manager */
 	private final AddressManager addressManager = new AddressManager();
@@ -1557,7 +1555,10 @@ public class AwkTuples implements Serializable {
 	 * @param regexpStr a {@link java.lang.String} object
 	 */
 	public void regexp(String regexpStr) {
-		queue.add(new Tuple(Opcode.REGEXP, regexpStr));
+		// For literal regexes (created by RegexpAst), precompile the Pattern
+		// and store it alongside the original string to skip runtime compilation.
+		Pattern precompiled = Pattern.compile(regexpStr);
+		queue.add(new Tuple(Opcode.REGEXP, regexpStr, precompiled));
 	}
 
 	/**
@@ -1602,7 +1603,7 @@ public class AwkTuples implements Serializable {
 	 * @param ps destination stream for the tuple listing
 	 */
 	public void dump(PrintStream ps) {
-		ps.println("(" + versionManager + ")");
+		ps.println("(intermediate serialVersionUID = " + serialVersionUID + ")");
 		ps.println();
 		for (int i = 0; i < queue.size(); i++) {
 			Address address = addressManager.getAddress(i);
