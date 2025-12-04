@@ -22,6 +22,10 @@ package org.metricshub.jawk.intermediate;
  * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
  */
 
+import java.io.IOException;
+import java.io.InvalidClassException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.ArrayDeque;
@@ -50,8 +54,8 @@ public class AwkTuples implements Serializable {
 
 	private static final long serialVersionUID = 2L;
 
-	/** Version Manager */
-	private VersionManager versionManager = new VersionManager();
+	// Tuple stream format version for serialized AwkTuples
+	private static final int TUPLE_STREAM_VERSION = 4;
 
 	/** Address manager */
 	private final AddressManager addressManager = new AddressManager();
@@ -1606,7 +1610,7 @@ public class AwkTuples implements Serializable {
 	 * @param ps destination stream for the tuple listing
 	 */
 	public void dump(PrintStream ps) {
-		ps.println("(" + versionManager + ")");
+		ps.println("(intermediate file format version = " + TUPLE_STREAM_VERSION + ")");
 		ps.println();
 		for (int i = 0; i < queue.size(); i++) {
 			Address address = addressManager.getAddress(i);
@@ -1616,6 +1620,22 @@ public class AwkTuples implements Serializable {
 				ps.println(i + " : [" + address + "] : " + queue.get(i));
 			}
 		}
+	}
+
+	// Custom serialization to embed a version header and fail fast on mismatches
+	private void writeObject(ObjectOutputStream oos) throws IOException {
+		oos.writeInt(TUPLE_STREAM_VERSION);
+		oos.defaultWriteObject();
+	}
+
+	private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+		int found = ois.readInt();
+		if (found != TUPLE_STREAM_VERSION) {
+			throw new InvalidClassException(
+					"Incompatible intermediate tuple format (found " + found
+							+ ", expected " + TUPLE_STREAM_VERSION + "). Recompile your script.");
+		}
+		ois.defaultReadObject();
 	}
 
 	/**
