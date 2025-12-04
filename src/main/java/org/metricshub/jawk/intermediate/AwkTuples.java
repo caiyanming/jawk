@@ -35,6 +35,7 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import org.metricshub.jawk.ext.ExtensionFunction;
 import org.metricshub.jawk.jrt.JRT;
 
@@ -1557,7 +1558,10 @@ public class AwkTuples implements Serializable {
 	 * @param regexpStr a {@link java.lang.String} object
 	 */
 	public void regexp(String regexpStr) {
-		queue.add(new Tuple(Opcode.REGEXP, regexpStr));
+		// For literal regexes (created by RegexpAst), precompile the Pattern
+		// and store it alongside the original string to skip runtime compilation.
+		Pattern precompiled = Pattern.compile(regexpStr);
+		queue.add(new Tuple(Opcode.REGEXP, regexpStr, precompiled));
 	}
 
 	/**

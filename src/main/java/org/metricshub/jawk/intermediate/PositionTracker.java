@@ -2,6 +2,7 @@ package org.metricshub.jawk.intermediate;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.metricshub.jawk.ext.ExtensionFunction;
+import java.util.regex.Pattern;
 
 /*-
  * ╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲
@@ -94,6 +95,9 @@ public class PositionTracker {
 		if (c == String.class) {
 			return tuple.getStrings()[argIdx];
 		}
+		if (c == Pattern.class) {
+			return tuple.getPatterns()[argIdx];
+		}
 		if (c == Address.class) {
 			assert argIdx == 0;
 			return tuple.getAddress();
@@ -103,6 +107,13 @@ public class PositionTracker {
 			return tuple.getExtensionFunction();
 		}
 		throw new Error("Invalid arg type: " + c + ", arg_idx = " + argIdx + ", tuple = " + tuple);
+	}
+
+	public Pattern patternArg(int argIdx) {
+		if (tuple.getTypes()[argIdx] != Pattern.class) {
+			throw new Error("Tuple does not contain a Pattern at index " + argIdx + ": " + tuple);
+		}
+		return tuple.getPatterns()[argIdx];
 	}
 
 	public ExtensionFunction extensionFunctionArg() {

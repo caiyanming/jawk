@@ -316,7 +316,6 @@ public class AVM implements VariableManager {
 	 * @throws IOException in case of I/O problems (with getline typically)
 	 */
 	public void interpret(AwkTuples tuples) throws ExitException, IOException {
-		Map<String, Pattern> regexps = new HashMap<String, Pattern>();
 		Map<Integer, ConditionPair> conditionPairs = new HashMap<Integer, ConditionPair>();
 
 		globalVariableOffsets = tuples.getGlobalVariableOffsetMap();
@@ -1712,13 +1711,8 @@ public class AVM implements VariableManager {
 					break;
 				}
 				case REGEXP: {
-					// arg[0] = string representation of regexp
-					String key = JRT.toAwkString(position.arg(0), jrt.getCONVFMTString(), locale);
-					Pattern pattern = regexps.get(key);
-					if (pattern == null) {
-						pattern = Pattern.compile(key);
-						regexps.put(key, pattern);
-					}
+					// Literal regex tuples must provide a precompiled Pattern as arg[1]
+					Pattern pattern = position.patternArg(1);
 					push(pattern);
 					position.next();
 					break;
