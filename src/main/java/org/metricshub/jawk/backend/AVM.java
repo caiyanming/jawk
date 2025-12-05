@@ -168,7 +168,7 @@ public class AVM implements VariableManager {
 	}
 
 	protected JRT createJrt() {
-		return new JRT(this);
+		return new JRT(this, settings.getLocale());
 	}
 
 	protected AwkTuples createTuples() {
@@ -296,10 +296,9 @@ public class AVM implements VariableManager {
 		// stack[1] = replacement string
 		// stack[2] = ere
 		boolean isGsub = position.boolArg(gsubArgPos);
-		String convfmt = jrt.getCONVFMTString();
-		String orig = JRT.toAwkString(pop(), convfmt, locale);
-		String repl = JRT.toAwkString(pop(), convfmt, locale);
-		String ere = JRT.toAwkString(pop(), convfmt, locale);
+		String orig = jrt.toAwkString(pop());
+		String repl = jrt.toAwkString(pop());
+		String ere = jrt.toAwkString(pop());
 		if (isGsub) {
 			newString = replaceAll(orig, ere, repl);
 		} else {
@@ -364,7 +363,7 @@ public class AVM implements VariableManager {
 					// etc.
 					long numArgs = position.intArg(0);
 					boolean append = position.boolArg(1);
-					String key = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
+					String key = jrt.toAwkString(pop());
 					PrintStream ps = jrt.jrtGetPrintStream(key, append);
 					printTo(ps, numArgs);
 					position.next();
@@ -377,7 +376,7 @@ public class AVM implements VariableManager {
 					// stack[2] = item 2
 					// etc.
 					long numArgs = position.intArg(0);
-					String cmd = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
+					String cmd = jrt.toAwkString(pop());
 					PrintStream ps = jrt.jrtSpawnForOutput(cmd);
 					printTo(ps, numArgs);
 					position.next();
@@ -402,7 +401,7 @@ public class AVM implements VariableManager {
 					// etc.
 					long numArgs = position.intArg(0);
 					boolean append = position.boolArg(1);
-					String key = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
+					String key = jrt.toAwkString(pop());
 					PrintStream ps = jrt.jrtGetPrintStream(key, append);
 					printfTo(ps, numArgs);
 					position.next();
@@ -415,7 +414,7 @@ public class AVM implements VariableManager {
 					// stack[2] = item 1
 					// etc.
 					long numArgs = position.intArg(0);
-					String cmd = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
+					String cmd = jrt.toAwkString(pop());
 					PrintStream ps = jrt.jrtSpawnForOutput(cmd);
 					printfTo(ps, numArgs);
 					position.next();
@@ -552,9 +551,8 @@ public class AVM implements VariableManager {
 				case CONCAT: {
 					// stack[0] = string1
 					// stack[1] = string2
-					String convfmt = jrt.getCONVFMTString();
-					String s2 = JRT.toAwkString(pop(), convfmt, locale);
-					String s1 = JRT.toAwkString(pop(), convfmt, locale);
+					String s2 = jrt.toAwkString(pop());
+					String s1 = jrt.toAwkString(pop());
 					String resultString = s1 + s2;
 					push(resultString);
 					position.next();
@@ -1006,9 +1004,8 @@ public class AVM implements VariableManager {
 				case MATCH: {
 					// stack[0] = 2nd arg to match() function
 					// stack[1] = 1st arg to match() function
-					String convfmt = jrt.getCONVFMTString();
-					String ere = JRT.toAwkString(pop(), convfmt, locale);
-					String s = JRT.toAwkString(pop(), convfmt, locale);
+					String ere = jrt.toAwkString(pop());
+					String s = jrt.toAwkString(pop());
 
 					// check if IGNORECASE set
 					int flags = 0;
@@ -1042,9 +1039,8 @@ public class AVM implements VariableManager {
 				case INDEX: {
 					// stack[0] = 2nd arg to index() function
 					// stack[1] = 1st arg to index() function
-					String convfmt = jrt.getCONVFMTString();
-					String s2 = JRT.toAwkString(pop(), convfmt, locale);
-					String s1 = JRT.toAwkString(pop(), convfmt, locale);
+					String s2 = jrt.toAwkString(pop());
+					String s1 = jrt.toAwkString(pop());
 					push(s1.indexOf(s2) + 1);
 					position.next();
 					break;
@@ -1054,10 +1050,9 @@ public class AVM implements VariableManager {
 					// stack[0] = replacement string
 					// stack[1] = ere
 					boolean isGsub = position.boolArg(0);
-					String convfmt = jrt.getCONVFMTString();
-					String repl = JRT.toAwkString(pop(), convfmt, locale);
-					String ere = JRT.toAwkString(pop(), convfmt, locale);
-					String orig = JRT.toAwkString(jrt.jrtGetInputField(0), convfmt, locale);
+					String repl = jrt.toAwkString(pop());
+					String ere = jrt.toAwkString(pop());
+					String orig = jrt.toAwkString(jrt.jrtGetInputField(0));
 					String newstring;
 					if (isGsub) {
 						newstring = replaceAll(orig, ere, repl);
@@ -1077,11 +1072,10 @@ public class AVM implements VariableManager {
 					// stack[2] = replacement string
 					// stack[3] = ere
 					boolean isGsub = position.boolArg(0);
-					String convfmt = jrt.getCONVFMTString();
 					long fieldNum = JRT.parseFieldNumber(pop(), position);
-					String orig = JRT.toAwkString(pop(), convfmt, locale);
-					String repl = JRT.toAwkString(pop(), convfmt, locale);
-					String ere = JRT.toAwkString(pop(), convfmt, locale);
+					String orig = jrt.toAwkString(pop());
+					String repl = jrt.toAwkString(pop());
+					String ere = jrt.toAwkString(pop());
 					String newstring;
 					if (isGsub) {
 						newstring = replaceAll(orig, ere, repl);
@@ -1138,13 +1132,12 @@ public class AVM implements VariableManager {
 					// stack[0] = field_sep (only if num args == 3)
 					// stack[1] = array
 					// stack[2] = string
-					String convfmt = jrt.getCONVFMTString();
 					long numArgs = position.intArg(0);
 					String fsString;
 					if (numArgs == 2) {
-						fsString = JRT.toAwkString(jrt.getFSVar(), convfmt, locale);
+						fsString = jrt.toAwkString(jrt.getFSVar());
 					} else if (numArgs == 3) {
-						fsString = JRT.toAwkString(pop(), convfmt, locale);
+						fsString = jrt.toAwkString(pop());
 					} else {
 						throw new Error("Invalid # of args. split() requires 2 or 3. Got: " + numArgs);
 					}
@@ -1152,7 +1145,7 @@ public class AVM implements VariableManager {
 					if (!(o instanceof AssocArray)) {
 						throw new AwkRuntimeException(position.lineNumber(), o + " is not an array.");
 					}
-					String s = JRT.toAwkString(pop(), convfmt, locale);
+					String s = jrt.toAwkString(pop());
 					Enumeration<Object> tokenizer;
 					if (fsString.equals(" ")) {
 						tokenizer = new StringTokenizer(s);
@@ -1185,10 +1178,10 @@ public class AVM implements VariableManager {
 					if (numArgs == 3) {
 						length = (int) JRT.toLong(pop());
 						startPos = (int) JRT.toDouble(pop());
-						s = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
+						s = jrt.toAwkString(pop());
 					} else if (numArgs == 2) {
 						startPos = (int) JRT.toDouble(pop());
-						s = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
+						s = jrt.toAwkString(pop());
 						length = s.length() - startPos + 1;
 					} else {
 						throw new Error("numArgs for SUBSTR must be 2 or 3. It is " + numArgs);
@@ -1210,19 +1203,19 @@ public class AVM implements VariableManager {
 				}
 				case TOLOWER: {
 					// stack[0] = string
-					push(JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale).toLowerCase());
+					push(jrt.toAwkString(pop()).toLowerCase());
 					position.next();
 					break;
 				}
 				case TOUPPER: {
 					// stack[0] = string
-					push(JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale).toUpperCase());
+					push(jrt.toAwkString(pop()).toUpperCase());
 					position.next();
 					break;
 				}
 				case SYSTEM: {
 // stack[0] = command string
-					String s = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
+					String s = jrt.toAwkString(pop());
 					push(jrt.jrtSystem(s));
 					position.next();
 					break;
@@ -1277,7 +1270,7 @@ public class AVM implements VariableManager {
 						boolean result = m.find();
 						push(result ? 1 : 0);
 					} else {
-						String r = JRT.toAwkString(o2, jrt.getCONVFMTString(), locale);
+						String r = jrt.toAwkString(o2);
 						boolean result = Pattern.compile(r).matcher(s).find();
 						push(result ? 1 : 0);
 					}
@@ -1472,14 +1465,14 @@ public class AVM implements VariableManager {
 				}
 				case USE_AS_FILE_INPUT: {
 // stack[0] = filename
-					String s = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
+					String s = jrt.toAwkString(pop());
 					avmConsumeFileInputForGetline(s);
 					position.next();
 					break;
 				}
 				case USE_AS_COMMAND_INPUT: {
 // stack[0] = command line
-					String s = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
+					String s = jrt.toAwkString(pop());
 					avmConsumeCommandInputForGetline(s);
 					position.next();
 					break;
@@ -1620,7 +1613,7 @@ public class AVM implements VariableManager {
 				}
 				case CLOSE: {
 					// stack[0] = file or command line to close
-					String s = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
+					String s = jrt.toAwkString(pop());
 					push(jrt.jrtClose(s));
 					position.next();
 					break;
@@ -1633,16 +1626,15 @@ public class AVM implements VariableManager {
 					long count = position.intArg(0);
 					assert count >= 1;
 					// String s;
-					String convfmt = jrt.getCONVFMTString();
 					if (count == 1) {
-						push(JRT.toAwkString(pop(), convfmt, locale));
+						push(jrt.toAwkString(pop()));
 					} else {
 						StringBuilder sb = new StringBuilder();
-						sb.append(JRT.toAwkString(pop(), convfmt, locale));
-						String subsep = JRT.toAwkString(jrt.getSUBSEPVar(), convfmt, locale);
+						sb.append(jrt.toAwkString(pop()));
+						String subsep = jrt.toAwkString(jrt.getSUBSEPVar());
 						for (int i = 1; i < count; i++) {
 							sb.insert(0, subsep);
-							sb.insert(0, JRT.toAwkString(pop(), convfmt, locale));
+							sb.insert(0, jrt.toAwkString(pop()));
 						}
 						push(sb.toString());
 					}
@@ -1754,7 +1746,7 @@ public class AVM implements VariableManager {
 					// stack[0] = Jawk code
 
 					// Experimental feature. Use with caution.
-					String awkCode = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
+					String awkCode = jrt.toAwkString(pop());
 					List<ScriptSource> scriptSources = new ArrayList<ScriptSource>(1);
 					scriptSources
 							.add(new ScriptSource(ScriptSource.DESCRIPTION_COMMAND_LINE_SCRIPT, new StringReader(awkCode)));
@@ -2083,7 +2075,7 @@ public class AVM implements VariableManager {
 
 			// Now print
 			for (int i = 0; i < numArgs; i++) {
-				ps.print(JRT.toAwkStringForOutput(args[i], getOFMT().toString(), locale));
+				ps.print(jrt.toAwkStringForOutput(args[i]));
 				// if more elements, display $FS
 				if (i < numArgs - 1) {
 					// use $OFS to separate fields
@@ -2126,7 +2118,7 @@ public class AVM implements VariableManager {
 		}
 
 		// the format argument!
-		String fmt = JRT.toAwkString(pop(), jrt.getCONVFMTString(), locale);
+		String fmt = jrt.toAwkString(pop());
 
 		if (trapIllegalFormatExceptions) {
 			return Printf4J.sprintf(locale, fmt, argArray);

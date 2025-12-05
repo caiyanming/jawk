@@ -135,15 +135,27 @@ public class JRT {
 	private String ofmt; // number-to-string for output
 	private String subsep; // subscript separator
 	private long argc; // number of arguments
+	private Locale locale; // locale for number formatting
 
 	/**
 	 * Create a JRT with a VariableManager
 	 *
 	 * @param vm The VariableManager to use with this JRT.
 	 */
-	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "JRT must hold the provided VariableManager for later use")
 	public JRT(VariableManager vm) {
+		this(vm, Locale.getDefault());
+	}
+
+	/**
+	 * Create a JRT with a VariableManager and a Locale
+	 *
+	 * @param vm The VariableManager to use with this JRT.
+	 * @param locale The Locale to use for number formatting.
+	 */
+	@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "JRT must hold the provided VariableManager for later use")
+	public JRT(VariableManager vm, Locale locale) {
 		this.vm = vm;
+		this.locale = locale;
 		this.nr = 0L;
 		this.fnr = 0L;
 		this.rstart = 0;
@@ -252,6 +264,17 @@ public class JRT {
 
 	/**
 	 * Convert Strings, Integers, and Doubles to Strings
+	 * based on the CONVFMT variable contents and the stored Locale.
+	 *
+	 * @param o Object to convert.
+	 * @return A String representation of o.
+	 */
+	public String toAwkString(Object o) {
+		return toAwkString(o, this.convfmt, this.locale);
+	}
+
+	/**
+	 * Convert Strings, Integers, and Doubles to Strings
 	 * based on the CONVFMT variable contents.
 	 *
 	 * @param o Object to convert.
@@ -259,7 +282,7 @@ public class JRT {
 	 * @return A String representation of o.
 	 * @param locale a {@link java.util.Locale} object
 	 */
-	public static String toAwkString(Object o, String convfmt, Locale locale) {
+	private static String toAwkString(Object o, String convfmt, Locale locale) {
 		if (o == null) {
 			return "";
 		}
@@ -296,29 +319,27 @@ public class JRT {
 		}
 	}
 
-	// not static to use CONVFMT (& possibly OFMT later)
 	/**
 	 * Convert a String, Integer, or Double to String
 	 * based on the OFMT variable contents. Jawk will
 	 * subsequently use this String for output via print().
 	 *
 	 * @param o Object to convert.
-	 * @param ofmt The contents of the OFMT variable.
 	 * @return A String representation of o.
-	 * @param locale a {@link java.util.Locale} object
 	 */
-	public static String toAwkStringForOutput(Object o, String ofmt, Locale locale) {
+	public String toAwkStringForOutput(Object o) {
 		// Even if specified Object o is not officially a number, we try to convert
 		// it to a Double. Because if it's a literal representation of a number,
 		// we will need to display it as a number ("12.00" --> 12)
-		if (!(o instanceof Number)) {
+		Object val = o;
+		if (!(val instanceof Number)) {
 			try {
-				o = new BigDecimal(o.toString()).doubleValue();
+				val = new BigDecimal(val.toString()).doubleValue();
 			} catch (NumberFormatException e) {// NOPMD - EmptyCatchBlock: intentionally ignored
 			}
 		}
 
-		return toAwkString(o, ofmt, locale);
+		return toAwkString(val, this.ofmt, this.locale);
 	}
 
 	/**
@@ -626,12 +647,10 @@ public class JRT {
 	 *
 	 * @param array The array to populate.
 	 * @param string The string to split.
-	 * @param convfmt Contents of the CONVFMT variable.
 	 * @return The number of parts resulting from this split operation.
-	 * @param locale a {@link java.util.Locale} object
 	 */
-	public static int split(Object array, Object string, String convfmt, Locale locale) {
-		return splitWorker(new StringTokenizer(toAwkString(string, convfmt, locale)), (AssocArray) array);
+	public int split(Object array, Object string) {
+		return splitWorker(new StringTokenizer(toAwkString(string)), (AssocArray) array);
 	}
 
 	/**
@@ -641,25 +660,23 @@ public class JRT {
 	 * If fs is blank, it behaves similar to the 2-arg version of
 	 * AWK's split function.
 	 *
-	 * @param fs Field separator regular expression.
+	 * @param fieldSeparator Field separator regular expression.
 	 * @param array The array to populate.
 	 * @param string The string to split.
-	 * @param convfmt Contents of the CONVFMT variable.
 	 * @return The number of parts resulting from this split operation.
-	 * @param locale a {@link java.util.Locale} object
 	 */
-	public static int split(Object fs, Object array, Object string, String convfmt, Locale locale) {
-		String fsString = toAwkString(fs, convfmt, locale);
+	public int split(Object fieldSeparator, Object array, Object string) {
+		String fsString = toAwkString(fieldSeparator);
 		if (fsString.equals(" ")) {
-			return splitWorker(new StringTokenizer(toAwkString(string, convfmt, locale)), (AssocArray) array);
+			return splitWorker(new StringTokenizer(toAwkString(string)), (AssocArray) array);
 		} else if (fsString.equals("")) {
-			return splitWorker(new CharacterTokenizer(toAwkString(string, convfmt, locale)), (AssocArray) array);
+			return splitWorker(new CharacterTokenizer(toAwkString(string)), (AssocArray) array);
 		} else if (fsString.length() == 1) {
 			return splitWorker(
-					new SingleCharacterTokenizer(toAwkString(string, convfmt, locale), fsString.charAt(0)),
+					new SingleCharacterTokenizer(toAwkString(string), fsString.charAt(0)),
 					(AssocArray) array);
 		} else {
-			return splitWorker(new RegexTokenizer(toAwkString(string, convfmt, locale), fsString), (AssocArray) array);
+			return splitWorker(new RegexTokenizer(toAwkString(string), fsString), (AssocArray) array);
 		}
 	}
 
@@ -996,17 +1013,18 @@ public class JRT {
 	 * @param forGetline {@code true} if the call is for {@code getline}; when
 	 *        {@code false} the fields of {@code $0} are parsed
 	 *        automatically
-	 * @param locale locale used for string conversion
+	 * @param pLocale locale used for string conversion
 	 * @return {@code true} if a line was consumed, {@code false} if no more input
 	 *         is available
 	 * @throws IOException upon an IO error
 	 */
-	public boolean consumeInput(final InputStream input, boolean forGetline, Locale locale) throws IOException {
-		initializeArgList(locale);
+	@SuppressWarnings("PMD.UnusedFormalParameter")
+	public boolean consumeInput(final InputStream input, boolean forGetline, Locale pLocale) throws IOException {
+		initializeArgList();
 
 		while (true) {
 			if ((partitioningReader == null || inputLine == null)
-					&& !prepareNextReader(input, locale)) {
+					&& !prepareNextReader(input)) {
 				return false;
 			}
 
@@ -1031,30 +1049,27 @@ public class JRT {
 
 	/**
 	 * Initialize internal state for traversing {@code ARGV}.
-	 *
-	 * @param locale locale used for string conversion when inspecting arguments
 	 */
-	private void initializeArgList(Locale locale) {
+	private void initializeArgList() {
 		if (arglistAa != null) {
 			return;
 		}
 		arglistAa = (AssocArray) vm.getARGV();
 		arglistIdx = 1;
-		hasFilenames = detectFilenames(locale);
+		hasFilenames = detectFilenames();
 	}
 
 	/**
 	 * Determine whether {@code ARGV} contains any filename entries (arguments
 	 * without an equals sign).
 	 *
-	 * @param locale locale used for string conversion
 	 * @return {@code true} if at least one filename was found
 	 */
-	private boolean detectFilenames(Locale locale) {
+	private boolean detectFilenames() {
 		int argCount = getArgCount();
 		for (long i = 1; i < argCount; i++) {
 			if (arglistAa.isIn(i)) {
-				String arg = toAwkString(arglistAa.get(i), this.convfmt, locale);
+				String arg = toAwkString(arglistAa.get(i));
 				if (arg.indexOf('=') == -1) {
 					return true;
 				}
@@ -1076,15 +1091,14 @@ public class JRT {
 	 * Obtain the next valid argument from {@code ARGV}, skipping uninitialized or
 	 * empty entries.
 	 *
-	 * @param locale locale used for string conversion
 	 * @return the next argument as an AWK string, or {@code null} if none remain
 	 */
-	private String nextArgument(Locale locale) {
+	private String nextArgument() {
 		int argCount = getArgCount();
 		while (arglistIdx <= argCount) {
 			Object o = arglistAa.get(arglistIdx++);
 			if (!(o instanceof UninitializedObject || o.toString().isEmpty())) {
-				return toAwkString(o, this.convfmt, locale);
+				return toAwkString(o);
 			}
 		}
 		return null;
@@ -1096,15 +1110,14 @@ public class JRT {
 	 * remain.
 	 *
 	 * @param input default input stream used when reading from standard input
-	 * @param locale locale used for string conversion
 	 * @return {@code true} if a reader was prepared, {@code false} if no more
 	 *         input is available
 	 * @throws IOException if an I/O error occurs while opening a file
 	 */
-	private boolean prepareNextReader(InputStream input, Locale locale) throws IOException {
+	private boolean prepareNextReader(InputStream input) throws IOException {
 		boolean ready = false;
 		while (!ready) {
-			String arg = nextArgument(locale);
+			String arg = nextArgument();
 			if (arg == null) {
 				if (partitioningReader == null && !hasFilenames) {
 					partitioningReader = new PartitioningReader(

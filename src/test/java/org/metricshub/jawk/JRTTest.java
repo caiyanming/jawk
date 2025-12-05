@@ -160,7 +160,9 @@ public class JRTTest {
 	@Test
 	public void testSplitSetsFieldZero() {
 		AssocArray aa = new AssocArray(false);
-		int n = JRT.split(aa, "a b", "%.6g", Locale.US);
+		JRT jrt = new JRT(null, Locale.US);
+		jrt.setCONVFMT("%.6g");
+		int n = jrt.split(aa, "a b");
 		assertEquals(2, n);
 		assertEquals(2, aa.get(0));
 	}
@@ -168,7 +170,9 @@ public class JRTTest {
 	@Test
 	public void testSplitRegexWhitespace() {
 		AssocArray aa = new AssocArray(false);
-		int n = JRT.split("[ \t]+", aa, " 9853   shen", "%.6g", Locale.US);
+		JRT jrt = new JRT(null, Locale.US);
+		jrt.setCONVFMT("%.6g");
+		int n = jrt.split("[ \t]+", aa, " 9853   shen");
 		assertEquals(3, n);
 		assertEquals("", aa.get(1));
 		assertEquals("9853", aa.get(2));
