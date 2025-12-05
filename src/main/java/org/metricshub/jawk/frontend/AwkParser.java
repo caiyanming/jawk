@@ -2546,7 +2546,9 @@ public class AwkParser {
 			tuples.setNumGlobals(symbolTable.numGlobals());
 
 			// Only ENVIRON/ARGC/ARGV remain regular globals
-			tuples.environOffset(environAst.offset);
+			if (environAst.isReferenced()) {
+				tuples.environOffset(environAst.offset);
+			}
 			tuples.argcOffset(argcAst.offset);
 			tuples.argvOffset(argvAst.offset);
 
@@ -2674,7 +2676,9 @@ public class AwkParser {
 			// (see above)!
 			tuples.setNumGlobals(symbolTable.numGlobals());
 
-			tuples.environOffset(environAst.offset);
+			if (environAst.isReferenced()) {
+				tuples.environOffset(environAst.offset);
+			}
 
 			tuples.setInputForEval();
 
@@ -4285,6 +4289,7 @@ public class AwkParser {
 		private String id;
 		private int offset = AVM.NULL_OFFSET;
 		private boolean isGlobal;
+		private boolean referenced;
 
 		private IDAst(String id, boolean isGlobal) {
 			this.id = id;
@@ -4367,6 +4372,14 @@ public class AwkParser {
 		@Override
 		public boolean isScalar() {
 			return isScalar;
+		}
+
+		private boolean isReferenced() {
+			return referenced;
+		}
+
+		private void markReferenced() {
+			referenced = true;
 		}
 
 		private void setArray(boolean b) {
@@ -5275,9 +5288,10 @@ public class AwkParser {
 
 		AST addID(String id) throws ParserException {
 			IDAst retVal = getID(id);
+			retVal.markReferenced();
 			/// ***
-			/// We really don't know if the evaluation is for an array or for a scalar
-			/// here, because we can use an array as a function parameter (passed by reference).
+                        /// We really don't know if the evaluation is for an array or for a scalar
+                        /// here, because we can use an array as a function parameter (passed by reference).
 			/// ***
 			// if (retVal.isArray)
 			// throw parserException("Cannot use "+retVal+" as a scalar.");
@@ -5319,6 +5333,7 @@ public class AwkParser {
 
 		AST addArrayID(String id) throws ParserException {
 			IDAst retVal = getID(id);
+			retVal.markReferenced();
 			if (retVal.isScalar()) {
 				throw parserException("Cannot use " + retVal + " as an array.");
 			}
