@@ -30,6 +30,12 @@ dynamic extensions during script execution.
 When embedding Jawk, instantiate `SandboxedAwk` to apply the same sandbox
 restrictions programmatically.
 
+## Language notes
+
+Jawk supports double-quoted strings with escape sequences and single-quoted
+strings that are treated literally (no escape processing). Single-quoted
+strings cannot contain a single quote character.
+
 ## Run AWK inside Java
 
 Execute a script in just one line using the convenience methods on `Awk`:

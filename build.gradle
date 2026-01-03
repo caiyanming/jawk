@@ -1,0 +1,111 @@
+/*-
+ * ╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲
+ * Jawk
+ * ჻჻჻჻჻჻
+ * Copyright (C) 2006 - 2025 MetricsHub
+ * ჻჻჻჻჻჻
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Lesser Public License for more details.
+ *
+ * You should have received a copy of the GNU General Lesser Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/lgpl-3.0.html>.
+ * ╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱
+ */
+
+plugins {
+	id 'java'
+	id 'application'
+	id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+group = 'org.metricshub'
+version = '5.0.01-SNAPSHOT'
+description = 'Java AWK interpreter, allowing Java to call and execute AWK scripts in the JVM.'
+
+repositories {
+	maven { url 'https://maven.aliyun.com/repository/google' }
+	maven { url 'https://maven.aliyun.com/repository/central' }
+	maven { url 'https://maven.aliyun.com/repository/public' }
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_1_8
+	targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+application {
+	mainClass = 'org.metricshub.jawk.Cli'
+}
+
+dependencies {
+	implementation 'org.metricshub:printf4j:0.9.08'
+	implementation 'com.github.spotbugs:spotbugs-annotations:4.9.8'
+
+	testImplementation 'junit:junit:4.13.2'
+	testImplementation 'com.github.stefanbirkner:system-rules:1.19.0'
+}
+
+tasks.withType(Test).configureEach {
+	useJUnit()
+}
+
+test {
+	exclude '**/*GawkTest.class',
+			'**/BwkPTest.class',
+			'**/BwkTTest.class',
+			'**/BwkMiscTest.class'
+	workingDir = file("$buildDir/surefire-workingdir")
+}
+
+tasks.register('compatibilityTest', Test) {
+	description = 'Runs compatibility tests (bwk/gawk) similar to Maven failsafe.'
+	group = 'verification'
+	useJUnit()
+	include '**/BwkPTest.class',
+			'**/BwkTTest.class',
+			'**/BwkMiscTest.class',
+			'**/*GawkTest.class'
+	ignoreFailures = true
+	workingDir = file("$buildDir/failsafe-workingdir")
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+}
+
+check.dependsOn tasks.named('compatibilityTest')
+
+tasks.withType(AbstractArchiveTask).configureEach {
+	preserveFileTimestamps = false
+	reproducibleFileOrder = true
+}
+
+jar {
+	manifest {
+		attributes(
+				'Main-Class': 'org.metricshub.jawk.Cli',
+				'Package-Name': project.group
+		)
+	}
+}
+
+shadowJar {
+	archiveClassifier.set('standalone')
+	manifest {
+		attributes(
+				'Main-Class': 'org.metricshub.jawk.Cli',
+				'Package-Name': project.group
+		)
+	}
+	exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
+
+tasks.named('build') {
+	dependsOn tasks.named('shadowJar')
+}

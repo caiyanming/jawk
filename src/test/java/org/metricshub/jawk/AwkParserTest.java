@@ -72,6 +72,35 @@ public class AwkParserTest {
 	}
 
 	@Test
+	public void testSingleQuotedStringParsing() throws Exception {
+		AwkTestSupport
+				.awkTest("Single-quoted strings must be literal")
+				.script("BEGIN { printf 'hello' }")
+				.expect("hello")
+				.runAndAssert();
+		AwkTestSupport
+				.awkTest("Single-quoted strings must not unescape \\n")
+				.script("BEGIN { printf '\\n' }")
+				.expect("\\n")
+				.runAndAssert();
+		AwkTestSupport
+				.awkTest("Single-quoted strings must allow double quotes")
+				.script("BEGIN { printf '\"' }")
+				.expect("\"")
+				.runAndAssert();
+		AwkTestSupport
+				.awkTest("Unfinished single-quoted string by EOF must throw")
+				.script("BEGIN { printf 'unfinished")
+				.expectThrow(LexerException.class)
+				.runAndAssert();
+		AwkTestSupport
+				.awkTest("Unfinished single-quoted string by EOL must throw")
+				.script("BEGIN { printf 'unfinished\n' }")
+				.expectThrow(LexerException.class)
+				.runAndAssert();
+	}
+
+	@Test
 	public void testMultiLineStatement() throws Exception {
 		AwkTestSupport
 				.awkTest("|| must allow eol")

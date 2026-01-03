@@ -475,6 +475,24 @@ public class AwkParser {
 	}
 
 	/**
+	 * Reads the string between single quotes without processing escape sequences.
+	 *
+	 * @throws IOException
+	 */
+	private void readSingleQuotedString() throws IOException {
+		string.setLength(0);
+
+		while (token != Token.EOF && c > 0 && c != '\'' && c != '\n') {
+			string.append((char) c);
+			read();
+		}
+		if (token == Token.EOF || c == '\n' || c <= 0) {
+			throw lexerException("Unterminated string: " + text);
+		}
+		read();
+	}
+
+	/**
 	 * Reads the regular expression (between slashes '/') and handle '\/'.
 	 *
 	 * @throws IOException
@@ -844,6 +862,13 @@ public class AwkParser {
 			// string
 			read();
 			readString();
+			token = Token.STRING;
+			return token;
+		}
+		if (c == '\'') {
+			// string (single quoted, no escapes)
+			read();
+			readSingleQuotedString();
 			token = Token.STRING;
 			return token;
 		}

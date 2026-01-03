@@ -84,6 +84,7 @@ There's a growing list of things that make our version diverge from the original
 * Improved performance in parsing inputs and printed output
 * Support for long integers
 * Support for octal and hexadecimal notation in strings (allowing `ESC` characters to do fancy terminal effects)
+* Support for single-quoted string literals without escape processing (shell-style literals)
 * Artifact *groupId* and package is `org.metricshub`
 * Added gawk's suite of unit tests
 * Added bwk's suite of unit tests

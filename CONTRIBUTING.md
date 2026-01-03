@@ -6,6 +6,7 @@ Requirements:
 
 * [Java 11](https://adoptium.net/)
 * [Maven 3.x](https://maven.apache.org/)
+* (Optional) [Gradle 8.x](https://gradle.org/)
 
 As usual with Maven, you compile, build and test with:
 
@@ -17,6 +18,18 @@ mvn verify
 
 * `jawk-<VERSION>.jar`, to be used in downstream projects requiring Jawk
 * `jawk-<VERSION>-standalone.jar`, an executable JAR that behaves like `awk` or `gawk`
+
+If you prefer Gradle and have it installed, the equivalent build is:
+
+```bash
+gradle build
+```
+
+Compatibility tests (bwk/gawk) are available as:
+
+```bash
+gradle compatibilityTest
+```
 
 The [documentation](metricshub.org/Jawk) is generated with Maven too:
 
