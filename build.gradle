@@ -37,8 +37,13 @@ repositories {
 }
 
 java {
-	sourceCompatibility = JavaVersion.VERSION_1_8
-	targetCompatibility = JavaVersion.VERSION_1_8
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8'
+	options.compilerArgs += ['-Xlint:deprecation', '-Xlint:unchecked']
 }
 
 application {
@@ -63,6 +68,9 @@ test {
 			'**/BwkTTest.class',
 			'**/BwkMiscTest.class'
 	workingDir = file("$buildDir/surefire-workingdir")
+	doFirst {
+		workingDir.mkdirs()
+	}
 }
 
 tasks.register('compatibilityTest', Test) {
@@ -75,6 +83,9 @@ tasks.register('compatibilityTest', Test) {
 			'**/*GawkTest.class'
 	ignoreFailures = true
 	workingDir = file("$buildDir/failsafe-workingdir")
+	doFirst {
+		workingDir.mkdirs()
+	}
 	testClassesDirs = sourceSets.test.output.classesDirs
 	classpath = sourceSets.test.runtimeClasspath
 }
